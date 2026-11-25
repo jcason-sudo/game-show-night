@@ -13,15 +13,24 @@ A family game show for rainy days. The TV shows the show, every phone is a buzze
 
 On a laptop, Space or Enter is Next, P is Pause, M opens the menu.
 
-## The five rounds
+## The ten games
 
-| Round | How it works |
+The showrunner picks the lineup in the lobby: Quick (4 games), Classic (5), All 10, or any mix. "Short rounds" trims every game.
+
+| Game | How it works |
 |---|---|
 | Everybody Votes | Everyone answers on their phone. A team scores the share of its players who are right, so uneven teams stay fair. |
+| Most Likely To | No trivia. Vote for the person in the room who fits. You score when you vote with the biggest group. |
 | The Board | Pick a category and value, buzz in, answer on your phone. A miss lets the other team steal. |
+| True or False Blitz | A statement, 12 seconds, true or false. |
 | Zoom In | A drawing of a famous place zooms out or uncovers tile by tile. Buzz early for more points. |
+| Closest Call | Every answer is a number. Everyone types a guess. Closest wins 150. |
 | Phrase Fever | Take turns on letters. Anyone can hit Solve and type the phrase. Five misses lose the puzzle. |
+| Name That Decade | Something happened. Pick the decade. |
+| Word Scramble | Unscramble the word. First in wins 150, everyone else can still score 40. |
 | Survey Says | Top 5 answers from this family's own secret surveys. Three strikes and the other team can steal. |
+
+The look is "Studio 74", a 1970s game-show set: cocoa, mustard, orange and teal, with a marquee board and a dome buzzer.
 
 ## How it is built
 

@@ -66,6 +66,7 @@
   var clockOff = 0;        // my clock minus the TV's clock
   function hnow() { var n = Date.now() - clockOff; if (S && S.paused && S.pat) { return S.pat; } return n; }
   function tname(t) { return S.teams[t] ? S.teams[t].name : ''; }
+  function gameTitle(key) { for (var i = 0; i < C.rounds.length; i++) { if (C.rounds[i].key === key) { return C.rounds[i].title; } } return key; }
   function pname(pid) { return pid && S.players[pid] ? S.players[pid].n : 'Someone'; }
   function pteam(pid) { return pid && S.players[pid] ? S.players[pid].t : 0; }
   function timerHtml(len) { return S.deadline ? '<div class="timer"><i data-dl="' + S.deadline + '" data-len="' + len + '"></i></div>' : ''; }
@@ -106,7 +107,7 @@
   /* HOME                                                               */
   /* ================================================================== */
   function home() {
-    app.innerHTML = '<div class="home"><h1>RAIN <b>CHECK!</b></h1><p>The family game show for rainy days.</p>' +
+    app.innerHTML = '<div class="home"><h1>Rain Check!</h1><p>The family game show for rainy days.</p>' +
       '<button class="big red" data-a="tv" autofocus>This is the TV screen</button>' +
       '<p style="margin-top:26px">Playing on a phone?</p>' +
       '<input class="field" id="code" maxlength="4" placeholder="ROOM CODE" autocapitalize="characters" autocomplete="off">' +
@@ -134,10 +135,13 @@
     var qrSvg = '';
     try { var qr = qrcode(0, 'M'); qr.addData(HERE + '?r=' + ROOM + (qs.relay ? '&relay=' + qs.relay : '')); qr.make(); qrSvg = qr.createSvgTag(6, 12); } catch (e) { }
 
-    app.innerHTML = '<div class="scr"><div class="top" id="top"></div><div class="stage" id="stage"></div>' +
+    var bulbs = '<div class="bulbs">'; for (var bi = 0; bi < 24; bi++) { bulbs += '<i></i>'; } bulbs += '</div>';
+    var rays = '<svg class="rays" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" preserveAspectRatio="none"><path fill="#4A2D1B" d="M640 300L-200 -40H80ZM640 300L300 -200H520ZM640 300L760 -200H980ZM640 300L1200 -40H1480ZM640 300L1500 260V480ZM640 300L1400 800H1120ZM640 300L840 900H560ZM640 300L160 800H-120ZM640 300L-220 480V260Z"/></svg>';
+    app.innerHTML = '<div class="scr">' + rays + '<div class="top" id="top"></div><div class="stagewrap"><div class="frame">' + bulbs + '<div class="stage" id="stage"></div>' + bulbs + '</div></div>' +
+      '<div class="stripes"><i class="s0"></i><i class="s1"></i><i class="s2"></i></div>' +
       '<div class="foot"><div class="host" id="host">' + RC.art.host + '</div><div class="bubble" id="bubble"></div><div class="joinbox" id="joinbox"></div></div>' +
       '<button class="menubtn" data-a="s_menu">Menu</button><div id="menu"></div><div id="pausel"></div><div id="xl"></div>' +
-      '<div class="overlay" id="ov"><h1>RAIN <b>CHECK!</b></h1><p>The family game show for rainy days</p><button data-a="s_unlock" id="ovb">Press OK to open the show</button></div></div>';
+      '<div class="overlay" id="ov"><h1>Rain Check!</h1><p>The family game show for rainy days</p><button data-a="s_unlock" id="ovb">Press OK to open the show</button></div></div>';
     try { document.getElementById('ovb').focus(); } catch (e) { }
 
     function publish() {
@@ -209,23 +213,25 @@
 
     /* drawing */
     function topHtml() {
-      var sub = S.phase === 'lobby' ? 'Join on your phone' : (S.phase === 'final' ? 'Final score' : 'Round ' + S.round + ' of ' + C.rounds.length + ' &middot; ' + esc(C.rounds[Math.max(0, S.round - 1)].title));
+      var sub = S.phase === 'lobby' ? 'Join on your phone' : (S.phase === 'final' ? 'Final score' : 'Game ' + S.round + ' of ' + (S.rof || 1) + ' &middot; ' + esc(S.rt || ''));
       function tm(t) { var ctrl = (S.turn && pteam(S.turn) === t) ? ' ctrl' : ''; return '<div class="tm t' + t + ctrl + '"><div class="tn">' + esc(tname(t)) + '</div><div class="ts">' + S.teams[t].score + '</div></div>'; }
-      return tm(0) + '<div class="mid"><div class="logo">RAIN <b>CHECK!</b></div><div class="sub">' + sub + '</div></div>' + tm(1);
+      return tm(0) + '<div class="mid"><div class="logo">Rain Check!</div><div class="sub">' + sub + '</div></div>' + tm(1);
     }
     function who(pid) { return '<span class="t' + pteam(pid) + 'c">' + esc(pname(pid)) + '</span>'; }
     function lobbyHtml() {
       var cols = ['', ''];
       S.order.forEach(function (pid) { var p = S.players[pid]; if (!p) { return; } cols[p.t] += '<div class="chip' + ((Date.now() - p.seen) > 30000 ? ' off' : '') + '">' + esc(p.n) + (pid === S.boss ? ' <small>RUNS THE SHOW</small>' : '') + (p.sd ? ' <small>READY</small>' : '') + '</div>'; });
+      var names = [];
+      for (var gi = 0; gi < S.lineup.length; gi++) { names.push(gameTitle(S.lineup[gi])); }
       return '<div class="lobby"><div class="qr">' + qrSvg + '<div class="url">' + esc(SHORT) + '</div><div class="code">' + ROOM + '</div></div>' +
-        '<div class="teams"><div class="col t0"><h3>' + esc(tname(0)) + '</h3>' + cols[0] + '</div><div class="col t1"><h3>' + esc(tname(1)) + '</h3>' + cols[1] + '</div></div></div>';
+        '<div class="teams"><div class="col t0"><h3>' + esc(tname(0)) + '</h3>' + cols[0] + '</div><div class="col t1"><h3>' + esc(tname(1)) + '</h3>' + cols[1] + '</div></div></div><div class="lineup"><b>Tonight:</b> ' + esc(names.join(', ')) + (S.short ? ' (short rounds)' : '') + '</div>';
     }
     function voteHtml() {
       var q = S.q, rv = S.phase === 'vote_reveal' ? S.rv : null, h = '<div class="tag">Question ' + q.n + ' of ' + q.of + '</div><div class="h2">' + esc(q.text) + '</div><div class="opts">';
       for (var i = 0; i < q.o.length; i++) { h += '<div class="opt o' + i + (rv ? (rv.a === i ? ' win' : ' dim') : '') + '"><span class="l">' + 'ABCD'.charAt(i) + '</span>' + esc(q.o[i]) + (rv ? '<span class="n">' + rv.counts[i] + '</span>' : '') + '</div>'; }
       h += '</div>';
       if (rv) { h += '<div class="status"><span class="t0c">' + esc(tname(0)) + ' +' + rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + rv.gains[1] + '</span>' + (rv.fast ? ' &nbsp; Fastest: ' + esc(rv.fast) : '') + '</div>'; }
-      else { h += '<div class="status">' + S.nv + ' answered</div>' + timerHtml(26000); }
+      else { h += '<div class="status">' + S.nv + ' answered</div>' + timerHtml(q.kind === 'tf' ? 16000 : 26000); }
       return h;
     }
     function boardHtml() {
@@ -307,6 +313,24 @@
       if (ph === 'lobby') { return lobbyHtml(); }
       if (ph === 'intro') { var how = ''; S.intro.how.forEach(function (x) { how += '<div>' + esc(x) + '</div>'; }); return '<div class="tag red">Round ' + S.intro.n + ' of ' + S.intro.of + '</div><div class="h1">' + esc(S.intro.title) + '</div><div class="how">' + how + '</div>' + timerHtml(14000); }
       if (ph === 'vote_q' || ph === 'vote_reveal') { return voteHtml(); }
+      if (ph === 'ml_q') { return '<div class="tag">Question ' + S.ml.n + ' of ' + S.ml.of + '</div><div class="h2">' + esc(S.ml.text) + '</div><div class="status">Vote on your phone. ' + S.nv + ' answered</div>' + timerHtml(26000); }
+      if (ph === 'ml_reveal') {
+        var tl = ''; S.rv.top.forEach(function (x) { tl += (tl ? ', ' : '') + esc(x.n) + ' ' + x.c; });
+        return '<div class="h2">' + esc(S.ml.text) + '</div><div class="answer">' + (S.rv.win.length ? esc(S.rv.win.join(' and ')) : 'No votes') + '</div><div class="tally">' + tl + '</div>' +
+          '<div class="status"><span class="t0c">' + esc(tname(0)) + ' +' + S.rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + S.rv.gains[1] + '</span></div>';
+      }
+      if (ph === 'num_q') { return '<div class="tag">Question ' + S.nm.n + ' of ' + S.nm.of + '</div><div class="h2">' + esc(S.nm.text) + '</div><div class="status">Type your best guess. ' + S.nv + ' answered</div>' + timerHtml(30000); }
+      if (ph === 'num_reveal') {
+        var nl = ''; S.rv.list.forEach(function (x) { nl += (nl ? ', ' : '') + '<span class="t' + x.t + 'c">' + esc(x.n) + '</span> ' + esc(x.v); });
+        return '<div class="h2">' + esc(S.nm.text) + '</div><div class="answer">' + esc(S.rv.a) + '</div><div class="tally">' + nl + '</div>' +
+          '<div class="status">' + (S.rv.who ? (S.rv.exact ? 'Exactly right: ' : 'Closest: ') + '<span class="t' + S.rv.team + 'c">' + esc(S.rv.who) + '</span> +' + S.rv.pts : 'No guesses') + '</div>';
+      }
+      if (ph === 'scr_q' || ph === 'scr_reveal') {
+        var letters = ph === 'scr_q' ? S.ws.mix : S.rv.text, lh = '';
+        for (var li = 0; li < letters.length; li++) { lh += '<span class="lt xl' + (ph === 'scr_reveal' ? ' new' : '') + '">' + letters.charAt(li) + '</span>'; }
+        var done = S.ws.done.length ? 'Solved: ' + esc(S.ws.done.join(', ')) : 'Type the word on your phone';
+        return '<div class="tag">Word ' + S.ws.n + ' of ' + S.ws.of + ' &middot; Hint: ' + esc(S.ws.hint) + '</div><div class="phrase"><span class="word">' + lh + '</span></div><div class="status">' + (ph === 'scr_reveal' && !S.ws.done.length ? 'Nobody got it' : done) + '</div>' + (ph === 'scr_q' ? timerHtml(35000) : '');
+      }
       if (ph === 'board_pick') { return boardHtml(); }
       if (ph === 'board_q' || ph === 'board_ans' || ph === 'board_reveal') { return clueHtml(); }
       if (ph === 'zoom_q' || ph === 'zoom_ans' || ph === 'zoom_reveal') { return zoomHtml(); }
@@ -314,7 +338,7 @@
       if (ph === 'feud_face' || ph === 'feud_pick' || ph === 'feud_reveal') { return feudHtml(); }
       if (ph === 'round_end') { return '<div class="tag">End of round ' + S.re.n + '</div><div class="h1">' + esc(S.re.title) + '</div>' + barsHtml(); }
       if (ph === 'final') {
-        var conf = '', cols = ['#C74634', '#2F6F8F', '#F2B134', '#4F8F4A'];
+        var conf = '', cols = ['#C4520F', '#17696B', '#F2B705', '#FBF0D9'];
         for (var i = 0; i < 28; i++) { conf += '<div class="conf" style="left:' + ((i * 37) % 100) + '%;background:' + cols[i % 4] + ';-webkit-animation-delay:' + ((i * 0.23) % 3.4) + 's;animation-delay:' + ((i * 0.23) % 3.4) + 's"></div>'; }
         var f = S.fin;
         return conf + '<div class="h1">' + (f.winner < 0 ? 'It is a tie!' : '<span class="t' + f.winner + 'c">' + esc(tname(f.winner)) + '</span> win!') + '</div>' + barsHtml() +
@@ -379,7 +403,7 @@
     var ui = { name: lsGet('rc_name') || '', team: -1, joined: false, step: 0, picks: [[], [], []], svSent: false, menu: false, sent: null, names: null };
     if (lsGet('rc_room') === ROOM && ui.name && !qs.pid) { ui.joined = true; ui.team = +lsGet('rc_team') || 0; ui.svFor = lsGet('rc_sv') || ''; try { ui.picks = JSON.parse(lsGet('rc_picks')) || ui.picks; } catch (e) { } }
     var lastSeq = 0, lastBoot = 0, lastState = 0, pending = null, bestOff = null, bestAt = 0;
-    app.innerHTML = '<div class="ph"><div id="pbanner"></div><div id="ptop"></div><div class="pbody" id="pbody"></div><div id="psheet"></div><div id="pboss"></div></div>';
+    app.innerHTML = '<div class="ph"><div id="pbanner"></div><div id="ptop"></div><div id="pnote"></div><div class="pbody" id="pbody"></div><div id="psheet"></div><div id="pboss"></div></div>';
 
     function svSig() { var x = ''; if (S && S.surveys) { for (var i = 0; i < S.surveys.length; i++) { x += S.surveys[i].q.substring(0, 24) + '|'; } } return x; }
     function send(m) { m.p = pid; if (!m.i) { m.i = rid(10); } netSend('in', JSON.stringify(m), false); }
@@ -439,6 +463,16 @@
       for (var i = 0; i < sv.o.length; i++) { h += '<button class="pbtn plain c' + (picks.indexOf(i) >= 0 ? ' sel' : '') + '" data-a="sv" data-v="' + i + '">' + esc(sv.o[i]) + '</button>'; }
       return h + '<button class="pbtn go" data-a="svnext"' + (picks.length ? '' : ' disabled') + '>' + (ui.step < S.surveys.length - 1 ? 'Next' : 'Done') + '</button>';
     }
+    function sameList(a, b) { return a.join(',') === b.join(','); }
+    function gamesHtml() {
+      var h = '<h3>Pick tonight\'s games</h3><div class="half">' +
+        '<button class="pbtn plain c' + (sameList(S.lineup, C.presets.quick) ? ' sel' : '') + '" data-a="c_set" data-v="quick">Quick, 4 games</button>' +
+        '<button class="pbtn plain c' + (sameList(S.lineup, C.presets.classic) ? ' sel' : '') + '" data-a="c_set" data-v="classic">Classic, 5 games</button>' +
+        '<button class="pbtn plain c' + (sameList(S.lineup, C.presets.all) ? ' sel' : '') + '" data-a="c_set" data-v="all">All 10 games</button>' +
+        '<button class="pbtn plain c' + (S.short ? ' sel' : '') + '" data-a="c_short">Short rounds: ' + (S.short ? 'on' : 'off') + '</button></div><p class="small">Or tap games on and off:</p><div class="half">';
+      for (var i = 0; i < C.presets.all.length; i++) { var k = C.presets.all[i]; h += '<button class="pbtn plain c' + (S.lineup.indexOf(k) >= 0 ? ' sel' : '') + '" data-a="c_game" data-v="' + k + '">' + esc(gameTitle(k)) + '</button>'; }
+      return h + '</div>';
+    }
     function lobbyHtml() {
       var m = me(), lists = ['', ''];
       S.order.forEach(function (id) { var p = S.players[id]; if (p) { lists[p.t] += esc(p.n) + (id === S.boss ? ' (showrunner)' : '') + '<br>'; } });
@@ -449,6 +483,7 @@
         h += '<h2>You run the show</h2><p class="small">Start when everyone is in. You also get Next and Pause buttons during the game.</p>' +
           '<input class="field" id="tn0" maxlength="14" value="' + esc(tname(0)) + '" style="font-size:19px;margin:4px 0"><input class="field" id="tn1" maxlength="14" value="' + esc(tname(1)) + '" style="font-size:19px;margin:4px 0">' +
           '<button class="pbtn plain c" data-a="c_names">Save team names</button><button class="pbtn plain c" data-a="c_preset">Kids vs Adults</button>' +
+          gamesHtml() +
           '<button class="pbtn go" data-a="c_start">START THE SHOW</button>';
       }
       return h;
@@ -469,6 +504,23 @@
         return h;
       }
       if (ph === 'vote_reveal') { return '<h2>Answer: ' + esc(S.q.o[S.rv.a]) + '</h2>' + watch(); }
+      if (ph === 'ml_q') {
+        if (s || (S.acted && S.acted[pid])) { return '<h2>Vote locked in</h2>' + watch('Waiting for the others.'); }
+        h = '<div class="q">' + esc(S.ml.text) + '</div><div class="half">';
+        for (var w = 0; w < S.ml.who.length; w++) { h += '<button class="pbtn plain c" data-a="mlv" data-v="' + esc(S.ml.who[w].p) + '">' + esc(S.ml.who[w].n) + '</button>'; }
+        return h + '</div>';
+      }
+      if (ph === 'ml_reveal') { return '<h2>' + (S.rv.win.length ? esc(S.rv.win.join(' and ')) : 'No votes') + '</h2>' + watch(); }
+      if (ph === 'num_q') {
+        if (s || (S.acted && S.acted[pid])) { return '<h2>Guess locked in' + (s ? ': ' + esc(s.label) : '') + '</h2>' + watch('Waiting for the others.'); }
+        return '<div class="q">' + esc(S.nm.text) + '</div><input class="field" id="numin" type="number" inputmode="decimal" autocomplete="off" placeholder="Your number"><button class="pbtn go" data-a="num">Lock it in</button>';
+      }
+      if (ph === 'num_reveal') { return '<h2>Answer: ' + esc(S.rv.a) + '</h2>' + (S.rv.who ? '<p>Closest: ' + esc(S.rv.who) + '</p>' : '') + watch(); }
+      if (ph === 'scr_q') {
+        if (S.acted && S.acted[pid]) { return '<h2>You got it!</h2>' + watch('Waiting for the others.'); }
+        return '<p class="small">Hint: ' + esc(S.ws.hint) + '</p><div class="pmask big2">' + esc(S.ws.mix) + '</div><input class="field" id="wordin" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="The word"><button class="pbtn go" data-a="word">Send</button>';
+      }
+      if (ph === 'scr_reveal') { return '<h2>' + esc(S.rv.text) + '</h2>' + watch(); }
       if (ph === 'board_pick') {
         if (!mine) { return '<h2>' + esc(pname(S.turn)) + ' is picking</h2>' + watch(); }
         h = '<h2>Your pick, ' + esc(m.n) + '!</h2><div class="tiles">';
@@ -522,13 +574,16 @@
       var m = me();
       var stale = S && ui.joined && (Date.now() - lastState > 12000);
       put('pbanner', !net.up ? '<div class="banner">Connecting to the game relay...</div>' : (stale ? '<div class="banner">Lost the TV. Is the TV page still open?</div>' : ''));
-      put('ptop', m ? '<div class="ptop t' + m.t + '"><span>' + esc(m.n) + ' &middot; ' + esc(tname(m.t)) + '</span><span class="sc">' + S.teams[0].score + ' : ' + S.teams[1].score + '</span></div>' : '<div class="ptop tn"><span>RAIN CHECK!</span><span>Room ' + ROOM + '</span></div>');
+      put('ptop', m ? '<div class="ptop t' + m.t + '"><span class="pill">' + esc(m.n) + ', ' + esc(tname(m.t)) + '</span><span class="sc">' + S.teams[0].score + ' to ' + S.teams[1].score + '</span></div>' : '<div class="ptop tn"><span class="sc">Rain Check!</span><span>Room ' + ROOM + '</span></div>');
       // do not redraw a screen with a text box while someone is typing in it
+      var wr = S && S.phase === 'scr_q' && S.wr ? (S.wr[pid] || 0) : 0;
+      put('pnote', wr && !(S.acted && S.acted[pid]) ? '<div class="pnote bad">Not it. Try again. (' + wr + (wr === 1 ? ' try' : ' tries') + ')</div>' : '');
       var ae = document.activeElement, html = bodyHtml();
       if (ae && ae.tagName === 'INPUT' && cache.pbody && cache.pbody.replace(/value="[^"]*"/g, '') === html.replace(/value="[^"]*"/g, '')) { /* keep */ }
       else if (ae && ae.tagName === 'INPUT' && ae.id === 'nm' && !ui.joined) { /* typing a name: wait */ }
       else if (ae && ae.tagName === 'INPUT' && (ae.id === 'tn0' || ae.id === 'tn1') && S && S.phase === 'lobby') { /* typing team names: wait */ }
-      else { put('pbody', html); }
+      else if (ae && ae.tagName === 'INPUT' && (ae.id === 'wordin' || ae.id === 'numin') && S && cache.pbodyK === S.k && !(S.acted && S.acted[pid]) && !sentHere()) { /* typing an answer: wait */ }
+      else { if (put('pbody', html)) { cache.pbodyK = S ? S.k : ''; } }
       var boss = S && m && S.boss === pid && S.phase !== 'lobby' && S.phase !== 'final';
       put('pboss', boss ? '<div class="bossbar"><button data-a="c_next">NEXT</button><button class="alt" data-a="c_pause">' + (S.paused ? 'Go' : 'Pause') + '</button><button class="alt" data-a="c_menu">More</button></div>' : '');
       put('psheet', boss && ui.menu ? '<div class="sheet"><p class="small">Showrunner tools</p>' +
@@ -553,7 +608,13 @@
       else if (a === 'sv') { var p = ui.picks[ui.step], i = p.indexOf(+v); if (i >= 0) { p.splice(i, 1); } else { if (p.length >= 2) { p.shift(); } p.push(+v); } }
       else if (a === 'svnext') { if (ui.step < S.surveys.length - 1) { ui.step++; try { window.scrollTo(0, 0); } catch (e) { } } else { ui.svSent = true; ui.svFor = svSig(); lsSet('rc_sv', ui.svFor); lsSet('rc_picks', JSON.stringify(ui.picks)); send({ t: 'survey', a: ui.picks }); } }
       else if (!S) { return; }
-      else if (a === 'vote') { doAct({ t: 'vote', a: +v }, 'ABCD'.charAt(+v)); }
+      else if (a === 'vote') { doAct({ t: 'vote', a: +v }, S.q.kind === 'mix' ? 'ABCD'.charAt(+v) : S.q.o[+v]); }
+      else if (a === 'mlv') { doAct({ t: 'mlv', v: v }, 'Voted'); }
+      else if (a === 'num') { el = document.getElementById('numin'); if (!el || el.value === '' || isNaN(parseFloat(el.value))) { if (el) { el.focus(); } return; } var nval = parseFloat(el.value); el.blur(); doAct({ t: 'num', v: nval }, String(nval)); }
+      else if (a === 'word') { el = document.getElementById('wordin'); if (!el || !el.value) { if (el) { el.focus(); } return; } send({ t: 'word', k: S.k, text: el.value }); el.value = ''; return; }
+      else if (a === 'c_set') { ctl('games', { keys: C.presets[v] }); }
+      else if (a === 'c_short') { ctl('short', { on: !S.short }); }
+      else if (a === 'c_game') { var cur = S.lineup.slice(), gi2 = cur.indexOf(v); if (gi2 >= 0) { cur.splice(gi2, 1); } else { cur.push(v); } if (cur.length) { ctl('games', { keys: cur }); } }
       else if (a === 'tile') { var cl = v.split(','); doAct({ t: 'pick', c: +cl[0], l: +cl[1] }, 'Picked'); }
       else if (a === 'buzz') { if (S.phase !== 'phrase_turn' && hnow() < (S.openAt || 0) - 150) { return; } if (sentHere()) { return; } try { if (navigator.vibrate) { navigator.vibrate(60); } } catch (e) { } doAct({ t: 'buzz' }, 'Buzzed'); }
       else if (a === 'ans') { doAct({ t: 'ans', a: +v }, 'Answer sent'); }

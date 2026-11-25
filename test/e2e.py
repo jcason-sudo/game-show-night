@@ -46,6 +46,12 @@ async def main():
         await asyncio.sleep(2)
         await tv.screenshot(path='test/shots/04_tv_lobby.png')
         await phones[0].screenshot(path='test/shots/05_phone_boss_lobby.png', full_page=True)
+        await phones[0].click('[data-a=c_set][data-v=all]')
+        await asyncio.sleep(0.6)
+        await phones[0].click('[data-a=c_short]')
+        await asyncio.sleep(0.6)
+        await phones[0].screenshot(path='test/shots/05b_phone_boss_games.png', full_page=True)
+        await tv.screenshot(path='test/shots/04b_tv_lobby_lineup.png')
         await phones[0].click('[data-a=c_preset]')
         await asyncio.sleep(0.6)
         await phones[0].click('[data-a=c_start]')
@@ -64,7 +70,7 @@ async def main():
                 await tv.screenshot(path='test/shots/tv_%02d_%s.png' % (len(shot), ph))
             if ph == 'final' and same >= 6: break
             # showrunner moves the show along on passive screens
-            if ph in ('intro', 'vote_reveal', 'board_reveal', 'zoom_reveal', 'phrase_reveal', 'feud_reveal', 'round_end') and same >= 6:
+            if ph in ('intro', 'vote_reveal', 'board_reveal', 'zoom_reveal', 'phrase_reveal', 'feud_reveal', 'round_end', 'ml_reveal', 'num_reveal', 'scr_reveal') and same >= 6:
                 b = await phones[0].query_selector('[data-a=c_next]')
                 if b: await b.click()
                 await asyncio.sleep(0.3); continue
@@ -75,7 +81,7 @@ async def main():
                 btns = await p.query_selector_all('#pbody [data-a]:not([disabled])')
                 acts = []
                 for b in btns: acts.append(await b.get_attribute('data-a'))
-                if key not in pshot and btns and any(a in ('vote','tile','buzz','ans','letter','solve','fpick') for a in acts):
+                if key not in pshot and btns and any(a in ('vote','tile','buzz','ans','letter','solve','fpick','mlv','num','word') for a in acts):
                     pshot[key] = 1
                     await p.screenshot(path='test/shots/ph_%02d_%s.png' % (len(pshot), key))
                 if not btns: continue
@@ -83,6 +89,16 @@ async def main():
                 try:
                     if 'vote' in acts:
                         await random.choice([b for b, x in zip(btns, acts) if x == 'vote']).click()
+                    elif 'mlv' in acts:
+                        await random.choice([b for b, x in zip(btns, acts) if x == 'mlv']).click()
+                    elif 'num' in acts:
+                        await p.fill('#numin', str(random.choice([3, 50, 88, 1900, 2000, 5000])))
+                        await p.click('[data-a=num]')
+                    elif 'word' in acts:
+                        if random.random() < 0.6:
+                            ans = await tv.evaluate("(function(){var m=RCS.ws.mix.split('').sort().join('');var L=RC.content.words;for(var i=0;i<L.length;i++){if(L[i].w.split('').sort().join('')===m)return L[i].w;}return 'x';})()")
+                            await p.fill('#wordin', ans.lower() if random.random() < 0.7 else 'banana')
+                            await p.click('[data-a=word]')
                     elif 'tile' in acts:
                         await random.choice([b for b, x in zip(btns, acts) if x == 'tile']).click()
                     elif 'ans' in acts:

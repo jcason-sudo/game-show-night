@@ -6,147 +6,159 @@
 <meta name="robots" content="noindex">
 <title>Rain Check! Family Game Show</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
-/* Rain Check! One stylesheet for the TV screen and the phones.
+/* Rain Check! "Studio 74" look: a 1970s game-show set.
+   Cocoa #3A2214, orange #C4520F (team 1), teal #17696B (team 2), mustard #F2B705, cream #FBF0D9.
    Flexbox only, no grid and no CSS variables, so older TV browsers can draw it. */
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; height: 100%; background: #FFFFFF; color: #23282D; font-family: 'Public Sans', 'Helvetica Neue', Arial, sans-serif; -webkit-text-size-adjust: 100%; }
-button { font-family: inherit; touch-action: manipulation; cursor: pointer; }
+html, body { margin: 0; padding: 0; height: 100%; background: #FBF0D9; color: #3A2214; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif; font-weight: 700; -webkit-text-size-adjust: 100%; }
+button, input { font-family: inherit; }
+button { touch-action: manipulation; cursor: pointer; }
 .hide { display: none !important; }
+/* the fat display face */
+.home h1, .big, .tm .ts, .logo, .joinbox b, .overlay h1, .overlay button, .paused, .h1, .h2, .status.go, .lobby .qr .code, .lobby .col h3, .opt .l, .opt .n, .bcell, .clue, .answer, .zval, .slot .no, .slot .pt, .strikes b, .pot, .bigx, .bar .bf, .ptop .sc, .pbody h2, .watch, .pbtn.go, .buzz, .tiles button, .bossbar button { font-family: 'Bagel Fat One', 'Nunito', sans-serif; font-weight: 400; }
 
 /* ---------- home ---------- */
 .home { max-width: 560px; margin: 0 auto; padding: 28px 20px; text-align: center; }
-.home h1 { font-size: 44px; margin: 10px 0 4px; color: #33484F; letter-spacing: 1px; }
-.home h1 b { color: #C74634; }
-.home p { font-size: 18px; color: #33484F; }
-.big { display: block; width: 100%; border: 0; border-radius: 14px; padding: 20px 16px; margin: 14px 0; font-size: 22px; font-weight: 800; color: #FFFFFF; background: #33484F; }
-.big.red { background: #C74634; }
-.big.yel { background: #F2B134; color: #23282D; }
-.big.ghost { background: #F3F1ED; color: #23282D; }
-.big:focus { outline: 5px solid #F2B134; }
-.big[disabled] { opacity: 0.4; }
-.field { width: 100%; font-size: 24px; padding: 16px; border: 3px solid #33484F; border-radius: 12px; background: #F3F1ED; color: #23282D; text-align: center; font-family: inherit; font-weight: 700; }
-.note { font-size: 15px; color: #5B6A70; margin-top: 18px; }
+.home h1 { font-size: 52px; margin: 10px 0 4px; color: #C4520F; line-height: 1; }
+.home p { font-size: 18px; font-weight: 800; }
+.big { display: block; width: 100%; border: 0; border-radius: 999px; padding: 20px 16px; margin: 16px 0; font-size: 24px; color: #FFFFFF; background: #17696B; box-shadow: 0 7px 0 #3A2214; }
+.big.red { background: #C4520F; }
+.big:focus { outline: 5px solid #F2B705; }
+.field { width: 100%; font-size: 24px; padding: 16px 22px; border: 4px solid #3A2214; border-radius: 999px; background: #FFFFFF; color: #3A2214; text-align: center; font-weight: 800; }
+.note { font-size: 15px; margin-top: 22px; }
 
 /* ---------- TV screen ---------- */
-.scr { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; background: #FFFFFF; }
-.top { height: 13vh; display: -webkit-flex; display: flex; -webkit-align-items: stretch; align-items: stretch; border-bottom: 0.6vh solid #33484F; }
-.tm { width: 27vw; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: space-between; justify-content: space-between; padding: 0 2vw; color: #FFFFFF; }
-.tm.t0 { background: #C74634; } .tm.t1 { background: #2F6F8F; }
-.tm .tn { font-size: 4vh; font-weight: 800; white-space: nowrap; overflow: hidden; }
-.tm .ts { font-size: 8vh; font-weight: 800; }
-.tm.ctrl { box-shadow: inset 0 -1.2vh 0 #F2B134; }
-.mid { -webkit-flex: 1; flex: 1; text-align: center; padding-top: 1vh; }
-.logo { font-size: 5.4vh; font-weight: 800; color: #33484F; letter-spacing: 0.3vh; }
-.logo b { color: #C74634; }
-.sub { font-size: 3.2vh; color: #5B6A70; font-weight: 700; }
-.stage { -webkit-flex: 1; flex: 1; position: relative; overflow: hidden; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; padding: 1vh 3vw; text-align: center; }
-.foot { height: 21vh; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; background: #F3F1ED; border-top: 0.4vh solid #33484F; padding: 0 1.5vw; }
-.host { width: 20vh; height: 19vh; -webkit-flex: none; flex: none; }
-.bubble { -webkit-flex: 1; flex: 1; margin: 0 2vw; background: #FFFFFF; border: 0.5vh solid #33484F; border-radius: 3vh; padding: 1.6vh 2vw; font-size: 3.6vh; font-weight: 600; line-height: 1.25; max-height: 17vh; overflow: hidden; text-align: left; }
-.joinbox { width: 25vw; -webkit-flex: none; flex: none; font-size: 2.4vh; color: #33484F; text-align: right; line-height: 1.35; }
-.joinbox b { font-size: 4.6vh; letter-spacing: 0.6vh; color: #C74634; }
-.dots i { display: inline-block; width: 1.6vh; height: 1.6vh; border-radius: 50%; background: #C9CDD0; margin-left: 0.5vh; }
-.dots i.on { background: #4F8F4A; }
-.menubtn { position: absolute; right: 1vw; bottom: 22vh; font-size: 2.6vh; background: #33484F; color: #FFFFFF; border: 0; border-radius: 1vh; padding: 0.8vh 1.4vh; opacity: 0.55; z-index: 5; }
-.menubtn:focus { opacity: 1; outline: 0.5vh solid #F2B134; }
-.menu { position: absolute; right: 1vw; bottom: 28vh; background: #FFFFFF; border: 0.5vh solid #33484F; border-radius: 2vh; padding: 1.5vh; z-index: 6; width: 34vh; }
-.menu button { display: block; width: 100%; font-size: 2.8vh; font-weight: 700; margin: 0.6vh 0; padding: 1.2vh; border: 0; border-radius: 1vh; background: #F3F1ED; color: #23282D; }
-.menu button:focus { outline: 0.5vh solid #F2B134; }
-.overlay { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: #FFFFFF; z-index: 20; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; text-align: center; }
-.overlay h1 { font-size: 12vh; margin: 0; color: #33484F; } .overlay h1 b { color: #C74634; }
-.overlay p { font-size: 4vh; color: #5B6A70; }
-.overlay button { font-size: 6vh; font-weight: 800; padding: 3vh 6vw; border: 0; border-radius: 3vh; background: #C74634; color: #FFFFFF; margin-top: 3vh; }
-.overlay button:focus { outline: 1vh solid #F2B134; }
-.paused { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.86); z-index: 4; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; font-size: 12vh; font-weight: 800; color: #33484F; }
+.scr { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; background: #3A2214; color: #3A2214; }
+.rays { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.top { position: relative; height: 12vh; -webkit-flex: none; flex: none; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 1.4vh 2.4vw 0; }
+.tm { width: 27vw; height: 9.4vh; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: space-between; justify-content: space-between; padding: 0 0.8vh 0 2vw; color: #FFFFFF; border-radius: 99vh; border: 0.7vh solid #FBF0D9; }
+.tm.t0 { background: #C4520F; }
+.tm.t1 { background: #17696B; -webkit-flex-direction: row-reverse; flex-direction: row-reverse; padding: 0 2vw 0 0.8vh; }
+.tm .tn { font-size: 3.6vh; font-weight: 900; white-space: nowrap; overflow: hidden; }
+.tm .ts { font-size: 5.6vh; line-height: 1; background: #FBF0D9; color: #3A2214; border-radius: 99vh; padding: 0.7vh 2.2vh; }
+.tm.ctrl { border-color: #F2B705; }
+.mid { -webkit-flex: 1; flex: 1; text-align: center; }
+.logo { font-size: 6.6vh; line-height: 1; color: #F2B705; }
+.sub { font-size: 2.6vh; color: #FBF0D9; font-weight: 800; margin-top: 0.4vh; }
+.stagewrap { position: relative; -webkit-flex: 1; flex: 1; padding: 1.2vh 4vw 1.6vh; display: -webkit-flex; display: flex; min-height: 0; }
+.frame { -webkit-flex: 1; flex: 1; background: #F2B705; border-radius: 4.4vh; padding: 0 2vh; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; min-height: 0; }
+.bulbs { height: 3.2vh; -webkit-flex: none; flex: none; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: space-between; justify-content: space-between; padding: 0 2.4vw; }
+.bulbs i { display: block; width: 1.5vh; height: 1.5vh; border-radius: 50%; background: #FBF0D9; }
+.stage { -webkit-flex: 1; flex: 1; min-height: 0; position: relative; overflow: hidden; background: #FBF0D9; border-radius: 2.8vh; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; padding: 1vh 2vw; text-align: center; }
+.stripes { position: relative; -webkit-flex: none; flex: none; }
+.stripes i { display: block; height: 0.9vh; }
+.stripes .s0 { background: #C4520F; } .stripes .s1 { background: #F2B705; } .stripes .s2 { background: #17696B; }
+.foot { position: relative; height: 16vh; -webkit-flex: none; flex: none; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; background: #FBF0D9; padding: 0 2.4vw; }
+.host { width: 16vh; height: 15vh; -webkit-flex: none; flex: none; }
+.bubble { -webkit-flex: 1; flex: 1; margin: 0 2vw; font-size: 3.5vh; font-weight: 800; line-height: 1.22; max-height: 13.5vh; overflow: hidden; text-align: left; }
+.joinbox { width: 25vw; -webkit-flex: none; flex: none; font-size: 2.2vh; font-weight: 800; text-align: right; line-height: 1.3; }
+.joinbox b { font-size: 5.4vh; letter-spacing: 0.6vh; color: #C4520F; line-height: 1; }
+.dots i { display: inline-block; width: 1.5vh; height: 1.5vh; border-radius: 50%; background: #CDBFA3; margin-left: 0.5vh; }
+.dots i.on { background: #17696B; }
+.menubtn { position: absolute; right: 0.6vw; top: 13vh; font-size: 2.2vh; font-weight: 800; background: #FBF0D9; color: #3A2214; border: 0; border-radius: 99vh; padding: 0.7vh 1.6vh; opacity: 0.5; z-index: 5; }
+.menubtn:focus { opacity: 1; outline: 0.5vh solid #F2B705; }
+.menu { position: absolute; right: 1vw; top: 18vh; background: #FBF0D9; border: 0.6vh solid #3A2214; border-radius: 3vh; padding: 1.5vh; z-index: 6; width: 36vh; }
+.menu button { display: block; width: 100%; font-size: 2.8vh; font-weight: 800; margin: 0.6vh 0; padding: 1.2vh; border: 0; border-radius: 99vh; background: #FFFFFF; color: #3A2214; }
+.menu button:focus { outline: 0.5vh solid #C4520F; }
+.overlay { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: #3A2214; z-index: 20; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; text-align: center; }
+.overlay h1 { font-size: 15vh; margin: 0; color: #F2B705; line-height: 1; }
+.overlay p { font-size: 4vh; color: #FBF0D9; font-weight: 800; }
+.overlay button { font-size: 6vh; padding: 2.6vh 6vw 3vh; border: 0; border-radius: 99vh; background: #C4520F; color: #FFFFFF; margin-top: 3vh; box-shadow: 0 1.2vh 0 #1F1009; }
+.overlay button:focus { outline: 1vh solid #F2B705; }
+.paused { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: rgba(58,34,20,0.88); z-index: 4; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; font-size: 14vh; color: #F2B705; }
 
-.h1 { font-size: 8.5vh; font-weight: 800; color: #33484F; margin: 0 0 1.5vh; line-height: 1.1; }
-.h2 { font-size: 5.6vh; font-weight: 800; color: #23282D; margin: 0 0 1.5vh; line-height: 1.15; }
-.tag { display: inline-block; font-size: 3.2vh; font-weight: 800; color: #FFFFFF; background: #33484F; border-radius: 1.2vh; padding: 0.6vh 1.6vh; margin-bottom: 1.6vh; }
-.tag.yel { background: #F2B134; color: #23282D; } .tag.red { background: #C74634; }
-.status { font-size: 4.4vh; font-weight: 800; color: #33484F; margin-top: 1.6vh; }
-.status.go { color: #C74634; -webkit-animation: pulse 0.7s infinite; animation: pulse 0.7s infinite; }
-.t0c { color: #C74634; } .t1c { color: #2F6F8F; }
-.timer { -webkit-flex: none; flex: none; width: 60vw; height: 1.6vh; background: #E4E1DB; border-radius: 1vh; overflow: hidden; margin-top: 2vh; }
-.timer i { display: block; height: 100%; width: 100%; background: #F2B134; }
-.row { display: -webkit-flex; display: flex; -webkit-justify-content: center; justify-content: center; width: 100%; }
+.h1 { font-size: 9vh; color: #C4520F; margin: 0 0 1.5vh; line-height: 1.05; }
+.h2 { font-size: 5.6vh; margin: 0 0 1.4vh; line-height: 1.1; }
+.tag { display: inline-block; font-size: 3vh; font-weight: 900; color: #FFFFFF; background: #17696B; border-radius: 99vh; padding: 0.6vh 2.4vh; margin-bottom: 1.4vh; }
+.tag.yel { background: #F2B705; color: #3A2214; } .tag.red { background: #C4520F; }
+.status { font-size: 4vh; font-weight: 900; margin-top: 1.4vh; }
+.status.go { display: inline-block; background: #C4520F; color: #FFFFFF; border-radius: 99vh; padding: 1vh 4vh 1.3vh; -webkit-animation: pulse 0.7s infinite; animation: pulse 0.7s infinite; }
+.status.go span { color: #FFFFFF; }
+.t0c { color: #C4520F; } .t1c { color: #17696B; }
+.timer { -webkit-flex: none; flex: none; width: 56vw; height: 1.8vh; background: #3A2214; border-radius: 1vh; overflow: hidden; margin-top: 1.6vh; padding: 0.4vh; }
+.timer i { display: block; height: 100%; width: 100%; background: #F2B705; border-radius: 1vh; }
+.lineup { font-size: 2.5vh; font-weight: 800; margin-top: 0.8vh; }
+.lineup b { color: #C4520F; font-weight: 900; }
+.tally { font-size: 3.4vh; font-weight: 800; margin-top: 1vh; }
 
 /* lobby */
-.lobby { display: -webkit-flex; display: flex; width: 100%; height: 100%; -webkit-align-items: center; align-items: center; }
-.lobby .qr { width: 36vw; text-align: center; }
-.lobby .qr svg, .lobby .qr img { width: 40vh; height: 40vh; }
-.lobby .qr .url { font-size: 3.2vh; font-weight: 700; color: #33484F; margin-top: 1vh; word-break: break-all; }
-.lobby .qr .code { font-size: 9vh; font-weight: 800; letter-spacing: 1.4vh; color: #C74634; line-height: 1; }
-.lobby .teams { -webkit-flex: 1; flex: 1; display: -webkit-flex; display: flex; height: 92%; }
-.lobby .col { -webkit-flex: 1; flex: 1; margin: 0 1vw; border-radius: 2vh; background: #F3F1ED; padding: 1.5vh; overflow: hidden; }
-.lobby .col h3 { margin: 0 0 1vh; font-size: 4.4vh; color: #FFFFFF; border-radius: 1.2vh; padding: 0.8vh; }
-.lobby .col.t0 h3 { background: #C74634; } .lobby .col.t1 h3 { background: #2F6F8F; }
-.chip { font-size: 3.4vh; font-weight: 700; padding: 0.5vh 0; line-height: 1.15; }
-.chip small { font-size: 2.1vh; white-space: nowrap; color: #4F8F4A; font-weight: 800; }
+.lobby { display: -webkit-flex; display: flex; width: 100%; -webkit-flex: 1; flex: 1; min-height: 0; -webkit-align-items: center; align-items: center; }
+.lobby .qr { width: 32vw; text-align: center; }
+.lobby .qr svg, .lobby .qr img { width: 31vh; height: 31vh; border-radius: 2vh; }
+.lobby .qr .url { font-size: 2.6vh; font-weight: 800; margin-top: 0.4vh; word-break: break-all; }
+.lobby .qr .code { font-size: 8.4vh; letter-spacing: 1.2vh; color: #C4520F; line-height: 1; }
+.lobby .teams { -webkit-flex: 1; flex: 1; display: -webkit-flex; display: flex; height: 96%; }
+.lobby .col { -webkit-flex: 1; flex: 1; margin: 0 0.8vw; border-radius: 3vh; background: #FFFFFF; padding: 1.4vh; overflow: hidden; text-align: left; }
+.lobby .col h3 { margin: 0 0 1vh; font-size: 4vh; color: #FFFFFF; border-radius: 99vh; padding: 0.6vh 2vh; text-align: center; }
+.lobby .col.t0 h3 { background: #C4520F; } .lobby .col.t1 h3 { background: #17696B; }
+.chip { font-size: 3.2vh; font-weight: 800; padding: 0.4vh 1vh; line-height: 1.15; }
+.chip small { font-size: 2vh; white-space: nowrap; color: #17696B; font-weight: 900; }
 .chip.off { opacity: 0.35; }
 
 /* options (vote) */
-.opts { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; width: 86vw; -webkit-justify-content: center; justify-content: center; }
-.opt { width: 41vw; margin: 0.8vh 1vw; border-radius: 1.6vh; padding: 1.8vh 1.5vw; font-size: 4.4vh; font-weight: 800; color: #FFFFFF; text-align: left; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; }
-.opt .l { -webkit-flex: none; flex: none; width: 6vh; height: 6vh; line-height: 6vh; text-align: center; border-radius: 50%; background: #FFFFFF; color: #23282D; margin-right: 1.4vw; }
-.opt .n { margin-left: auto; padding-left: 1vw; font-size: 3.6vh; }
-.o0 { background: #C74634; } .o1 { background: #2F6F8F; } .o2 { background: #F2B134; color: #23282D; } .o3 { background: #4F8F4A; }
+.opts { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; width: 84vw; -webkit-justify-content: center; justify-content: center; }
+.opt { width: 39vw; margin: 0.8vh 1vw; border-radius: 99vh; padding: 1.3vh 1.6vw 1.3vh 1.3vh; font-size: 4.2vh; font-weight: 900; color: #FFFFFF; text-align: left; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; }
+.opt .l { -webkit-flex: none; flex: none; width: 6vh; height: 6vh; line-height: 6vh; text-align: center; border-radius: 50%; background: #FBF0D9; color: #3A2214; margin-right: 1.2vw; }
+.opt .n { margin-left: auto; padding-left: 1vw; }
+.o0 { background: #C4520F; } .o1 { background: #17696B; } .o2 { background: #F2B705; color: #3A2214; } .o3 { background: #3A2214; }
 .opt.dim { opacity: 0.25; }
-.opt.win { outline: 1vh solid #23282D; }
+.opt.win { box-shadow: 0 0 0 0.7vh #FBF0D9, 0 0 0 1.5vh #3A2214; }
 
 /* board */
-.board { display: -webkit-flex; display: flex; width: 92vw; height: 56vh; }
+.board { display: -webkit-flex; display: flex; width: 86vw; height: 45vh; }
 .bcol { -webkit-flex: 1; flex: 1; margin: 0 0.5vw; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; }
-.bhead { height: 11vh; background: #33484F; color: #FFFFFF; font-size: 3vh; font-weight: 800; border-radius: 1.2vh; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; padding: 0 0.5vw; line-height: 1.1; }
-.bcell { -webkit-flex: 1; flex: 1; margin-top: 1vh; background: #F3F1ED; border: 0.5vh solid #33484F; border-radius: 1.2vh; font-size: 5.6vh; font-weight: 800; color: #C74634; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; }
-.bcell.used { color: #F3F1ED; border-color: #E4E1DB; }
-.clue { font-size: 6.4vh; font-weight: 800; line-height: 1.15; max-width: 86vw; color: #23282D; }
-.answer { font-size: 9vh; font-weight: 800; color: #C74634; line-height: 1.1; margin: 1vh 0; }
+.bhead { height: 9vh; background: #17696B; color: #FFFFFF; font-size: 2.8vh; font-weight: 900; border-radius: 2vh; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; padding: 0 0.5vw; line-height: 1.1; }
+.bcell { -webkit-flex: 1; flex: 1; margin-top: 1vh; background: #FFFFFF; border: 0.5vh solid #3A2214; border-radius: 99vh; font-size: 5vh; color: #C4520F; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; }
+.bcell.used { color: #FBF0D9; background: #FBF0D9; border-color: #E8DCC0; }
+.clue { font-size: 6.6vh; line-height: 1.1; max-width: 80vw; }
+.answer { font-size: 8.4vh; color: #17696B; line-height: 1.05; margin: 1.2vh 0 0.6vh; }
 
 /* zoom */
 .zwrap { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; }
-.zf { position: relative; width: 88vh; height: 55vh; overflow: hidden; border: 0.8vh solid #33484F; border-radius: 2vh; background: #33484F; }
+.zf { position: relative; width: 78vh; height: 49vh; overflow: hidden; border: 0.8vh solid #3A2214; border-radius: 3vh; background: #3A2214; }
 .zi { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
-.zt { position: absolute; background: #33484F; border: 1px solid #44595F; }
+.zt { position: absolute; background: #3A2214; border: 1px solid #4A2D1B; }
 .zside { width: 30vw; padding-left: 3vw; text-align: left; }
-.zval { font-size: 12vh; font-weight: 800; color: #C74634; line-height: 1; }
+.zval { font-size: 12vh; color: #C4520F; line-height: 1; }
 
-/* phrase */
-.phrase { max-width: 90vw; }
-.word { display: inline-block; white-space: nowrap; margin: 0.8vh 1.6vw; }
-.lt { display: inline-block; width: 6.4vh; height: 8.4vh; line-height: 8.4vh; margin: 0 0.3vh; background: #F3F1ED; border: 0.5vh solid #33484F; border-radius: 1vh; font-size: 6vh; font-weight: 800; text-align: center; vertical-align: top; color: #23282D; }
+/* phrase and word tiles */
+.phrase { max-width: 84vw; }
+.word { display: inline-block; white-space: nowrap; margin: 0.7vh 1.4vw; }
+.lt { font-weight: 900; display: inline-block; width: 6vh; height: 8vh; line-height: 8vh; margin: 0 0.3vh; background: #FFFFFF; border: 0.5vh solid #3A2214; border-radius: 1.4vh; font-size: 5.6vh; text-align: center; vertical-align: top; }
 .lt.p { background: none; border-color: transparent; width: 3vh; }
-.lt.new { background: #F2B134; }
-.used { font-size: 3.4vh; font-weight: 700; color: #5B6A70; letter-spacing: 0.6vh; margin-top: 1.4vh; }
-.miss { font-size: 4vh; font-weight: 800; margin-top: 1vh; color: #33484F; }
-.miss i { display: inline-block; width: 4.6vh; height: 4.6vh; line-height: 4.2vh; border-radius: 50%; border: 0.5vh solid #33484F; margin: 0 0.4vh; font-style: normal; color: #FFFFFF; }
-.miss i.x { background: #C74634; border-color: #C74634; }
+.lt.new { background: #F2B705; }
+.lt.xl { width: 8vh; height: 10.4vh; line-height: 10.4vh; font-size: 7.4vh; margin: 0 0.5vh; }
+.used { font-size: 3.2vh; font-weight: 800; letter-spacing: 0.6vh; margin-top: 1.2vh; }
+.miss { font-size: 3.6vh; font-weight: 900; margin-top: 0.8vh; }
+.miss i { display: inline-block; width: 4.6vh; height: 4.6vh; line-height: 3.8vh; border-radius: 50%; border: 0.5vh solid #3A2214; margin: 0 0.4vh; font-style: normal; color: #FFFFFF; vertical-align: middle; }
+.miss i.x { background: #C4520F; border-color: #C4520F; }
 
-/* feud */
-.fwrap { display: -webkit-flex; display: flex; width: 92vw; -webkit-align-items: center; align-items: center; }
+/* survey says */
+.fwrap { display: -webkit-flex; display: flex; width: 84vw; -webkit-align-items: center; align-items: center; }
 .slots { -webkit-flex: 1; flex: 1; }
-.slot { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; height: 7.3vh; margin: 0.7vh 0; border-radius: 1.4vh; background: #33484F; color: #FFFFFF; font-size: 4.4vh; font-weight: 800; padding: 0 1.4vw; text-align: left; }
-.slot .no { -webkit-flex: none; flex: none; width: 5.4vh; height: 5.4vh; line-height: 5.4vh; text-align: center; border-radius: 50%; background: #F2B134; color: #23282D; margin-right: 1.4vw; }
-.slot .pt { margin-left: auto; }
-.slot.shown { background: #F3F1ED; color: #23282D; border: 0.5vh solid #33484F; }
+.slot { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; height: 6.6vh; margin: 0.7vh 0; border-radius: 99vh; background: #3A2214; color: #FBF0D9; font-size: 3.8vh; font-weight: 900; padding: 0 2vw 0 0.8vh; text-align: left; }
+.slot .no { -webkit-flex: none; flex: none; width: 5vh; height: 5vh; line-height: 5vh; text-align: center; border-radius: 50%; background: #F2B705; color: #3A2214; margin-right: 1.2vw; }
+.slot .pt { margin-left: auto; color: #C4520F; }
+.slot.shown { background: #FFFFFF; color: #3A2214; box-shadow: inset 0 0 0 0.5vh #3A2214; }
 .slot.shown.missed { opacity: 0.55; }
-.slot .vt { font-size: 2.6vh; color: #5B6A70; margin-left: 1vw; font-weight: 700; }
-.fside { width: 26vw; padding-left: 2vw; }
-.strikes b { display: inline-block; font-size: 9vh; color: #E4E1DB; margin: 0 0.6vh; font-weight: 800; }
-.strikes b.x { color: #C74634; }
-.pot { font-size: 9vh; font-weight: 800; color: #33484F; line-height: 1; }
-.bigx { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; font-size: 46vh; font-weight: 800; color: #C74634; -webkit-animation: flash 1.1s forwards; animation: flash 1.1s forwards; pointer-events: none; }
+.slot .vt { font-size: 2.4vh; margin-left: 1vw; font-weight: 800; }
+.fside { width: 24vw; padding-left: 2vw; }
+.strikes b { display: inline-block; font-size: 8vh; color: #E8DCC0; margin: 0 0.6vh; line-height: 1; }
+.strikes b.x { color: #C4520F; }
+.pot { font-size: 8vh; line-height: 1; }
+.bigx { position: absolute; left: 0; top: 0; width: 100%; height: 100%; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; font-size: 46vh; color: #C4520F; -webkit-animation: flash 1.1s forwards; animation: flash 1.1s forwards; pointer-events: none; z-index: 7; }
 
 /* scores */
-.bars { width: 80vw; }
-.bar { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; margin: 2vh 0; }
-.bar .bn { width: 26vw; text-align: right; padding-right: 2vw; font-size: 5vh; font-weight: 800; }
-.bar .bt { -webkit-flex: 1; flex: 1; height: 9vh; background: #F3F1ED; border-radius: 1.4vh; overflow: hidden; text-align: left; }
-.bar .bf { height: 100%; color: #FFFFFF; font-size: 6vh; font-weight: 800; line-height: 9vh; padding-left: 1.4vw; white-space: nowrap; min-width: 12vw; }
-.bf.t0 { background: #C74634; } .bf.t1 { background: #2F6F8F; }
-.how { font-size: 4.4vh; font-weight: 600; color: #33484F; text-align: left; line-height: 1.5; }
-.how div:before { content: '\2022  '; color: #C74634; font-weight: 800; }
+.bars { width: 74vw; }
+.bar { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; margin: 1.6vh 0; }
+.bar .bn { width: 22vw; text-align: right; padding-right: 2vw; font-size: 4.6vh; font-weight: 900; }
+.bar .bt { -webkit-flex: 1; flex: 1; height: 8.4vh; background: #FFFFFF; border-radius: 99vh; overflow: hidden; text-align: left; }
+.bar .bf { height: 100%; color: #FFFFFF; font-size: 5.6vh; line-height: 8.4vh; padding-left: 1.6vw; white-space: nowrap; min-width: 12vw; border-radius: 99vh; }
+.bf.t0 { background: #C4520F; } .bf.t1 { background: #17696B; }
+.how { font-size: 4vh; font-weight: 800; text-align: left; line-height: 1.5; }
+.how div:before { content: '\2022  '; color: #C4520F; font-weight: 900; }
 .conf { position: absolute; top: -4vh; width: 1.6vh; height: 2.6vh; -webkit-animation: fall 3.4s linear infinite; animation: fall 3.4s linear infinite; }
 
 /* host */
@@ -156,53 +168,60 @@ button { font-family: inherit; touch-action: manipulation; cursor: pointer; }
 @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 @-webkit-keyframes talk { 0%,100% { -webkit-transform: scaleY(1); } 50% { -webkit-transform: scaleY(0.25); } }
 @keyframes talk { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(0.25); } }
-@-webkit-keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
-@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
+@-webkit-keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
 @-webkit-keyframes flash { 0% { opacity: 0; -webkit-transform: scale(0.4); } 20% { opacity: 1; -webkit-transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes flash { 0% { opacity: 0; transform: scale(0.4); } 20% { opacity: 1; transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
 @-webkit-keyframes fall { 0% { -webkit-transform: translateY(0) rotate(0deg); } 100% { -webkit-transform: translateY(80vh) rotate(540deg); } }
 @keyframes fall { 0% { transform: translateY(0) rotate(0deg); } 100% { transform: translateY(80vh) rotate(540deg); } }
 
 /* ---------- phone ---------- */
-.ph { max-width: 560px; margin: 0 auto; min-height: 100%; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; }
-.ptop { padding: 10px 14px; color: #FFFFFF; font-size: 17px; font-weight: 700; display: -webkit-flex; display: flex; -webkit-justify-content: space-between; justify-content: space-between; -webkit-align-items: center; align-items: center; }
-.ptop.t0 { background: #C74634; } .ptop.t1 { background: #2F6F8F; } .ptop.tn { background: #33484F; }
-.ptop .sc { font-size: 19px; font-weight: 800; white-space: nowrap; }
-.pbody { -webkit-flex: 1; flex: 1; padding: 16px 16px 110px; text-align: center; }
-.pbody h2 { font-size: 26px; margin: 12px 0 8px; color: #33484F; line-height: 1.2; }
-.pbody p { font-size: 19px; color: #33484F; margin: 8px 0; line-height: 1.35; }
-.pbody .q { font-size: 21px; font-weight: 700; margin: 6px 0 12px; color: #23282D; line-height: 1.3; }
-.watch { font-size: 22px; font-weight: 800; color: #5B6A70; margin-top: 30px; }
-.pbtn { display: block; width: 100%; border: 0; border-radius: 14px; padding: 18px 14px; margin: 10px 0; font-size: 21px; font-weight: 800; color: #FFFFFF; text-align: left; min-height: 62px; }
+.ph { max-width: 560px; margin: 0 auto; min-height: 100%; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; background: #FBF0D9; }
+.ptop { padding: 12px 16px; background: #3A2214; color: #FBF0D9; font-size: 18px; font-weight: 900; display: -webkit-flex; display: flex; -webkit-justify-content: space-between; justify-content: space-between; -webkit-align-items: center; align-items: center; box-shadow: 0 7px 0 #C4520F, 0 14px 0 #F2B705, 0 21px 0 #17696B; margin-bottom: 21px; }
+.ptop .pill { border-radius: 999px; padding: 7px 16px; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%; }
+.ptop.t0 .pill { background: #C4520F; } .ptop.t1 .pill { background: #17696B; }
+.ptop .sc { font-size: 24px; color: #F2B705; white-space: nowrap; }
+.pnote { background: #17696B; color: #FFFFFF; font-size: 18px; font-weight: 900; padding: 10px 14px; text-align: center; }
+.pnote.bad { background: #C4520F; }
+.pbody { -webkit-flex: 1; flex: 1; padding: 18px 18px 116px; text-align: center; }
+.pbody h2 { font-size: 30px; margin: 10px 0 8px; color: #C4520F; line-height: 1.1; }
+.pbody h3 { font-size: 20px; font-weight: 900; margin: 22px 0 8px; }
+.pbody p { font-size: 19px; font-weight: 800; margin: 8px 0; line-height: 1.35; }
+.pbody .q { font-size: 22px; font-weight: 900; margin: 6px 0 12px; line-height: 1.25; }
+.pbody .field { margin: 6px 0 14px; }
+.watch { font-size: 26px; color: #17696B; margin-top: 30px; }
+.pbtn { display: block; width: 100%; border: 0; border-radius: 24px; padding: 17px 18px; margin: 0 0 16px; font-size: 21px; font-weight: 900; color: #FFFFFF; text-align: left; min-height: 64px; box-shadow: 0 6px 0 #3A2214; }
 .pbtn.c { text-align: center; }
-.pbtn[disabled] { opacity: 0.3; }
-.pbtn.sel { outline: 5px solid #23282D; }
-.pbtn.plain { background: #F3F1ED; color: #23282D; border: 3px solid #33484F; }
-.pbtn.plain.sel { background: #F2B134; outline: none; }
-.pbtn.go { background: #C74634; text-align: center; }
-.pbtn.dark { background: #33484F; text-align: center; }
-.buzz { width: 250px; height: 250px; border-radius: 50%; border: 12px solid #33484F; background: #C74634; color: #FFFFFF; font-size: 44px; font-weight: 800; margin: 26px auto 10px; display: block; -webkit-user-select: none; user-select: none; }
-.buzz.wait { background: #C9CDD0; color: #5B6A70; }
-.buzz.sent { background: #F2B134; color: #23282D; }
-.buzz.sm { width: 170px; height: 170px; font-size: 30px; border-width: 9px; margin: 14px auto 6px; }
+.pbtn[disabled] { opacity: 0.35; }
+.pbtn.sel { box-shadow: 0 0 0 4px #FBF0D9, 0 0 0 9px #F2B705; }
+.pbtn.plain { background: #FFFFFF; color: #3A2214; box-shadow: inset 0 0 0 3px #3A2214; margin-bottom: 10px; }
+.pbtn.plain.sel { background: #F2B705; box-shadow: inset 0 0 0 3px #3A2214; }
+.pbtn.go { background: #F2B705; color: #3A2214; text-align: center; font-size: 26px; border-radius: 999px; margin-top: 10px; }
+.pbtn.dark { background: #17696B; text-align: center; font-size: 24px; }
+.half { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-justify-content: space-between; justify-content: space-between; }
+.half .pbtn { width: 48.5%; padding: 12px 8px; min-height: 58px; font-size: 17px; }
+.buzz { width: 236px; height: 236px; border-radius: 50%; border: 18px solid #F2B705; background: #C4520F; color: #FFFFFF; font-size: 52px; margin: 40px auto 26px; display: block; -webkit-user-select: none; user-select: none; box-shadow: 0 0 0 14px #3A2214, inset 0 -14px 0 rgba(58,34,20,0.28), inset 0 9px 0 rgba(255,255,255,0.22), 0 30px 30px rgba(58,34,20,0.3); }
+.buzz.wait { background: #D9CDB2; color: #3A2214; box-shadow: 0 0 0 14px #3A2214, inset 0 -14px 0 rgba(58,34,20,0.15); }
+.buzz.sent { background: #17696B; }
 .tiles { display: -webkit-flex; display: flex; }
 .tiles .tc { -webkit-flex: 1; flex: 1; margin: 0 2px; min-width: 0; }
-.tiles .th { font-size: 12px; font-weight: 800; height: 46px; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; background: #33484F; color: #FFFFFF; border-radius: 6px; padding: 2px; line-height: 1.05; overflow: hidden; }
-.tiles button { display: block; width: 100%; margin-top: 5px; height: 56px; border: 3px solid #33484F; border-radius: 8px; background: #F3F1ED; color: #C74634; font-size: 19px; font-weight: 800; padding: 0; }
-.tiles button[disabled] { color: #F3F1ED; border-color: #E4E1DB; }
-.keys { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-justify-content: center; justify-content: center; margin-top: 8px; }
-.keys button { width: 13.2%; margin: 0.55%; height: 54px; border: 3px solid #33484F; border-radius: 8px; background: #F3F1ED; font-size: 22px; font-weight: 800; color: #23282D; padding: 0; }
+.tiles .th { font-size: 12px; font-weight: 900; height: 48px; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; background: #17696B; color: #FFFFFF; border-radius: 10px; padding: 2px; line-height: 1.05; overflow: hidden; }
+.tiles button { display: block; width: 100%; margin-top: 6px; height: 56px; border: 3px solid #3A2214; border-radius: 999px; background: #FFFFFF; color: #C4520F; font-size: 19px; padding: 0; }
+.tiles button[disabled] { color: #FBF0D9; background: #FBF0D9; border-color: #E8DCC0; }
+.keys { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-justify-content: center; justify-content: center; margin: 8px 0 18px; }
+.keys button { font-weight: 900; width: 13.2%; margin: 0.55%; height: 54px; border: 3px solid #3A2214; border-radius: 12px; background: #FFFFFF; font-size: 22px; color: #3A2214; padding: 0; }
 .keys button[disabled] { opacity: 0.22; }
-.pmask { font-size: 22px; font-weight: 800; letter-spacing: 3px; word-spacing: 10px; margin: 8px 0; color: #23282D; line-height: 1.5; }
-.bossbar { position: fixed; left: 0; bottom: 0; width: 100%; background: #23282D; padding: 8px; display: -webkit-flex; display: flex; z-index: 9; }
-.bossbar button { -webkit-flex: 1; flex: 1; margin: 0 4px; border: 0; border-radius: 10px; padding: 14px 6px; font-size: 18px; font-weight: 800; background: #F2B134; color: #23282D; min-height: 54px; }
-.bossbar button.alt { background: #5B6A70; color: #FFFFFF; -webkit-flex: none; flex: none; width: 74px; }
-.sheet { position: fixed; left: 0; bottom: 78px; width: 100%; background: #FFFFFF; border-top: 4px solid #23282D; padding: 10px 14px; z-index: 8; max-height: 70%; overflow: auto; }
+.pmask { font-weight: 900; font-size: 22px; letter-spacing: 3px; word-spacing: 10px; margin: 8px 0; line-height: 1.5; }
+.pmask.big2 { font-size: 34px; letter-spacing: 6px; color: #17696B; }
+.bossbar { position: fixed; left: 0; bottom: 0; width: 100%; background: #3A2214; padding: 10px 8px; display: -webkit-flex; display: flex; z-index: 9; }
+.bossbar button { -webkit-flex: 1; flex: 1; margin: 0 4px; border: 0; border-radius: 999px; padding: 14px 6px; font-size: 20px; background: #F2B705; color: #3A2214; min-height: 54px; }
+.bossbar button.alt { background: #FBF0D9; -webkit-flex: none; flex: none; width: 84px; font-family: inherit; font-weight: 900; font-size: 17px; }
+.sheet { position: fixed; left: 0; bottom: 78px; width: 100%; background: #FBF0D9; border-top: 5px solid #3A2214; padding: 12px 14px; z-index: 8; max-height: 70%; overflow: auto; }
 .sheet .r2 { display: -webkit-flex; display: flex; } .sheet .r2 button { -webkit-flex: 1; flex: 1; margin: 4px; }
-.banner { background: #F2B134; color: #23282D; font-weight: 800; font-size: 16px; padding: 8px 12px; text-align: center; }
-.plist { text-align: left; font-size: 18px; margin: 6px 0 14px; }
-.plist b.t0c, .plist b.t1c { display: block; margin-top: 10px; font-size: 19px; }
-.small { font-size: 15px; color: #5B6A70; }
+.banner { background: #F2B705; color: #3A2214; font-weight: 900; font-size: 16px; padding: 8px 12px; text-align: center; }
+.plist { text-align: left; font-size: 18px; font-weight: 800; margin: 6px 0 14px; }
+.plist b.t0c, .plist b.t1c { display: block; margin-top: 10px; font-size: 20px; font-weight: 900; }
+.small { font-size: 15px; font-weight: 800; }
 </style>
 </head>
 <body>
@@ -2708,13 +2727,94 @@ RC.content = {
     { q: 'What does every grandparent have in their house?', o: ['A candy dish', 'Family photos', 'A comfy recliner', 'Old photo albums', 'A loud ticking clock', 'Cookies', 'A remote nobody else can work', 'Reading glasses everywhere', 'A very loud TV', 'Little statues on a shelf'] }
   ],
 
+  tf: [
+    { q: 'A group of lions is called a pride.', a: true, f: '' },
+    { q: 'You can see the Great Wall of China from the Moon with your bare eyes.', a: false, f: 'It is far too narrow to see from that far away.' },
+    { q: 'An octopus has three hearts.', a: true, f: 'Two pump blood to the gills, one to the body.' },
+    { q: 'Lightning never strikes the same place twice.', a: false, f: 'Tall buildings get hit many times a year.' },
+    { q: 'Venus is the hottest planet in our solar system.', a: true, f: 'Hotter than Mercury, thanks to its thick air.' },
+    { q: 'Sharks are mammals.', a: false, f: 'Sharks are fish.' },
+    { q: 'The Atlantic is the largest ocean on Earth.', a: false, f: 'The Pacific is the largest.' },
+    { q: 'Mount Everest is the highest mountain above sea level.', a: true, f: '' },
+    { q: 'Goldfish only remember things for three seconds.', a: false, f: 'They can remember for months.' },
+    { q: 'The Statue of Liberty was a gift from France.', a: true, f: 'It arrived in 1885.' },
+    { q: 'Adults have more bones than babies.', a: false, f: 'Babies have about 300. Many fuse as we grow.' },
+    { q: 'Australia is both a country and a continent.', a: true, f: '' },
+    { q: 'Spiders are insects.', a: false, f: 'Spiders are arachnids, with eight legs.' },
+    { q: 'The Eiffel Tower is in Rome.', a: false, f: 'It is in Paris.' },
+    { q: 'Sound travels faster in water than in air.', a: true, f: 'More than four times faster.' },
+    { q: 'Honey can last for thousands of years without spoiling.', a: true, f: '' }
+  ],
+
+  decades: [
+    { q: 'People first walked on the Moon.', o: ['1960s', '1950s', '1970s', '1980s'] },
+    { q: 'The Berlin Wall came down.', o: ['1980s', '1960s', '1970s', '1990s'] },
+    { q: 'The first iPhone went on sale.', o: ['2000s', '1990s', '2010s', '1980s'] },
+    { q: 'Elvis Presley released "Heartbreak Hotel".', o: ['1950s', '1940s', '1960s', '1970s'] },
+    { q: 'The Beatles first played The Ed Sullivan Show.', o: ['1960s', '1950s', '1970s', '1980s'] },
+    { q: 'The first Star Wars movie opened in theaters.', o: ['1970s', '1960s', '1980s', '1990s'] },
+    { q: 'The movie Titanic opened in theaters.', o: ['1990s', '1980s', '2000s', '2010s'] },
+    { q: 'Disney released Frozen.', o: ['2010s', '1990s', '2000s', '2020s'] },
+    { q: 'World War II ended.', o: ['1940s', '1930s', '1950s', '1960s'] },
+    { q: 'MTV went on the air.', o: ['1980s', '1960s', '1970s', '1990s'] },
+    { q: 'YouTube was launched.', o: ['2000s', '1990s', '2010s', '1980s'] },
+    { q: 'Pac-Man arrived in arcades.', o: ['1980s', '1960s', '1970s', '1990s'] },
+    { q: 'Disneyland opened in California.', o: ['1950s', '1940s', '1960s', '1970s'] },
+    { q: 'The first Harry Potter book was published.', o: ['1990s', '1980s', '2000s', '2010s'] }
+  ],
+
+  likely: [
+    'fall asleep during a movie', 'win a dance contest', 'get lost even with the GPS on', 'eat dessert before dinner',
+    'start talking to a stranger in line', 'forget where the car is parked', 'become famous one day', 'survive on a desert island',
+    'sing loudly in the shower', 'laugh at the wrong moment', 'burn the toast', 'be the last one ready to leave',
+    'cry at a commercial', 'win this game', 'tell the same story twice', 'pack three suitcases for a weekend'
+  ],
+
+  numbers: [
+    { q: 'How many keys does a piano have?', a: 88 },
+    { q: 'How many feet are in a mile?', a: 5280 },
+    { q: 'How many minutes are in one day?', a: 1440 },
+    { q: 'In what year did the Titanic sink?', a: 1912, y: true },
+    { q: 'How many squares are on a chessboard?', a: 64 },
+    { q: 'How many dots are on a pair of dice?', a: 42 },
+    { q: 'At what temperature does water boil, in Fahrenheit?', a: 212 },
+    { q: 'How many hearts does an octopus have?', a: 3 },
+    { q: 'In what year did the first iPhone go on sale?', a: 2007, y: true },
+    { q: 'How many cards are in a standard deck, without the jokers?', a: 52 },
+    { q: 'How many stripes are on the American flag?', a: 13 },
+    { q: 'How tall is Mount Everest, in feet?', a: 29032 },
+    { q: 'How many teeth does an adult usually have?', a: 32 },
+    { q: 'How many legs does a lobster have?', a: 10 },
+    { q: 'How many players does a baseball team put on the field?', a: 9 },
+    { q: 'In what year did people first walk on the Moon?', a: 1969, y: true }
+  ],
+
+  words: [
+    { w: 'UMBRELLA', h: 'Rainy day gear' }, { w: 'THUNDER', h: 'Storm sound' }, { w: 'RAINBOW', h: 'After the rain' },
+    { w: 'PUDDLE', h: 'Splash' }, { w: 'PANCAKE', h: 'Breakfast' }, { w: 'POPCORN', h: 'Movie snack' },
+    { w: 'BLANKET', h: 'Cozy' }, { w: 'VACATION', h: 'Family time' }, { w: 'SUITCASE', h: 'Travel' },
+    { w: 'COUSIN', h: 'Family' }, { w: 'DINOSAUR', h: 'Long ago' }, { w: 'SANDWICH', h: 'Lunch' },
+    { w: 'PILLOW', h: 'Bedtime' }, { w: 'GUITAR', h: 'Music' }, { w: 'ELEPHANT', h: 'Animal' }, { w: 'HOLIDAY', h: 'Time off' }
+  ],
+
+  /* the catalog of games, in the order a show plays them */
   rounds: [
     { key: 'vote', title: 'Everybody Votes', how: ['Everyone answers on their own phone.', 'Your team scores the share of teammates who get it right.', 'Fastest correct answer earns a bonus.'] },
+    { key: 'likely', title: 'Most Likely To', how: ['No trivia. Vote for the person in this room who fits best.', 'You score when you vote with the biggest group.', 'Yes, you can vote for yourself.'] },
     { key: 'board', title: 'The Board', how: ['Pick a category and a point value.', 'Buzz in first, then answer on your phone.', 'Miss it and the other team can steal.'] },
+    { key: 'tf', title: 'True or False Blitz', how: ['A statement appears. True or false?', 'Everyone answers. You have 12 seconds.', 'Your team scores the share of teammates who get it right.'] },
     { key: 'zoom', title: 'Zoom In', how: ['A famous place slowly comes into view.', 'Buzz early for more points.', 'A wrong guess locks your team out.'] },
+    { key: 'num', title: 'Closest Call', how: ['Every answer is a number.', 'Everyone types a guess.', 'The closest guess wins 150 points for the team.'] },
     { key: 'phrase', title: 'Phrase Fever', how: ['Take turns picking letters.', 'Anyone can hit SOLVE and type the phrase.', 'Five misses and the puzzle is lost.'] },
+    { key: 'decade', title: 'Name That Decade', how: ['Something happened. In which decade?', 'Everyone answers on their own phone.', 'Grandparents, this one is yours.'] },
+    { key: 'scramble', title: 'Word Scramble', how: ['The letters are mixed up. Type the word.', 'First to solve wins 150. Everyone else can still score 40.', 'Wrong tries cost nothing.'] },
     { key: 'feud', title: 'Survey Says', how: ['The board comes from this family\'s own answers.', 'Find the top 5. Three strikes and the other team can steal.', 'The last survey is worth double.'] }
   ],
+  presets: {
+    quick: ['likely', 'tf', 'zoom', 'feud'],
+    classic: ['vote', 'board', 'zoom', 'phrase', 'feud'],
+    all: ['vote', 'likely', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'feud']
+  },
 
   lines: {
     welcome: ['Welcome to Rain Check, the only game show that needs bad weather. I am your host, Drizzle McCloud.'],
@@ -2859,15 +2959,15 @@ var RC = (typeof RC !== 'undefined') ? RC : {};
   /* The host: Drizzle McCloud, a cloud in a bow tie. */
   art.host = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220" width="100%" height="100%">' +
     '<g class="hostbob">' +
-    '<path d="M52,128 C20,128 14,88 46,82 C44,50 86,36 104,58 C118,30 172,36 174,72 C210,66 226,112 194,126 Z" fill="#FFFFFF" stroke="#33484F" stroke-width="6" stroke-linejoin="round"/>' +
-    '<ellipse cx="92" cy="88" rx="8" ry="11" fill="#23282D" class="hosteye"/><ellipse cx="140" cy="88" rx="8" ry="11" fill="#23282D" class="hosteye"/>' +
-    '<path d="M80,70 q12,-10 24,-2 M128,68 q12,-8 24,2" stroke="#23282D" stroke-width="5" fill="none" stroke-linecap="round"/>' +
-    '<path class="hostmouth" d="M96,106 Q116,124 138,106 Z" fill="#23282D"/>' +
+    '<path d="M52,128 C20,128 14,88 46,82 C44,50 86,36 104,58 C118,30 172,36 174,72 C210,66 226,112 194,126 Z" fill="#FFFFFF" stroke="#3A2214" stroke-width="6" stroke-linejoin="round"/>' +
+    '<ellipse cx="92" cy="88" rx="8" ry="11" fill="#3A2214" class="hosteye"/><ellipse cx="140" cy="88" rx="8" ry="11" fill="#3A2214" class="hosteye"/>' +
+    '<path d="M80,70 q12,-10 24,-2 M128,68 q12,-8 24,2" stroke="#3A2214" stroke-width="5" fill="none" stroke-linecap="round"/>' +
+    '<path class="hostmouth" d="M96,106 Q116,124 138,106 Z" fill="#3A2214"/>' +
     '<circle cx="72" cy="104" r="8" fill="#F5B7A8"/><circle cx="162" cy="104" r="8" fill="#F5B7A8"/>' +
-    '<polygon points="116,138 86,124 86,156" fill="#C74634"/><polygon points="116,138 146,124 146,156" fill="#C74634"/><circle cx="116" cy="139" r="8" fill="#A93226"/>' +
-    '<path d="M86,150 L72,206 L160,206 L146,150 Z" fill="#33484F"/>' +
-    '<path d="M150,160 q40,6 46,-26" stroke="#33484F" stroke-width="10" fill="none" stroke-linecap="round"/>' +
-    '<rect x="188" y="96" width="14" height="40" rx="7" fill="#8A8F93"/><circle cx="195" cy="92" r="13" fill="#23282D"/>' +
+    '<polygon points="116,138 86,124 86,156" fill="#C4520F"/><polygon points="116,138 146,124 146,156" fill="#C4520F"/><circle cx="116" cy="139" r="8" fill="#9C3F0A"/>' +
+    '<path d="M86,150 L72,206 L160,206 L146,150 Z" fill="#17696B"/>' +
+    '<path d="M150,160 q40,6 46,-26" stroke="#17696B" stroke-width="10" fill="none" stroke-linecap="round"/>' +
+    '<rect x="188" y="96" width="14" height="40" rx="7" fill="#8A8F93"/><circle cx="195" cy="92" r="13" fill="#3A2214"/>' +
     '</g></svg>';
 
   RC.art = art;
@@ -2897,6 +2997,10 @@ RC.createEngine = function (C, opts) {
     for (var i = 0; i < order.length; i++) { o.push(item.o[order[i]]); if (order[i] === 0) { a = i; } }
     return { q: item.q, o: o, a: a, f: item.f || '' };
   }
+  var CAT = {};
+  for (var ci = 0; ci < C.rounds.length; ci++) { CAT[C.rounds[ci].key] = C.rounds[ci]; }
+  function cnt(full, small) { return S.short ? small : full; }
+  function fmt(n, plain) { var t = String(n); if (plain) { return t; } return t.replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
   function readMs(text) { return Math.min(9000, 1800 + String(text).length * 55); }
 
   function say(text) { S.say = { id: S.say.id + 1, text: text }; }
@@ -2941,7 +3045,8 @@ RC.createEngine = function (C, opts) {
       teams: [{ name: 'Thunder', score: 0 }, { name: 'Lightning', score: 0 }],
       players: {}, order: [], boss: null, round: 0, rot: [-1, -1],
       say: { id: 0, text: '' }, fx: { id: 0, name: '' }, gain: null,
-      surveys: freshSurveys(), acted: {}, deadline: 0, turn: null
+      surveys: freshSurveys(), acted: {}, deadline: 0, turn: null,
+      lineup: C.presets.classic.slice(), short: false
     };
     P = { sv: {} };
     return S;
@@ -2950,24 +3055,30 @@ RC.createEngine = function (C, opts) {
   /* ---------- round flow ---------- */
   function startRound(r, now) {
     S.round = r;
-    var info = C.rounds[r - 1];
-    S.intro = { n: r, of: C.rounds.length, title: info.title, how: info.how };
+    var info = CAT[S.lineup[r - 1]];
+    S.intro = { n: r, of: S.lineup.length, title: info.title, how: info.how };
+    S.rt = info.title; S.rof = S.lineup.length;
     S.turn = null;
     setPhase('intro', now, 14000);
     say('Round ' + r + '. ' + info.title + '. ' + info.how.join(' '));
     fx('fanfare');
   }
   function beginRound(now) {
-    var key = C.rounds[S.round - 1].key;
-    if (key === 'vote') { P.vq = shuffle(C.votes).slice(0, 8); S.vi = -1; nextVote(now); }
+    var key = S.lineup[S.round - 1];
+    if (key === 'vote') { P.vq = shuffle(C.votes).slice(0, cnt(8, 5)); P.vkind = 'mix'; S.vi = -1; nextVote(now); }
+    else if (key === 'tf') { P.vq = shuffle(C.tf).slice(0, cnt(10, 6)); P.vkind = 'tf'; S.vi = -1; nextVote(now); }
+    else if (key === 'decade') { P.vq = shuffle(C.decades).slice(0, cnt(8, 5)); P.vkind = 'decade'; S.vi = -1; nextVote(now); }
+    else if (key === 'likely') { P.mq = shuffle(C.likely).slice(0, cnt(6, 4)); S.mi = -1; nextLikely(now); }
+    else if (key === 'num') { P.nq = shuffle(C.numbers).slice(0, cnt(6, 4)); S.ni = -1; nextNum(now); }
+    else if (key === 'scramble') { P.wq = shuffle(C.words).slice(0, cnt(6, 4)); S.wi = -1; nextWord(now); }
     else if (key === 'board') { setupBoard(now); boardPick(now); }
-    else if (key === 'zoom') { P.zs = shuffle(C.zoom).slice(0, 5); S.zi = -1; nextZoom(now); }
-    else if (key === 'phrase') { P.ps = shuffle(C.phrases).slice(0, 4); S.pi = -1; S.pteam = trailing(); nextPhrase(now); }
+    else if (key === 'zoom') { P.zs = shuffle(C.zoom).slice(0, cnt(5, 3)); S.zi = -1; nextZoom(now); }
+    else if (key === 'phrase') { P.ps = shuffle(C.phrases).slice(0, cnt(4, 2)); S.pi = -1; S.pteam = trailing(); nextPhrase(now); }
     else if (key === 'feud') { setupFeud(); S.fi = -1; nextFeud(now); }
   }
   function roundEnd(now) {
     S.turn = null;
-    S.re = { n: S.round, title: C.rounds[S.round - 1].title };
+    S.re = { n: S.round, title: S.rt };
     setPhase('round_end', now, 10000);
     var a = S.teams[0], b = S.teams[1];
     say(a.score === b.score ? 'It is all tied up at ' + a.score + '!' : (a.score > b.score ? a.name : b.name) + ' lead, ' + Math.max(a.score, b.score) + ' to ' + Math.min(a.score, b.score) + '.');
@@ -2992,14 +3103,19 @@ RC.createEngine = function (C, opts) {
   function nextVote(now) {
     S.vi++;
     if (S.vi >= P.vq.length) { return roundEnd(now); }
-    P.cur = mc(P.vq[S.vi]); P.votes = {};
-    S.q = { n: S.vi + 1, of: P.vq.length, text: P.cur.q, o: P.cur.o };
+    var it = P.vq[S.vi];
+    if (P.vkind === 'tf') { P.cur = { q: it.q, o: ['True', 'False'], a: it.a ? 0 : 1, f: it.f || '' }; }
+    else if (P.vkind === 'decade') { var so = it.o.slice().sort(); P.cur = { q: it.q, o: so, a: so.indexOf(it.o[0]), f: '' }; }
+    else { P.cur = mc(it); }
+    P.votes = {};
+    S.q = { n: S.vi + 1, of: P.vq.length, text: P.cur.q, o: P.cur.o, kind: P.vkind };
     S.nv = 0; S.rv = null;
-    setPhase('vote_q', now, readMs(P.cur.q) + 20000);
-    say(P.cur.q);
+    setPhase('vote_q', now, readMs(P.cur.q) + (P.vkind === 'tf' ? 12000 : 20000));
+    say((P.vkind === 'tf' ? 'True or false? ' : (P.vkind === 'decade' ? 'Which decade? ' : '')) + P.cur.q);
   }
   function endVote(now) {
-    var counts = [0, 0, 0, 0], ok = [0, 0], den = [0, 0], fast = null, pid, v;
+    var counts = [], ok = [0, 0], den = [0, 0], fast = null, pid, v;
+    for (var ci2 = 0; ci2 < P.cur.o.length; ci2++) { counts.push(0); }
     for (var i = 0; i < S.order.length; i++) {
       pid = S.order[i]; v = P.votes[pid];
       var p = pl(pid); if (!p) { continue; }
@@ -3019,9 +3135,83 @@ RC.createEngine = function (C, opts) {
     fx(ok[0] + ok[1] > 0 ? 'right' : 'wrong');
   }
 
+  /* ---------- most likely to ---------- */
+  function allActed(now) { for (var i = 0; i < S.order.length; i++) { if (present(S.order[i], now) && !S.acted[S.order[i]]) { return false; } } return true; }
+  function nextLikely(now) {
+    S.mi++;
+    if (S.mi >= P.mq.length) { return roundEnd(now); }
+    var who = [];
+    for (var i = 0; i < S.order.length && who.length < 16; i++) { if (present(S.order[i], now)) { who.push({ p: S.order[i], n: nm(S.order[i]) }); } }
+    S.ml = { n: S.mi + 1, of: P.mq.length, text: 'Who is most likely to ' + P.mq[S.mi] + '?', who: who };
+    P.mv = {}; S.nv = 0; S.rv = null;
+    setPhase('ml_q', now, readMs(S.ml.text) + 22000);
+    say(S.ml.text);
+  }
+  function endLikely(now) {
+    var tally = {}, max = 0, pid, i;
+    for (pid in P.mv) { if (P.mv.hasOwnProperty(pid)) { tally[P.mv[pid]] = (tally[P.mv[pid]] || 0) + 1; if (tally[P.mv[pid]] > max) { max = tally[P.mv[pid]]; } } }
+    var top = [], win = [];
+    for (i = 0; i < S.ml.who.length; i++) { var w = S.ml.who[i]; if (tally[w.p]) { top.push({ n: w.n, c: tally[w.p] }); if (tally[w.p] === max) { win.push(w.n); } } }
+    top.sort(function (x, y) { return y.c - x.c; });
+    var ok = [0, 0], den = [0, 0], gains = [0, 0];
+    for (i = 0; i < S.order.length; i++) {
+      pid = S.order[i]; var p = pl(pid); if (!p) { continue; }
+      if (P.mv[pid] || present(pid, now)) { den[p.t]++; }
+      if (P.mv[pid] && tally[P.mv[pid]] === max) { ok[p.t]++; p.pts += 10; }
+    }
+    for (var t = 0; t < 2; t++) { gains[t] = den[t] ? Math.round(100 * ok[t] / den[t]) : 0; S.teams[t].score += gains[t]; }
+    S.rv = { win: win, top: top.slice(0, 4), gains: gains };
+    setPhase('ml_reveal', now, 9000);
+    say(win.length ? 'The family says: ' + win.join(' and ') + '!' : 'Nobody voted.');
+    fx(win.length ? 'right' : 'wrong');
+  }
+
+  /* ---------- closest call ---------- */
+  function nextNum(now) {
+    S.ni++;
+    if (S.ni >= P.nq.length) { return roundEnd(now); }
+    var it = P.nq[S.ni];
+    S.nm = { n: S.ni + 1, of: P.nq.length, text: it.q };
+    P.ng = {}; S.nv = 0; S.rv = null;
+    setPhase('num_q', now, readMs(it.q) + 25000);
+    say(it.q + ' Type your best guess.');
+  }
+  function endNum(now) {
+    var it = P.nq[S.ni], list = [], pid;
+    for (pid in P.ng) { if (P.ng.hasOwnProperty(pid) && pl(pid)) { list.push({ p: pid, v: P.ng[pid].v, d: Math.abs(P.ng[pid].v - it.a), at: P.ng[pid].at }); } }
+    list.sort(function (x, y) { return (x.d - y.d) || (x.at - y.at); });
+    var best = list[0] || null, show = [];
+    for (var i = 0; i < list.length && i < 4; i++) { show.push({ n: nm(list[i].p), v: fmt(list[i].v, it.y), t: pl(list[i].p).t }); }
+    var pts = best ? (best.d === 0 ? 200 : 150) : 0;
+    if (best) { award(pl(best.p).t, pts, best.p); }
+    S.rv = { a: fmt(it.a, it.y), list: show, who: best ? nm(best.p) : '', team: best ? pl(best.p).t : -1, pts: pts, exact: !!best && best.d === 0 };
+    setPhase('num_reveal', now, 9000);
+    say('The answer is ' + S.rv.a + '. ' + (best ? (S.rv.exact ? 'Exactly right, ' : 'Closest: ') + S.rv.who + '.' : ''));
+    fx(best ? 'right' : 'wrong');
+  }
+
+  /* ---------- word scramble ---------- */
+  function nextWord(now) {
+    S.wi++;
+    if (S.wi >= P.wq.length) { return roundEnd(now); }
+    var it = P.wq[S.wi], mix = it.w, tries = 0;
+    while (mix === it.w && tries < 12) { mix = shuffle(it.w.split('')).join(''); tries++; }
+    P.word = it.w; P.wd = {};
+    S.ws = { n: S.wi + 1, of: P.wq.length, mix: mix, hint: it.h, done: [] };
+    S.wr = {}; S.rv = null;
+    setPhase('scr_q', now, 35000);
+    say('Unscramble the word. The hint is: ' + it.h + '.');
+  }
+  function endWord(now) {
+    S.rv = { text: P.word, who: S.ws.done[0] || '', n: S.ws.done.length };
+    setPhase('scr_reveal', now, 7000);
+    say('The word was ' + P.word.toLowerCase() + '.' + (S.rv.who ? ' First in: ' + S.rv.who + '.' : ''));
+    if (!S.rv.who) { fx('wrong'); }
+  }
+
   /* ---------- round 2: the board ---------- */
   function setupBoard(now) {
-    var cats = shuffle(range(C.board.length)).slice(0, 5);
+    var cats = shuffle(range(C.board.length)).slice(0, cnt(5, 3));
     P.board = []; S.board = { cats: [], used: [] };
     for (var i = 0; i < cats.length; i++) {
       var cat = C.board[cats[i]], row = [];
@@ -3160,9 +3350,10 @@ RC.createEngine = function (C, opts) {
   }
   function nextFeud(now) {
     S.fi++;
-    if (S.fi >= S.surveys.length) { return roundEnd(now); }
+    P.fn = cnt(S.surveys.length, 2);
+    if (S.fi >= P.fn) { return roundEnd(now); }
     var sv = S.surveys[S.fi];
-    S.f = { n: S.fi + 1, of: S.surveys.length, q: sv.q, o: sv.o, mult: S.fi === S.surveys.length - 1 ? 2 : 1, tried: [], slots: [null, null, null, null, null], strikes: 0, pot: 0, play: -1, mode: 'face', x: 0 };
+    S.f = { n: S.fi + 1, of: P.fn, q: sv.q, o: sv.o, mult: S.fi === P.fn - 1 ? 2 : 1, tried: [], slots: [null, null, null, null, null], strikes: 0, pot: 0, play: -1, mode: 'face', x: 0 };
     S.rv = null; S.turn = null;
     var r = readMs(sv.q);
     S.openAt = now + r;
@@ -3228,6 +3419,12 @@ RC.createEngine = function (C, opts) {
     else if (ph === 'intro') { beginRound(now); }
     else if (ph === 'vote_q') { endVote(now); }
     else if (ph === 'vote_reveal') { nextVote(now); }
+    else if (ph === 'ml_q') { endLikely(now); }
+    else if (ph === 'ml_reveal') { nextLikely(now); }
+    else if (ph === 'num_q') { endNum(now); }
+    else if (ph === 'num_reveal') { nextNum(now); }
+    else if (ph === 'scr_q') { endWord(now); }
+    else if (ph === 'scr_reveal') { nextWord(now); }
     else if (ph === 'board_pick') { for (var l = 0; l < 4; l++) { for (var c = 0; c < S.board.used.length; c++) { if (!S.board.used[c][l]) { return openTile(c, l, now); } } } }
     else if (ph === 'board_q') { say(line('nobuzz')); boardReveal(null, now); }
     else if (ph === 'board_ans') { boardWrong(pl(S.turn) ? pl(S.turn).t : 0, -1, now); }
@@ -3241,7 +3438,7 @@ RC.createEngine = function (C, opts) {
     else if (ph === 'feud_face') { S.f.play = activeTeam(trailing(), now); feudPlayTurn(now); }
     else if (ph === 'feud_pick') { feudPick(-1, now); }
     else if (ph === 'feud_reveal') { nextFeud(now); }
-    else if (ph === 'round_end') { if (S.round >= C.rounds.length) { finale(now); } else { startRound(S.round + 1, now); } }
+    else if (ph === 'round_end') { if (S.round >= S.lineup.length) { finale(now); } else { startRound(S.round + 1, now); } }
   }
   function startShow(now) {
     S.teams[0].score = 0; S.teams[1].score = 0;
@@ -3265,6 +3462,14 @@ RC.createEngine = function (C, opts) {
     }
     else if (c === 'skip') { if (S.phase !== 'lobby' && S.phase !== 'final' && S.phase !== 'round_end') { roundEnd(now); } }
     else if (c === 'adj') { var t = a.team === 1 ? 1 : 0; var d2 = Math.max(-500, Math.min(500, parseInt(a.d, 10) || 0)); S.teams[t].score += d2; }
+    else if (c === 'games') {
+      if (S.phase === 'lobby' && a.keys && a.keys.length) {
+        var keep = [];
+        for (var g = 0; g < C.presets.all.length; g++) { if (a.keys.indexOf(C.presets.all[g]) >= 0) { keep.push(C.presets.all[g]); } }
+        if (keep.length) { S.lineup = keep; }
+      }
+    }
+    else if (c === 'short') { if (S.phase === 'lobby') { S.short = !!a.on; } }
     else if (c === 'boss') { if (pl(a.pid)) { S.boss = a.pid; } }
     else if (c === 'teams') { if (a.names && a.names.length === 2) { S.teams[0].name = clean(a.names[0], 14) || 'Thunder'; S.teams[1].name = clean(a.names[1], 14) || 'Lightning'; } }
     else if (c === 'kick') { if (pl(a.pid)) { delete S.players[a.pid]; S.order.splice(S.order.indexOf(a.pid), 1); if (S.boss === a.pid) { S.boss = S.order[0] || null; } } }
@@ -3309,11 +3514,34 @@ RC.createEngine = function (C, opts) {
     var ph = S.phase, team2 = p.t, a;
     if (m.t === 'vote' && ph === 'vote_q') {
       a = parseInt(m.a, 10);
-      if (P.votes[pid] || !(a >= 0 && a < 4)) { return; }
+      if (P.votes[pid] || !(a >= 0 && a < P.cur.o.length)) { return; }
       P.votes[pid] = { a: a, at: now }; S.acted[pid] = true; S.nv++;
       var all = true;
       for (var i = 0; i < S.order.length; i++) { if (present(S.order[i], now) && !P.votes[S.order[i]]) { all = false; } }
       if (all) { endVote(now); }
+    }
+    else if (m.t === 'mlv' && ph === 'ml_q') {
+      var tgt = clean(m.v, 12), found = false;
+      for (var q = 0; q < S.ml.who.length; q++) { if (S.ml.who[q].p === tgt) { found = true; } }
+      if (P.mv[pid] || !found) { return; }
+      P.mv[pid] = tgt; S.acted[pid] = true; S.nv++;
+      if (allActed(now)) { endLikely(now); }
+    }
+    else if (m.t === 'num' && ph === 'num_q') {
+      var nv = parseFloat(m.v);
+      if (P.ng[pid] || !isFinite(nv) || Math.abs(nv) > 1e9) { return; }
+      P.ng[pid] = { v: Math.round(nv * 10) / 10, at: now }; S.acted[pid] = true; S.nv++;
+      if (allActed(now)) { endNum(now); }
+    }
+    else if (m.t === 'word' && ph === 'scr_q') {
+      if (P.wd[pid]) { return; }
+      if (String(m.text || '').toUpperCase().replace(/[^A-Z]/g, '') === P.word) {
+        P.wd[pid] = 1; S.acted[pid] = true;
+        award(team2, S.ws.done.length ? 40 : 150, pid);
+        if (!S.ws.done.length) { say(p.n + ' got it first! Ten seconds for everyone else.'); if (S.deadline > now + 10000) { S.deadline = now + 10000; } }
+        S.ws.done.push(p.n); fx('ding');
+        if (allActed(now)) { endWord(now); }
+      } else { S.wr[pid] = (S.wr[pid] || 0) + 1; }
     }
     else if (m.t === 'pick' && ph === 'board_pick') {
       var c = parseInt(m.c, 10), l = parseInt(m.l, 10);
@@ -3456,6 +3684,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
   var clockOff = 0;        // my clock minus the TV's clock
   function hnow() { var n = Date.now() - clockOff; if (S && S.paused && S.pat) { return S.pat; } return n; }
   function tname(t) { return S.teams[t] ? S.teams[t].name : ''; }
+  function gameTitle(key) { for (var i = 0; i < C.rounds.length; i++) { if (C.rounds[i].key === key) { return C.rounds[i].title; } } return key; }
   function pname(pid) { return pid && S.players[pid] ? S.players[pid].n : 'Someone'; }
   function pteam(pid) { return pid && S.players[pid] ? S.players[pid].t : 0; }
   function timerHtml(len) { return S.deadline ? '<div class="timer"><i data-dl="' + S.deadline + '" data-len="' + len + '"></i></div>' : ''; }
@@ -3496,7 +3725,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
   /* HOME                                                               */
   /* ================================================================== */
   function home() {
-    app.innerHTML = '<div class="home"><h1>RAIN <b>CHECK!</b></h1><p>The family game show for rainy days.</p>' +
+    app.innerHTML = '<div class="home"><h1>Rain Check!</h1><p>The family game show for rainy days.</p>' +
       '<button class="big red" data-a="tv" autofocus>This is the TV screen</button>' +
       '<p style="margin-top:26px">Playing on a phone?</p>' +
       '<input class="field" id="code" maxlength="4" placeholder="ROOM CODE" autocapitalize="characters" autocomplete="off">' +
@@ -3524,10 +3753,13 @@ if (typeof module !== 'undefined') { module.exports = RC; }
     var qrSvg = '';
     try { var qr = qrcode(0, 'M'); qr.addData(HERE + '?r=' + ROOM + (qs.relay ? '&relay=' + qs.relay : '')); qr.make(); qrSvg = qr.createSvgTag(6, 12); } catch (e) { }
 
-    app.innerHTML = '<div class="scr"><div class="top" id="top"></div><div class="stage" id="stage"></div>' +
+    var bulbs = '<div class="bulbs">'; for (var bi = 0; bi < 24; bi++) { bulbs += '<i></i>'; } bulbs += '</div>';
+    var rays = '<svg class="rays" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" preserveAspectRatio="none"><path fill="#4A2D1B" d="M640 300L-200 -40H80ZM640 300L300 -200H520ZM640 300L760 -200H980ZM640 300L1200 -40H1480ZM640 300L1500 260V480ZM640 300L1400 800H1120ZM640 300L840 900H560ZM640 300L160 800H-120ZM640 300L-220 480V260Z"/></svg>';
+    app.innerHTML = '<div class="scr">' + rays + '<div class="top" id="top"></div><div class="stagewrap"><div class="frame">' + bulbs + '<div class="stage" id="stage"></div>' + bulbs + '</div></div>' +
+      '<div class="stripes"><i class="s0"></i><i class="s1"></i><i class="s2"></i></div>' +
       '<div class="foot"><div class="host" id="host">' + RC.art.host + '</div><div class="bubble" id="bubble"></div><div class="joinbox" id="joinbox"></div></div>' +
       '<button class="menubtn" data-a="s_menu">Menu</button><div id="menu"></div><div id="pausel"></div><div id="xl"></div>' +
-      '<div class="overlay" id="ov"><h1>RAIN <b>CHECK!</b></h1><p>The family game show for rainy days</p><button data-a="s_unlock" id="ovb">Press OK to open the show</button></div></div>';
+      '<div class="overlay" id="ov"><h1>Rain Check!</h1><p>The family game show for rainy days</p><button data-a="s_unlock" id="ovb">Press OK to open the show</button></div></div>';
     try { document.getElementById('ovb').focus(); } catch (e) { }
 
     function publish() {
@@ -3599,23 +3831,25 @@ if (typeof module !== 'undefined') { module.exports = RC; }
 
     /* drawing */
     function topHtml() {
-      var sub = S.phase === 'lobby' ? 'Join on your phone' : (S.phase === 'final' ? 'Final score' : 'Round ' + S.round + ' of ' + C.rounds.length + ' &middot; ' + esc(C.rounds[Math.max(0, S.round - 1)].title));
+      var sub = S.phase === 'lobby' ? 'Join on your phone' : (S.phase === 'final' ? 'Final score' : 'Game ' + S.round + ' of ' + (S.rof || 1) + ' &middot; ' + esc(S.rt || ''));
       function tm(t) { var ctrl = (S.turn && pteam(S.turn) === t) ? ' ctrl' : ''; return '<div class="tm t' + t + ctrl + '"><div class="tn">' + esc(tname(t)) + '</div><div class="ts">' + S.teams[t].score + '</div></div>'; }
-      return tm(0) + '<div class="mid"><div class="logo">RAIN <b>CHECK!</b></div><div class="sub">' + sub + '</div></div>' + tm(1);
+      return tm(0) + '<div class="mid"><div class="logo">Rain Check!</div><div class="sub">' + sub + '</div></div>' + tm(1);
     }
     function who(pid) { return '<span class="t' + pteam(pid) + 'c">' + esc(pname(pid)) + '</span>'; }
     function lobbyHtml() {
       var cols = ['', ''];
       S.order.forEach(function (pid) { var p = S.players[pid]; if (!p) { return; } cols[p.t] += '<div class="chip' + ((Date.now() - p.seen) > 30000 ? ' off' : '') + '">' + esc(p.n) + (pid === S.boss ? ' <small>RUNS THE SHOW</small>' : '') + (p.sd ? ' <small>READY</small>' : '') + '</div>'; });
+      var names = [];
+      for (var gi = 0; gi < S.lineup.length; gi++) { names.push(gameTitle(S.lineup[gi])); }
       return '<div class="lobby"><div class="qr">' + qrSvg + '<div class="url">' + esc(SHORT) + '</div><div class="code">' + ROOM + '</div></div>' +
-        '<div class="teams"><div class="col t0"><h3>' + esc(tname(0)) + '</h3>' + cols[0] + '</div><div class="col t1"><h3>' + esc(tname(1)) + '</h3>' + cols[1] + '</div></div></div>';
+        '<div class="teams"><div class="col t0"><h3>' + esc(tname(0)) + '</h3>' + cols[0] + '</div><div class="col t1"><h3>' + esc(tname(1)) + '</h3>' + cols[1] + '</div></div></div><div class="lineup"><b>Tonight:</b> ' + esc(names.join(', ')) + (S.short ? ' (short rounds)' : '') + '</div>';
     }
     function voteHtml() {
       var q = S.q, rv = S.phase === 'vote_reveal' ? S.rv : null, h = '<div class="tag">Question ' + q.n + ' of ' + q.of + '</div><div class="h2">' + esc(q.text) + '</div><div class="opts">';
       for (var i = 0; i < q.o.length; i++) { h += '<div class="opt o' + i + (rv ? (rv.a === i ? ' win' : ' dim') : '') + '"><span class="l">' + 'ABCD'.charAt(i) + '</span>' + esc(q.o[i]) + (rv ? '<span class="n">' + rv.counts[i] + '</span>' : '') + '</div>'; }
       h += '</div>';
       if (rv) { h += '<div class="status"><span class="t0c">' + esc(tname(0)) + ' +' + rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + rv.gains[1] + '</span>' + (rv.fast ? ' &nbsp; Fastest: ' + esc(rv.fast) : '') + '</div>'; }
-      else { h += '<div class="status">' + S.nv + ' answered</div>' + timerHtml(26000); }
+      else { h += '<div class="status">' + S.nv + ' answered</div>' + timerHtml(q.kind === 'tf' ? 16000 : 26000); }
       return h;
     }
     function boardHtml() {
@@ -3697,6 +3931,24 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       if (ph === 'lobby') { return lobbyHtml(); }
       if (ph === 'intro') { var how = ''; S.intro.how.forEach(function (x) { how += '<div>' + esc(x) + '</div>'; }); return '<div class="tag red">Round ' + S.intro.n + ' of ' + S.intro.of + '</div><div class="h1">' + esc(S.intro.title) + '</div><div class="how">' + how + '</div>' + timerHtml(14000); }
       if (ph === 'vote_q' || ph === 'vote_reveal') { return voteHtml(); }
+      if (ph === 'ml_q') { return '<div class="tag">Question ' + S.ml.n + ' of ' + S.ml.of + '</div><div class="h2">' + esc(S.ml.text) + '</div><div class="status">Vote on your phone. ' + S.nv + ' answered</div>' + timerHtml(26000); }
+      if (ph === 'ml_reveal') {
+        var tl = ''; S.rv.top.forEach(function (x) { tl += (tl ? ', ' : '') + esc(x.n) + ' ' + x.c; });
+        return '<div class="h2">' + esc(S.ml.text) + '</div><div class="answer">' + (S.rv.win.length ? esc(S.rv.win.join(' and ')) : 'No votes') + '</div><div class="tally">' + tl + '</div>' +
+          '<div class="status"><span class="t0c">' + esc(tname(0)) + ' +' + S.rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + S.rv.gains[1] + '</span></div>';
+      }
+      if (ph === 'num_q') { return '<div class="tag">Question ' + S.nm.n + ' of ' + S.nm.of + '</div><div class="h2">' + esc(S.nm.text) + '</div><div class="status">Type your best guess. ' + S.nv + ' answered</div>' + timerHtml(30000); }
+      if (ph === 'num_reveal') {
+        var nl = ''; S.rv.list.forEach(function (x) { nl += (nl ? ', ' : '') + '<span class="t' + x.t + 'c">' + esc(x.n) + '</span> ' + esc(x.v); });
+        return '<div class="h2">' + esc(S.nm.text) + '</div><div class="answer">' + esc(S.rv.a) + '</div><div class="tally">' + nl + '</div>' +
+          '<div class="status">' + (S.rv.who ? (S.rv.exact ? 'Exactly right: ' : 'Closest: ') + '<span class="t' + S.rv.team + 'c">' + esc(S.rv.who) + '</span> +' + S.rv.pts : 'No guesses') + '</div>';
+      }
+      if (ph === 'scr_q' || ph === 'scr_reveal') {
+        var letters = ph === 'scr_q' ? S.ws.mix : S.rv.text, lh = '';
+        for (var li = 0; li < letters.length; li++) { lh += '<span class="lt xl' + (ph === 'scr_reveal' ? ' new' : '') + '">' + letters.charAt(li) + '</span>'; }
+        var done = S.ws.done.length ? 'Solved: ' + esc(S.ws.done.join(', ')) : 'Type the word on your phone';
+        return '<div class="tag">Word ' + S.ws.n + ' of ' + S.ws.of + ' &middot; Hint: ' + esc(S.ws.hint) + '</div><div class="phrase"><span class="word">' + lh + '</span></div><div class="status">' + (ph === 'scr_reveal' && !S.ws.done.length ? 'Nobody got it' : done) + '</div>' + (ph === 'scr_q' ? timerHtml(35000) : '');
+      }
       if (ph === 'board_pick') { return boardHtml(); }
       if (ph === 'board_q' || ph === 'board_ans' || ph === 'board_reveal') { return clueHtml(); }
       if (ph === 'zoom_q' || ph === 'zoom_ans' || ph === 'zoom_reveal') { return zoomHtml(); }
@@ -3704,7 +3956,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       if (ph === 'feud_face' || ph === 'feud_pick' || ph === 'feud_reveal') { return feudHtml(); }
       if (ph === 'round_end') { return '<div class="tag">End of round ' + S.re.n + '</div><div class="h1">' + esc(S.re.title) + '</div>' + barsHtml(); }
       if (ph === 'final') {
-        var conf = '', cols = ['#C74634', '#2F6F8F', '#F2B134', '#4F8F4A'];
+        var conf = '', cols = ['#C4520F', '#17696B', '#F2B705', '#FBF0D9'];
         for (var i = 0; i < 28; i++) { conf += '<div class="conf" style="left:' + ((i * 37) % 100) + '%;background:' + cols[i % 4] + ';-webkit-animation-delay:' + ((i * 0.23) % 3.4) + 's;animation-delay:' + ((i * 0.23) % 3.4) + 's"></div>'; }
         var f = S.fin;
         return conf + '<div class="h1">' + (f.winner < 0 ? 'It is a tie!' : '<span class="t' + f.winner + 'c">' + esc(tname(f.winner)) + '</span> win!') + '</div>' + barsHtml() +
@@ -3769,7 +4021,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
     var ui = { name: lsGet('rc_name') || '', team: -1, joined: false, step: 0, picks: [[], [], []], svSent: false, menu: false, sent: null, names: null };
     if (lsGet('rc_room') === ROOM && ui.name && !qs.pid) { ui.joined = true; ui.team = +lsGet('rc_team') || 0; ui.svFor = lsGet('rc_sv') || ''; try { ui.picks = JSON.parse(lsGet('rc_picks')) || ui.picks; } catch (e) { } }
     var lastSeq = 0, lastBoot = 0, lastState = 0, pending = null, bestOff = null, bestAt = 0;
-    app.innerHTML = '<div class="ph"><div id="pbanner"></div><div id="ptop"></div><div class="pbody" id="pbody"></div><div id="psheet"></div><div id="pboss"></div></div>';
+    app.innerHTML = '<div class="ph"><div id="pbanner"></div><div id="ptop"></div><div id="pnote"></div><div class="pbody" id="pbody"></div><div id="psheet"></div><div id="pboss"></div></div>';
 
     function svSig() { var x = ''; if (S && S.surveys) { for (var i = 0; i < S.surveys.length; i++) { x += S.surveys[i].q.substring(0, 24) + '|'; } } return x; }
     function send(m) { m.p = pid; if (!m.i) { m.i = rid(10); } netSend('in', JSON.stringify(m), false); }
@@ -3829,6 +4081,16 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       for (var i = 0; i < sv.o.length; i++) { h += '<button class="pbtn plain c' + (picks.indexOf(i) >= 0 ? ' sel' : '') + '" data-a="sv" data-v="' + i + '">' + esc(sv.o[i]) + '</button>'; }
       return h + '<button class="pbtn go" data-a="svnext"' + (picks.length ? '' : ' disabled') + '>' + (ui.step < S.surveys.length - 1 ? 'Next' : 'Done') + '</button>';
     }
+    function sameList(a, b) { return a.join(',') === b.join(','); }
+    function gamesHtml() {
+      var h = '<h3>Pick tonight\'s games</h3><div class="half">' +
+        '<button class="pbtn plain c' + (sameList(S.lineup, C.presets.quick) ? ' sel' : '') + '" data-a="c_set" data-v="quick">Quick, 4 games</button>' +
+        '<button class="pbtn plain c' + (sameList(S.lineup, C.presets.classic) ? ' sel' : '') + '" data-a="c_set" data-v="classic">Classic, 5 games</button>' +
+        '<button class="pbtn plain c' + (sameList(S.lineup, C.presets.all) ? ' sel' : '') + '" data-a="c_set" data-v="all">All 10 games</button>' +
+        '<button class="pbtn plain c' + (S.short ? ' sel' : '') + '" data-a="c_short">Short rounds: ' + (S.short ? 'on' : 'off') + '</button></div><p class="small">Or tap games on and off:</p><div class="half">';
+      for (var i = 0; i < C.presets.all.length; i++) { var k = C.presets.all[i]; h += '<button class="pbtn plain c' + (S.lineup.indexOf(k) >= 0 ? ' sel' : '') + '" data-a="c_game" data-v="' + k + '">' + esc(gameTitle(k)) + '</button>'; }
+      return h + '</div>';
+    }
     function lobbyHtml() {
       var m = me(), lists = ['', ''];
       S.order.forEach(function (id) { var p = S.players[id]; if (p) { lists[p.t] += esc(p.n) + (id === S.boss ? ' (showrunner)' : '') + '<br>'; } });
@@ -3839,6 +4101,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
         h += '<h2>You run the show</h2><p class="small">Start when everyone is in. You also get Next and Pause buttons during the game.</p>' +
           '<input class="field" id="tn0" maxlength="14" value="' + esc(tname(0)) + '" style="font-size:19px;margin:4px 0"><input class="field" id="tn1" maxlength="14" value="' + esc(tname(1)) + '" style="font-size:19px;margin:4px 0">' +
           '<button class="pbtn plain c" data-a="c_names">Save team names</button><button class="pbtn plain c" data-a="c_preset">Kids vs Adults</button>' +
+          gamesHtml() +
           '<button class="pbtn go" data-a="c_start">START THE SHOW</button>';
       }
       return h;
@@ -3859,6 +4122,23 @@ if (typeof module !== 'undefined') { module.exports = RC; }
         return h;
       }
       if (ph === 'vote_reveal') { return '<h2>Answer: ' + esc(S.q.o[S.rv.a]) + '</h2>' + watch(); }
+      if (ph === 'ml_q') {
+        if (s || (S.acted && S.acted[pid])) { return '<h2>Vote locked in</h2>' + watch('Waiting for the others.'); }
+        h = '<div class="q">' + esc(S.ml.text) + '</div><div class="half">';
+        for (var w = 0; w < S.ml.who.length; w++) { h += '<button class="pbtn plain c" data-a="mlv" data-v="' + esc(S.ml.who[w].p) + '">' + esc(S.ml.who[w].n) + '</button>'; }
+        return h + '</div>';
+      }
+      if (ph === 'ml_reveal') { return '<h2>' + (S.rv.win.length ? esc(S.rv.win.join(' and ')) : 'No votes') + '</h2>' + watch(); }
+      if (ph === 'num_q') {
+        if (s || (S.acted && S.acted[pid])) { return '<h2>Guess locked in' + (s ? ': ' + esc(s.label) : '') + '</h2>' + watch('Waiting for the others.'); }
+        return '<div class="q">' + esc(S.nm.text) + '</div><input class="field" id="numin" type="number" inputmode="decimal" autocomplete="off" placeholder="Your number"><button class="pbtn go" data-a="num">Lock it in</button>';
+      }
+      if (ph === 'num_reveal') { return '<h2>Answer: ' + esc(S.rv.a) + '</h2>' + (S.rv.who ? '<p>Closest: ' + esc(S.rv.who) + '</p>' : '') + watch(); }
+      if (ph === 'scr_q') {
+        if (S.acted && S.acted[pid]) { return '<h2>You got it!</h2>' + watch('Waiting for the others.'); }
+        return '<p class="small">Hint: ' + esc(S.ws.hint) + '</p><div class="pmask big2">' + esc(S.ws.mix) + '</div><input class="field" id="wordin" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="The word"><button class="pbtn go" data-a="word">Send</button>';
+      }
+      if (ph === 'scr_reveal') { return '<h2>' + esc(S.rv.text) + '</h2>' + watch(); }
       if (ph === 'board_pick') {
         if (!mine) { return '<h2>' + esc(pname(S.turn)) + ' is picking</h2>' + watch(); }
         h = '<h2>Your pick, ' + esc(m.n) + '!</h2><div class="tiles">';
@@ -3912,13 +4192,16 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       var m = me();
       var stale = S && ui.joined && (Date.now() - lastState > 12000);
       put('pbanner', !net.up ? '<div class="banner">Connecting to the game relay...</div>' : (stale ? '<div class="banner">Lost the TV. Is the TV page still open?</div>' : ''));
-      put('ptop', m ? '<div class="ptop t' + m.t + '"><span>' + esc(m.n) + ' &middot; ' + esc(tname(m.t)) + '</span><span class="sc">' + S.teams[0].score + ' : ' + S.teams[1].score + '</span></div>' : '<div class="ptop tn"><span>RAIN CHECK!</span><span>Room ' + ROOM + '</span></div>');
+      put('ptop', m ? '<div class="ptop t' + m.t + '"><span class="pill">' + esc(m.n) + ', ' + esc(tname(m.t)) + '</span><span class="sc">' + S.teams[0].score + ' to ' + S.teams[1].score + '</span></div>' : '<div class="ptop tn"><span class="sc">Rain Check!</span><span>Room ' + ROOM + '</span></div>');
       // do not redraw a screen with a text box while someone is typing in it
+      var wr = S && S.phase === 'scr_q' && S.wr ? (S.wr[pid] || 0) : 0;
+      put('pnote', wr && !(S.acted && S.acted[pid]) ? '<div class="pnote bad">Not it. Try again. (' + wr + (wr === 1 ? ' try' : ' tries') + ')</div>' : '');
       var ae = document.activeElement, html = bodyHtml();
       if (ae && ae.tagName === 'INPUT' && cache.pbody && cache.pbody.replace(/value="[^"]*"/g, '') === html.replace(/value="[^"]*"/g, '')) { /* keep */ }
       else if (ae && ae.tagName === 'INPUT' && ae.id === 'nm' && !ui.joined) { /* typing a name: wait */ }
       else if (ae && ae.tagName === 'INPUT' && (ae.id === 'tn0' || ae.id === 'tn1') && S && S.phase === 'lobby') { /* typing team names: wait */ }
-      else { put('pbody', html); }
+      else if (ae && ae.tagName === 'INPUT' && (ae.id === 'wordin' || ae.id === 'numin') && S && cache.pbodyK === S.k && !(S.acted && S.acted[pid]) && !sentHere()) { /* typing an answer: wait */ }
+      else { if (put('pbody', html)) { cache.pbodyK = S ? S.k : ''; } }
       var boss = S && m && S.boss === pid && S.phase !== 'lobby' && S.phase !== 'final';
       put('pboss', boss ? '<div class="bossbar"><button data-a="c_next">NEXT</button><button class="alt" data-a="c_pause">' + (S.paused ? 'Go' : 'Pause') + '</button><button class="alt" data-a="c_menu">More</button></div>' : '');
       put('psheet', boss && ui.menu ? '<div class="sheet"><p class="small">Showrunner tools</p>' +
@@ -3943,7 +4226,13 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       else if (a === 'sv') { var p = ui.picks[ui.step], i = p.indexOf(+v); if (i >= 0) { p.splice(i, 1); } else { if (p.length >= 2) { p.shift(); } p.push(+v); } }
       else if (a === 'svnext') { if (ui.step < S.surveys.length - 1) { ui.step++; try { window.scrollTo(0, 0); } catch (e) { } } else { ui.svSent = true; ui.svFor = svSig(); lsSet('rc_sv', ui.svFor); lsSet('rc_picks', JSON.stringify(ui.picks)); send({ t: 'survey', a: ui.picks }); } }
       else if (!S) { return; }
-      else if (a === 'vote') { doAct({ t: 'vote', a: +v }, 'ABCD'.charAt(+v)); }
+      else if (a === 'vote') { doAct({ t: 'vote', a: +v }, S.q.kind === 'mix' ? 'ABCD'.charAt(+v) : S.q.o[+v]); }
+      else if (a === 'mlv') { doAct({ t: 'mlv', v: v }, 'Voted'); }
+      else if (a === 'num') { el = document.getElementById('numin'); if (!el || el.value === '' || isNaN(parseFloat(el.value))) { if (el) { el.focus(); } return; } var nval = parseFloat(el.value); el.blur(); doAct({ t: 'num', v: nval }, String(nval)); }
+      else if (a === 'word') { el = document.getElementById('wordin'); if (!el || !el.value) { if (el) { el.focus(); } return; } send({ t: 'word', k: S.k, text: el.value }); el.value = ''; return; }
+      else if (a === 'c_set') { ctl('games', { keys: C.presets[v] }); }
+      else if (a === 'c_short') { ctl('short', { on: !S.short }); }
+      else if (a === 'c_game') { var cur = S.lineup.slice(), gi2 = cur.indexOf(v); if (gi2 >= 0) { cur.splice(gi2, 1); } else { cur.push(v); } if (cur.length) { ctl('games', { keys: cur }); } }
       else if (a === 'tile') { var cl = v.split(','); doAct({ t: 'pick', c: +cl[0], l: +cl[1] }, 'Picked'); }
       else if (a === 'buzz') { if (S.phase !== 'phrase_turn' && hnow() < (S.openAt || 0) - 150) { return; } if (sentHere()) { return; } try { if (navigator.vibrate) { navigator.vibrate(60); } } catch (e) { } doAct({ t: 'buzz' }, 'Buzzed'); }
       else if (a === 'ans') { doAct({ t: 'ans', a: +v }, 'Answer sent'); }

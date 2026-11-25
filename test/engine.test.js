@@ -18,6 +18,13 @@ function play(seed, nPlayers, teamSplit, skill) {
   assert.strictEqual(E.state().boss, 'p0');
   E.handle({ p: 'p1', t: 'ctl', c: 'start' }, now); // not the boss: ignored
   assert.strictEqual(E.state().phase, 'lobby');
+  var presets = ['classic', 'all', 'quick'];
+  var preset = presets[seed % 3];
+  E.handle({ p: 'p0', t: 'ctl', c: 'games', a: { keys: RC.content.presets[preset] } }, now);
+  assert.deepStrictEqual(E.state().lineup, RC.content.presets[preset]);
+  E.handle({ p: 'p0', t: 'ctl', c: 'games', a: { keys: ['nonsense'] } }, now);
+  assert.deepStrictEqual(E.state().lineup, RC.content.presets[preset], 'bad lineup must be ignored');
+  E.handle({ p: 'p0', t: 'ctl', c: 'short', a: { on: seed % 4 === 0 } }, now);
   E.handle({ p: 'p0', t: 'ctl', c: 'start' }, now);
   assert.strictEqual(E.state().phase, 'intro');
   var seen = {}; var steps = 0;
@@ -29,7 +36,10 @@ function play(seed, nPlayers, teamSplit, skill) {
     var pid = pids[Math.floor(rnd() * nPlayers)];
     var k = S.k, ph = S.phase;
     var good = rnd() < skill;
-    if (ph === 'vote_q') { E.handle({ p: pid, t: 'vote', k: k, a: good ? P.cur.a : Math.floor(rnd() * 4) }, now); }
+    if (ph === 'vote_q') { E.handle({ p: pid, t: 'vote', k: k, a: good ? P.cur.a : Math.floor(rnd() * P.cur.o.length) }, now); }
+    else if (ph === 'ml_q') { E.handle({ p: pid, t: 'mlv', k: k, v: S.ml.who[Math.floor(rnd() * S.ml.who.length)].p }, now); }
+    else if (ph === 'num_q') { E.handle({ p: pid, t: 'num', k: k, v: good ? P.nq[S.ni].a : Math.round(P.nq[S.ni].a * (0.5 + rnd())) }, now); }
+    else if (ph === 'scr_q' && rnd() < 0.5) { E.handle({ p: pid, t: 'word', k: k, text: good ? P.word.toLowerCase() : 'zzz' }, now); }
     else if (ph === 'board_pick' && rnd() < 0.5) { E.handle({ p: S.turn, t: 'pick', k: k, c: Math.floor(rnd() * 5), l: Math.floor(rnd() * 4) }, now); }
     else if ((ph === 'board_q' || ph === 'zoom_q' || ph === 'feud_face') && rnd() < 0.25) { E.handle({ p: pid, t: 'buzz', k: k }, now); }
     else if ((ph === 'board_ans' || ph === 'zoom_ans') && rnd() < 0.6) { E.handle({ p: S.turn, t: 'ans', k: k, a: good ? P.cur.a : Math.floor(rnd() * 4) }, now); }
@@ -49,6 +59,7 @@ function play(seed, nPlayers, teamSplit, skill) {
   S = E.state();
   assert.strictEqual(S.phase, 'final', 'game did not finish, stuck in ' + S.phase);
   assert.ok(S.teams[0].score >= 0 && S.teams[1].score >= 0);
+  assert.ok(S.round === S.lineup.length, 'did not play the whole lineup');
   return { seen: seen, scores: [S.teams[0].score, S.teams[1].score], minutes: Math.round((now - 1000000) / 60000), fin: S.fin };
 }
 
@@ -61,7 +72,7 @@ for (var seed = 1; seed <= 300; seed++) {
   for (var k in r.seen) { phases[k] = 1; }
   if (seed <= 4) { out.push('seed ' + seed + ' players ' + n + ' scores ' + r.scores.join('-') + ' game minutes ' + r.minutes); }
 }
-var need = ['intro', 'vote_q', 'vote_reveal', 'board_pick', 'board_q', 'board_ans', 'board_reveal', 'zoom_q', 'zoom_ans', 'zoom_reveal', 'phrase_turn', 'phrase_solve', 'phrase_reveal', 'feud_face', 'feud_pick', 'feud_reveal', 'round_end'];
+var need = ['intro', 'vote_q', 'vote_reveal', 'board_pick', 'board_q', 'board_ans', 'board_reveal', 'zoom_q', 'zoom_ans', 'zoom_reveal', 'phrase_turn', 'phrase_solve', 'phrase_reveal', 'feud_face', 'feud_pick', 'feud_reveal', 'round_end', 'ml_q', 'ml_reveal', 'num_q', 'num_reveal', 'scr_q', 'scr_reveal'];
 need.forEach(function (p) { assert.ok(phases[p], 'phase never reached: ' + p); });
 
 // content sanity
@@ -69,8 +80,12 @@ var C = RC.content;
 C.votes.forEach(function (q) { assert.strictEqual(q.o.length, 4, q.q); assert.strictEqual(new Set(q.o).size, 4, q.q); });
 C.board.forEach(function (c) { assert.strictEqual(c.levels.length, 4); c.levels.forEach(function (l) { l.forEach(function (q) { assert.strictEqual(q.o.length, 4, q.q); assert.strictEqual(new Set(q.o).size, 4, q.q); }); }); });
 C.zoom.forEach(function (z) { assert.strictEqual(z.o.length, 4); });
+C.decades.forEach(function (q) { assert.strictEqual(new Set(q.o).size, 4, q.q); });
+C.words.forEach(function (w) { assert.ok(/^[A-Z]+$/.test(w.w), w.w); });
+C.numbers.forEach(function (n) { assert.ok(typeof n.a === 'number', n.q); });
+Object.keys(C.presets).forEach(function (k) { C.presets[k].forEach(function (g) { assert.ok(C.rounds.some(function (r) { return r.key === g; }), g); }); });
 C.surveys.forEach(function (s) { assert.strictEqual(s.o.length, 10, s.q); });
 assert.ok(C.board.length >= 5 && C.zoom.length >= 5 && C.phrases.length >= 4 && C.surveys.length >= 3);
 
 console.log(out.join('\n'));
-console.log('OK: 300 simulated games finished, all ' + need.length + ' phases reached, content checks passed');
+console.log('OK: 300 simulated games finished (classic, quick and all-ten lineups), all ' + need.length + ' phases reached, content checks passed');

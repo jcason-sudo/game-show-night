@@ -21,6 +21,10 @@ RC.createEngine = function (C, opts) {
     for (var i = 0; i < order.length; i++) { o.push(item.o[order[i]]); if (order[i] === 0) { a = i; } }
     return { q: item.q, o: o, a: a, f: item.f || '' };
   }
+  var CAT = {};
+  for (var ci = 0; ci < C.rounds.length; ci++) { CAT[C.rounds[ci].key] = C.rounds[ci]; }
+  function cnt(full, small) { return S.short ? small : full; }
+  function fmt(n, plain) { var t = String(n); if (plain) { return t; } return t.replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
   function readMs(text) { return Math.min(9000, 1800 + String(text).length * 55); }
 
   function say(text) { S.say = { id: S.say.id + 1, text: text }; }
@@ -65,7 +69,8 @@ RC.createEngine = function (C, opts) {
       teams: [{ name: 'Thunder', score: 0 }, { name: 'Lightning', score: 0 }],
       players: {}, order: [], boss: null, round: 0, rot: [-1, -1],
       say: { id: 0, text: '' }, fx: { id: 0, name: '' }, gain: null,
-      surveys: freshSurveys(), acted: {}, deadline: 0, turn: null
+      surveys: freshSurveys(), acted: {}, deadline: 0, turn: null,
+      lineup: C.presets.classic.slice(), short: false
     };
     P = { sv: {} };
     return S;
@@ -74,24 +79,30 @@ RC.createEngine = function (C, opts) {
   /* ---------- round flow ---------- */
   function startRound(r, now) {
     S.round = r;
-    var info = C.rounds[r - 1];
-    S.intro = { n: r, of: C.rounds.length, title: info.title, how: info.how };
+    var info = CAT[S.lineup[r - 1]];
+    S.intro = { n: r, of: S.lineup.length, title: info.title, how: info.how };
+    S.rt = info.title; S.rof = S.lineup.length;
     S.turn = null;
     setPhase('intro', now, 14000);
     say('Round ' + r + '. ' + info.title + '. ' + info.how.join(' '));
     fx('fanfare');
   }
   function beginRound(now) {
-    var key = C.rounds[S.round - 1].key;
-    if (key === 'vote') { P.vq = shuffle(C.votes).slice(0, 8); S.vi = -1; nextVote(now); }
+    var key = S.lineup[S.round - 1];
+    if (key === 'vote') { P.vq = shuffle(C.votes).slice(0, cnt(8, 5)); P.vkind = 'mix'; S.vi = -1; nextVote(now); }
+    else if (key === 'tf') { P.vq = shuffle(C.tf).slice(0, cnt(10, 6)); P.vkind = 'tf'; S.vi = -1; nextVote(now); }
+    else if (key === 'decade') { P.vq = shuffle(C.decades).slice(0, cnt(8, 5)); P.vkind = 'decade'; S.vi = -1; nextVote(now); }
+    else if (key === 'likely') { P.mq = shuffle(C.likely).slice(0, cnt(6, 4)); S.mi = -1; nextLikely(now); }
+    else if (key === 'num') { P.nq = shuffle(C.numbers).slice(0, cnt(6, 4)); S.ni = -1; nextNum(now); }
+    else if (key === 'scramble') { P.wq = shuffle(C.words).slice(0, cnt(6, 4)); S.wi = -1; nextWord(now); }
     else if (key === 'board') { setupBoard(now); boardPick(now); }
-    else if (key === 'zoom') { P.zs = shuffle(C.zoom).slice(0, 5); S.zi = -1; nextZoom(now); }
-    else if (key === 'phrase') { P.ps = shuffle(C.phrases).slice(0, 4); S.pi = -1; S.pteam = trailing(); nextPhrase(now); }
+    else if (key === 'zoom') { P.zs = shuffle(C.zoom).slice(0, cnt(5, 3)); S.zi = -1; nextZoom(now); }
+    else if (key === 'phrase') { P.ps = shuffle(C.phrases).slice(0, cnt(4, 2)); S.pi = -1; S.pteam = trailing(); nextPhrase(now); }
     else if (key === 'feud') { setupFeud(); S.fi = -1; nextFeud(now); }
   }
   function roundEnd(now) {
     S.turn = null;
-    S.re = { n: S.round, title: C.rounds[S.round - 1].title };
+    S.re = { n: S.round, title: S.rt };
     setPhase('round_end', now, 10000);
     var a = S.teams[0], b = S.teams[1];
     say(a.score === b.score ? 'It is all tied up at ' + a.score + '!' : (a.score > b.score ? a.name : b.name) + ' lead, ' + Math.max(a.score, b.score) + ' to ' + Math.min(a.score, b.score) + '.');
@@ -116,14 +127,19 @@ RC.createEngine = function (C, opts) {
   function nextVote(now) {
     S.vi++;
     if (S.vi >= P.vq.length) { return roundEnd(now); }
-    P.cur = mc(P.vq[S.vi]); P.votes = {};
-    S.q = { n: S.vi + 1, of: P.vq.length, text: P.cur.q, o: P.cur.o };
+    var it = P.vq[S.vi];
+    if (P.vkind === 'tf') { P.cur = { q: it.q, o: ['True', 'False'], a: it.a ? 0 : 1, f: it.f || '' }; }
+    else if (P.vkind === 'decade') { var so = it.o.slice().sort(); P.cur = { q: it.q, o: so, a: so.indexOf(it.o[0]), f: '' }; }
+    else { P.cur = mc(it); }
+    P.votes = {};
+    S.q = { n: S.vi + 1, of: P.vq.length, text: P.cur.q, o: P.cur.o, kind: P.vkind };
     S.nv = 0; S.rv = null;
-    setPhase('vote_q', now, readMs(P.cur.q) + 20000);
-    say(P.cur.q);
+    setPhase('vote_q', now, readMs(P.cur.q) + (P.vkind === 'tf' ? 12000 : 20000));
+    say((P.vkind === 'tf' ? 'True or false? ' : (P.vkind === 'decade' ? 'Which decade? ' : '')) + P.cur.q);
   }
   function endVote(now) {
-    var counts = [0, 0, 0, 0], ok = [0, 0], den = [0, 0], fast = null, pid, v;
+    var counts = [], ok = [0, 0], den = [0, 0], fast = null, pid, v;
+    for (var ci2 = 0; ci2 < P.cur.o.length; ci2++) { counts.push(0); }
     for (var i = 0; i < S.order.length; i++) {
       pid = S.order[i]; v = P.votes[pid];
       var p = pl(pid); if (!p) { continue; }
@@ -143,9 +159,83 @@ RC.createEngine = function (C, opts) {
     fx(ok[0] + ok[1] > 0 ? 'right' : 'wrong');
   }
 
+  /* ---------- most likely to ---------- */
+  function allActed(now) { for (var i = 0; i < S.order.length; i++) { if (present(S.order[i], now) && !S.acted[S.order[i]]) { return false; } } return true; }
+  function nextLikely(now) {
+    S.mi++;
+    if (S.mi >= P.mq.length) { return roundEnd(now); }
+    var who = [];
+    for (var i = 0; i < S.order.length && who.length < 16; i++) { if (present(S.order[i], now)) { who.push({ p: S.order[i], n: nm(S.order[i]) }); } }
+    S.ml = { n: S.mi + 1, of: P.mq.length, text: 'Who is most likely to ' + P.mq[S.mi] + '?', who: who };
+    P.mv = {}; S.nv = 0; S.rv = null;
+    setPhase('ml_q', now, readMs(S.ml.text) + 22000);
+    say(S.ml.text);
+  }
+  function endLikely(now) {
+    var tally = {}, max = 0, pid, i;
+    for (pid in P.mv) { if (P.mv.hasOwnProperty(pid)) { tally[P.mv[pid]] = (tally[P.mv[pid]] || 0) + 1; if (tally[P.mv[pid]] > max) { max = tally[P.mv[pid]]; } } }
+    var top = [], win = [];
+    for (i = 0; i < S.ml.who.length; i++) { var w = S.ml.who[i]; if (tally[w.p]) { top.push({ n: w.n, c: tally[w.p] }); if (tally[w.p] === max) { win.push(w.n); } } }
+    top.sort(function (x, y) { return y.c - x.c; });
+    var ok = [0, 0], den = [0, 0], gains = [0, 0];
+    for (i = 0; i < S.order.length; i++) {
+      pid = S.order[i]; var p = pl(pid); if (!p) { continue; }
+      if (P.mv[pid] || present(pid, now)) { den[p.t]++; }
+      if (P.mv[pid] && tally[P.mv[pid]] === max) { ok[p.t]++; p.pts += 10; }
+    }
+    for (var t = 0; t < 2; t++) { gains[t] = den[t] ? Math.round(100 * ok[t] / den[t]) : 0; S.teams[t].score += gains[t]; }
+    S.rv = { win: win, top: top.slice(0, 4), gains: gains };
+    setPhase('ml_reveal', now, 9000);
+    say(win.length ? 'The family says: ' + win.join(' and ') + '!' : 'Nobody voted.');
+    fx(win.length ? 'right' : 'wrong');
+  }
+
+  /* ---------- closest call ---------- */
+  function nextNum(now) {
+    S.ni++;
+    if (S.ni >= P.nq.length) { return roundEnd(now); }
+    var it = P.nq[S.ni];
+    S.nm = { n: S.ni + 1, of: P.nq.length, text: it.q };
+    P.ng = {}; S.nv = 0; S.rv = null;
+    setPhase('num_q', now, readMs(it.q) + 25000);
+    say(it.q + ' Type your best guess.');
+  }
+  function endNum(now) {
+    var it = P.nq[S.ni], list = [], pid;
+    for (pid in P.ng) { if (P.ng.hasOwnProperty(pid) && pl(pid)) { list.push({ p: pid, v: P.ng[pid].v, d: Math.abs(P.ng[pid].v - it.a), at: P.ng[pid].at }); } }
+    list.sort(function (x, y) { return (x.d - y.d) || (x.at - y.at); });
+    var best = list[0] || null, show = [];
+    for (var i = 0; i < list.length && i < 4; i++) { show.push({ n: nm(list[i].p), v: fmt(list[i].v, it.y), t: pl(list[i].p).t }); }
+    var pts = best ? (best.d === 0 ? 200 : 150) : 0;
+    if (best) { award(pl(best.p).t, pts, best.p); }
+    S.rv = { a: fmt(it.a, it.y), list: show, who: best ? nm(best.p) : '', team: best ? pl(best.p).t : -1, pts: pts, exact: !!best && best.d === 0 };
+    setPhase('num_reveal', now, 9000);
+    say('The answer is ' + S.rv.a + '. ' + (best ? (S.rv.exact ? 'Exactly right, ' : 'Closest: ') + S.rv.who + '.' : ''));
+    fx(best ? 'right' : 'wrong');
+  }
+
+  /* ---------- word scramble ---------- */
+  function nextWord(now) {
+    S.wi++;
+    if (S.wi >= P.wq.length) { return roundEnd(now); }
+    var it = P.wq[S.wi], mix = it.w, tries = 0;
+    while (mix === it.w && tries < 12) { mix = shuffle(it.w.split('')).join(''); tries++; }
+    P.word = it.w; P.wd = {};
+    S.ws = { n: S.wi + 1, of: P.wq.length, mix: mix, hint: it.h, done: [] };
+    S.wr = {}; S.rv = null;
+    setPhase('scr_q', now, 35000);
+    say('Unscramble the word. The hint is: ' + it.h + '.');
+  }
+  function endWord(now) {
+    S.rv = { text: P.word, who: S.ws.done[0] || '', n: S.ws.done.length };
+    setPhase('scr_reveal', now, 7000);
+    say('The word was ' + P.word.toLowerCase() + '.' + (S.rv.who ? ' First in: ' + S.rv.who + '.' : ''));
+    if (!S.rv.who) { fx('wrong'); }
+  }
+
   /* ---------- round 2: the board ---------- */
   function setupBoard(now) {
-    var cats = shuffle(range(C.board.length)).slice(0, 5);
+    var cats = shuffle(range(C.board.length)).slice(0, cnt(5, 3));
     P.board = []; S.board = { cats: [], used: [] };
     for (var i = 0; i < cats.length; i++) {
       var cat = C.board[cats[i]], row = [];
@@ -284,9 +374,10 @@ RC.createEngine = function (C, opts) {
   }
   function nextFeud(now) {
     S.fi++;
-    if (S.fi >= S.surveys.length) { return roundEnd(now); }
+    P.fn = cnt(S.surveys.length, 2);
+    if (S.fi >= P.fn) { return roundEnd(now); }
     var sv = S.surveys[S.fi];
-    S.f = { n: S.fi + 1, of: S.surveys.length, q: sv.q, o: sv.o, mult: S.fi === S.surveys.length - 1 ? 2 : 1, tried: [], slots: [null, null, null, null, null], strikes: 0, pot: 0, play: -1, mode: 'face', x: 0 };
+    S.f = { n: S.fi + 1, of: P.fn, q: sv.q, o: sv.o, mult: S.fi === P.fn - 1 ? 2 : 1, tried: [], slots: [null, null, null, null, null], strikes: 0, pot: 0, play: -1, mode: 'face', x: 0 };
     S.rv = null; S.turn = null;
     var r = readMs(sv.q);
     S.openAt = now + r;
@@ -352,6 +443,12 @@ RC.createEngine = function (C, opts) {
     else if (ph === 'intro') { beginRound(now); }
     else if (ph === 'vote_q') { endVote(now); }
     else if (ph === 'vote_reveal') { nextVote(now); }
+    else if (ph === 'ml_q') { endLikely(now); }
+    else if (ph === 'ml_reveal') { nextLikely(now); }
+    else if (ph === 'num_q') { endNum(now); }
+    else if (ph === 'num_reveal') { nextNum(now); }
+    else if (ph === 'scr_q') { endWord(now); }
+    else if (ph === 'scr_reveal') { nextWord(now); }
     else if (ph === 'board_pick') { for (var l = 0; l < 4; l++) { for (var c = 0; c < S.board.used.length; c++) { if (!S.board.used[c][l]) { return openTile(c, l, now); } } } }
     else if (ph === 'board_q') { say(line('nobuzz')); boardReveal(null, now); }
     else if (ph === 'board_ans') { boardWrong(pl(S.turn) ? pl(S.turn).t : 0, -1, now); }
@@ -365,7 +462,7 @@ RC.createEngine = function (C, opts) {
     else if (ph === 'feud_face') { S.f.play = activeTeam(trailing(), now); feudPlayTurn(now); }
     else if (ph === 'feud_pick') { feudPick(-1, now); }
     else if (ph === 'feud_reveal') { nextFeud(now); }
-    else if (ph === 'round_end') { if (S.round >= C.rounds.length) { finale(now); } else { startRound(S.round + 1, now); } }
+    else if (ph === 'round_end') { if (S.round >= S.lineup.length) { finale(now); } else { startRound(S.round + 1, now); } }
   }
   function startShow(now) {
     S.teams[0].score = 0; S.teams[1].score = 0;
@@ -389,6 +486,14 @@ RC.createEngine = function (C, opts) {
     }
     else if (c === 'skip') { if (S.phase !== 'lobby' && S.phase !== 'final' && S.phase !== 'round_end') { roundEnd(now); } }
     else if (c === 'adj') { var t = a.team === 1 ? 1 : 0; var d2 = Math.max(-500, Math.min(500, parseInt(a.d, 10) || 0)); S.teams[t].score += d2; }
+    else if (c === 'games') {
+      if (S.phase === 'lobby' && a.keys && a.keys.length) {
+        var keep = [];
+        for (var g = 0; g < C.presets.all.length; g++) { if (a.keys.indexOf(C.presets.all[g]) >= 0) { keep.push(C.presets.all[g]); } }
+        if (keep.length) { S.lineup = keep; }
+      }
+    }
+    else if (c === 'short') { if (S.phase === 'lobby') { S.short = !!a.on; } }
     else if (c === 'boss') { if (pl(a.pid)) { S.boss = a.pid; } }
     else if (c === 'teams') { if (a.names && a.names.length === 2) { S.teams[0].name = clean(a.names[0], 14) || 'Thunder'; S.teams[1].name = clean(a.names[1], 14) || 'Lightning'; } }
     else if (c === 'kick') { if (pl(a.pid)) { delete S.players[a.pid]; S.order.splice(S.order.indexOf(a.pid), 1); if (S.boss === a.pid) { S.boss = S.order[0] || null; } } }
@@ -433,11 +538,34 @@ RC.createEngine = function (C, opts) {
     var ph = S.phase, team2 = p.t, a;
     if (m.t === 'vote' && ph === 'vote_q') {
       a = parseInt(m.a, 10);
-      if (P.votes[pid] || !(a >= 0 && a < 4)) { return; }
+      if (P.votes[pid] || !(a >= 0 && a < P.cur.o.length)) { return; }
       P.votes[pid] = { a: a, at: now }; S.acted[pid] = true; S.nv++;
       var all = true;
       for (var i = 0; i < S.order.length; i++) { if (present(S.order[i], now) && !P.votes[S.order[i]]) { all = false; } }
       if (all) { endVote(now); }
+    }
+    else if (m.t === 'mlv' && ph === 'ml_q') {
+      var tgt = clean(m.v, 12), found = false;
+      for (var q = 0; q < S.ml.who.length; q++) { if (S.ml.who[q].p === tgt) { found = true; } }
+      if (P.mv[pid] || !found) { return; }
+      P.mv[pid] = tgt; S.acted[pid] = true; S.nv++;
+      if (allActed(now)) { endLikely(now); }
+    }
+    else if (m.t === 'num' && ph === 'num_q') {
+      var nv = parseFloat(m.v);
+      if (P.ng[pid] || !isFinite(nv) || Math.abs(nv) > 1e9) { return; }
+      P.ng[pid] = { v: Math.round(nv * 10) / 10, at: now }; S.acted[pid] = true; S.nv++;
+      if (allActed(now)) { endNum(now); }
+    }
+    else if (m.t === 'word' && ph === 'scr_q') {
+      if (P.wd[pid]) { return; }
+      if (String(m.text || '').toUpperCase().replace(/[^A-Z]/g, '') === P.word) {
+        P.wd[pid] = 1; S.acted[pid] = true;
+        award(team2, S.ws.done.length ? 40 : 150, pid);
+        if (!S.ws.done.length) { say(p.n + ' got it first! Ten seconds for everyone else.'); if (S.deadline > now + 10000) { S.deadline = now + 10000; } }
+        S.ws.done.push(p.n); fx('ding');
+        if (allActed(now)) { endWord(now); }
+      } else { S.wr[pid] = (S.wr[pid] || 0) + 1; }
     }
     else if (m.t === 'pick' && ph === 'board_pick') {
       var c = parseInt(m.c, 10), l = parseInt(m.l, 10);

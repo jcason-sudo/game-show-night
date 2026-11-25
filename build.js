@@ -6,7 +6,7 @@ var game = ['src/content.js', 'src/art.js', 'src/engine.js', 'src/app.js'].map(r
 function safe(js) { return js.replace(/<\/script/gi, '<\\/script'); }
 var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">\n' +
   '<meta name="robots" content="noindex">\n<title>Rain Check! Family Game Show</title>\n' +
-  '<link rel="preconnect" href="https://fonts.googleapis.com">\n<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@600;700;800&display=swap" rel="stylesheet">\n' +
+  '<link rel="preconnect" href="https://fonts.googleapis.com">\n<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">\n' +
   '<style>\n' + r('src/style.css') + '</style>\n</head>\n<body>\n<div id="app"></div>\n' +
   '<script>\n' + safe(libs) + '\n</script>\n<script>\n' + safe(game) + '\n</script>\n</body>\n</html>\n';
 

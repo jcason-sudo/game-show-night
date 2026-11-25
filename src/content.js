@@ -123,13 +123,94 @@ RC.content = {
     { q: 'What does every grandparent have in their house?', o: ['A candy dish', 'Family photos', 'A comfy recliner', 'Old photo albums', 'A loud ticking clock', 'Cookies', 'A remote nobody else can work', 'Reading glasses everywhere', 'A very loud TV', 'Little statues on a shelf'] }
   ],
 
+  tf: [
+    { q: 'A group of lions is called a pride.', a: true, f: '' },
+    { q: 'You can see the Great Wall of China from the Moon with your bare eyes.', a: false, f: 'It is far too narrow to see from that far away.' },
+    { q: 'An octopus has three hearts.', a: true, f: 'Two pump blood to the gills, one to the body.' },
+    { q: 'Lightning never strikes the same place twice.', a: false, f: 'Tall buildings get hit many times a year.' },
+    { q: 'Venus is the hottest planet in our solar system.', a: true, f: 'Hotter than Mercury, thanks to its thick air.' },
+    { q: 'Sharks are mammals.', a: false, f: 'Sharks are fish.' },
+    { q: 'The Atlantic is the largest ocean on Earth.', a: false, f: 'The Pacific is the largest.' },
+    { q: 'Mount Everest is the highest mountain above sea level.', a: true, f: '' },
+    { q: 'Goldfish only remember things for three seconds.', a: false, f: 'They can remember for months.' },
+    { q: 'The Statue of Liberty was a gift from France.', a: true, f: 'It arrived in 1885.' },
+    { q: 'Adults have more bones than babies.', a: false, f: 'Babies have about 300. Many fuse as we grow.' },
+    { q: 'Australia is both a country and a continent.', a: true, f: '' },
+    { q: 'Spiders are insects.', a: false, f: 'Spiders are arachnids, with eight legs.' },
+    { q: 'The Eiffel Tower is in Rome.', a: false, f: 'It is in Paris.' },
+    { q: 'Sound travels faster in water than in air.', a: true, f: 'More than four times faster.' },
+    { q: 'Honey can last for thousands of years without spoiling.', a: true, f: '' }
+  ],
+
+  decades: [
+    { q: 'People first walked on the Moon.', o: ['1960s', '1950s', '1970s', '1980s'] },
+    { q: 'The Berlin Wall came down.', o: ['1980s', '1960s', '1970s', '1990s'] },
+    { q: 'The first iPhone went on sale.', o: ['2000s', '1990s', '2010s', '1980s'] },
+    { q: 'Elvis Presley released "Heartbreak Hotel".', o: ['1950s', '1940s', '1960s', '1970s'] },
+    { q: 'The Beatles first played The Ed Sullivan Show.', o: ['1960s', '1950s', '1970s', '1980s'] },
+    { q: 'The first Star Wars movie opened in theaters.', o: ['1970s', '1960s', '1980s', '1990s'] },
+    { q: 'The movie Titanic opened in theaters.', o: ['1990s', '1980s', '2000s', '2010s'] },
+    { q: 'Disney released Frozen.', o: ['2010s', '1990s', '2000s', '2020s'] },
+    { q: 'World War II ended.', o: ['1940s', '1930s', '1950s', '1960s'] },
+    { q: 'MTV went on the air.', o: ['1980s', '1960s', '1970s', '1990s'] },
+    { q: 'YouTube was launched.', o: ['2000s', '1990s', '2010s', '1980s'] },
+    { q: 'Pac-Man arrived in arcades.', o: ['1980s', '1960s', '1970s', '1990s'] },
+    { q: 'Disneyland opened in California.', o: ['1950s', '1940s', '1960s', '1970s'] },
+    { q: 'The first Harry Potter book was published.', o: ['1990s', '1980s', '2000s', '2010s'] }
+  ],
+
+  likely: [
+    'fall asleep during a movie', 'win a dance contest', 'get lost even with the GPS on', 'eat dessert before dinner',
+    'start talking to a stranger in line', 'forget where the car is parked', 'become famous one day', 'survive on a desert island',
+    'sing loudly in the shower', 'laugh at the wrong moment', 'burn the toast', 'be the last one ready to leave',
+    'cry at a commercial', 'win this game', 'tell the same story twice', 'pack three suitcases for a weekend'
+  ],
+
+  numbers: [
+    { q: 'How many keys does a piano have?', a: 88 },
+    { q: 'How many feet are in a mile?', a: 5280 },
+    { q: 'How many minutes are in one day?', a: 1440 },
+    { q: 'In what year did the Titanic sink?', a: 1912, y: true },
+    { q: 'How many squares are on a chessboard?', a: 64 },
+    { q: 'How many dots are on a pair of dice?', a: 42 },
+    { q: 'At what temperature does water boil, in Fahrenheit?', a: 212 },
+    { q: 'How many hearts does an octopus have?', a: 3 },
+    { q: 'In what year did the first iPhone go on sale?', a: 2007, y: true },
+    { q: 'How many cards are in a standard deck, without the jokers?', a: 52 },
+    { q: 'How many stripes are on the American flag?', a: 13 },
+    { q: 'How tall is Mount Everest, in feet?', a: 29032 },
+    { q: 'How many teeth does an adult usually have?', a: 32 },
+    { q: 'How many legs does a lobster have?', a: 10 },
+    { q: 'How many players does a baseball team put on the field?', a: 9 },
+    { q: 'In what year did people first walk on the Moon?', a: 1969, y: true }
+  ],
+
+  words: [
+    { w: 'UMBRELLA', h: 'Rainy day gear' }, { w: 'THUNDER', h: 'Storm sound' }, { w: 'RAINBOW', h: 'After the rain' },
+    { w: 'PUDDLE', h: 'Splash' }, { w: 'PANCAKE', h: 'Breakfast' }, { w: 'POPCORN', h: 'Movie snack' },
+    { w: 'BLANKET', h: 'Cozy' }, { w: 'VACATION', h: 'Family time' }, { w: 'SUITCASE', h: 'Travel' },
+    { w: 'COUSIN', h: 'Family' }, { w: 'DINOSAUR', h: 'Long ago' }, { w: 'SANDWICH', h: 'Lunch' },
+    { w: 'PILLOW', h: 'Bedtime' }, { w: 'GUITAR', h: 'Music' }, { w: 'ELEPHANT', h: 'Animal' }, { w: 'HOLIDAY', h: 'Time off' }
+  ],
+
+  /* the catalog of games, in the order a show plays them */
   rounds: [
     { key: 'vote', title: 'Everybody Votes', how: ['Everyone answers on their own phone.', 'Your team scores the share of teammates who get it right.', 'Fastest correct answer earns a bonus.'] },
+    { key: 'likely', title: 'Most Likely To', how: ['No trivia. Vote for the person in this room who fits best.', 'You score when you vote with the biggest group.', 'Yes, you can vote for yourself.'] },
     { key: 'board', title: 'The Board', how: ['Pick a category and a point value.', 'Buzz in first, then answer on your phone.', 'Miss it and the other team can steal.'] },
+    { key: 'tf', title: 'True or False Blitz', how: ['A statement appears. True or false?', 'Everyone answers. You have 12 seconds.', 'Your team scores the share of teammates who get it right.'] },
     { key: 'zoom', title: 'Zoom In', how: ['A famous place slowly comes into view.', 'Buzz early for more points.', 'A wrong guess locks your team out.'] },
+    { key: 'num', title: 'Closest Call', how: ['Every answer is a number.', 'Everyone types a guess.', 'The closest guess wins 150 points for the team.'] },
     { key: 'phrase', title: 'Phrase Fever', how: ['Take turns picking letters.', 'Anyone can hit SOLVE and type the phrase.', 'Five misses and the puzzle is lost.'] },
+    { key: 'decade', title: 'Name That Decade', how: ['Something happened. In which decade?', 'Everyone answers on their own phone.', 'Grandparents, this one is yours.'] },
+    { key: 'scramble', title: 'Word Scramble', how: ['The letters are mixed up. Type the word.', 'First to solve wins 150. Everyone else can still score 40.', 'Wrong tries cost nothing.'] },
     { key: 'feud', title: 'Survey Says', how: ['The board comes from this family\'s own answers.', 'Find the top 5. Three strikes and the other team can steal.', 'The last survey is worth double.'] }
   ],
+  presets: {
+    quick: ['likely', 'tf', 'zoom', 'feud'],
+    classic: ['vote', 'board', 'zoom', 'phrase', 'feud'],
+    all: ['vote', 'likely', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'feud']
+  },
 
   lines: {
     welcome: ['Welcome to Rain Check, the only game show that needs bad weather. I am your host, Drizzle McCloud.'],

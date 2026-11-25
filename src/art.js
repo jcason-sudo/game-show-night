@@ -128,15 +128,15 @@ var RC = (typeof RC !== 'undefined') ? RC : {};
   /* The host: Drizzle McCloud, a cloud in a bow tie. */
   art.host = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220" width="100%" height="100%">' +
     '<g class="hostbob">' +
-    '<path d="M52,128 C20,128 14,88 46,82 C44,50 86,36 104,58 C118,30 172,36 174,72 C210,66 226,112 194,126 Z" fill="#FFFFFF" stroke="#33484F" stroke-width="6" stroke-linejoin="round"/>' +
-    '<ellipse cx="92" cy="88" rx="8" ry="11" fill="#23282D" class="hosteye"/><ellipse cx="140" cy="88" rx="8" ry="11" fill="#23282D" class="hosteye"/>' +
-    '<path d="M80,70 q12,-10 24,-2 M128,68 q12,-8 24,2" stroke="#23282D" stroke-width="5" fill="none" stroke-linecap="round"/>' +
-    '<path class="hostmouth" d="M96,106 Q116,124 138,106 Z" fill="#23282D"/>' +
+    '<path d="M52,128 C20,128 14,88 46,82 C44,50 86,36 104,58 C118,30 172,36 174,72 C210,66 226,112 194,126 Z" fill="#FFFFFF" stroke="#3A2214" stroke-width="6" stroke-linejoin="round"/>' +
+    '<ellipse cx="92" cy="88" rx="8" ry="11" fill="#3A2214" class="hosteye"/><ellipse cx="140" cy="88" rx="8" ry="11" fill="#3A2214" class="hosteye"/>' +
+    '<path d="M80,70 q12,-10 24,-2 M128,68 q12,-8 24,2" stroke="#3A2214" stroke-width="5" fill="none" stroke-linecap="round"/>' +
+    '<path class="hostmouth" d="M96,106 Q116,124 138,106 Z" fill="#3A2214"/>' +
     '<circle cx="72" cy="104" r="8" fill="#F5B7A8"/><circle cx="162" cy="104" r="8" fill="#F5B7A8"/>' +
-    '<polygon points="116,138 86,124 86,156" fill="#C74634"/><polygon points="116,138 146,124 146,156" fill="#C74634"/><circle cx="116" cy="139" r="8" fill="#A93226"/>' +
-    '<path d="M86,150 L72,206 L160,206 L146,150 Z" fill="#33484F"/>' +
-    '<path d="M150,160 q40,6 46,-26" stroke="#33484F" stroke-width="10" fill="none" stroke-linecap="round"/>' +
-    '<rect x="188" y="96" width="14" height="40" rx="7" fill="#8A8F93"/><circle cx="195" cy="92" r="13" fill="#23282D"/>' +
+    '<polygon points="116,138 86,124 86,156" fill="#C4520F"/><polygon points="116,138 146,124 146,156" fill="#C4520F"/><circle cx="116" cy="139" r="8" fill="#9C3F0A"/>' +
+    '<path d="M86,150 L72,206 L160,206 L146,150 Z" fill="#17696B"/>' +
+    '<path d="M150,160 q40,6 46,-26" stroke="#17696B" stroke-width="10" fill="none" stroke-linecap="round"/>' +
+    '<rect x="188" y="96" width="14" height="40" rx="7" fill="#8A8F93"/><circle cx="195" cy="92" r="13" fill="#3A2214"/>' +
     '</g></svg>';
 
   RC.art = art;
