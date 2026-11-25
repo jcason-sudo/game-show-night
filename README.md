@@ -4,18 +4,20 @@ A family game show for rainy days. The TV shows the show, every phone is a buzze
 
 **Play:** https://jcason-sudo.github.io/raincheck/
 
-## How to run a game
+## How to run a show
 
 1. Open the link on the screen everyone can see and choose **This is the TV screen**. Press OK once to turn on sound.
 2. Each player scans the QR code (or opens the link and types the 4-letter room code), enters a name and picks a team.
-3. Each player answers three secret surveys. They feed the last round.
-4. The first player to join runs the show. Their phone gets **Start**, **Next** and **Pause**.
+3. The first player to join runs the show. Their phone shows the **game menu**: tap any game to start it.
+4. When a game ends, the menu comes back. Pick the next one, replay one, or tap **Finish the show** to crown a winner.
 
-On a laptop, Space or Enter is Next, P is Pause, M opens the menu.
+During a game the showrunner's phone has **Next** (on score and answer screens), **Skip this one**, **Pause** and **Menu**. Menu holds **Back to the game menu**, score fixes and a list of each phone's connection quality.
+
+The TV can run the menu too: every game on the menu screen is a button, and on a laptop Space or Enter is Next, P is Pause, M opens the menu.
 
 ## The ten games
 
-The showrunner picks the lineup in the lobby: Quick (4 games), Classic (5), All 10, or any mix. "Short rounds" trims every game.
+Play them in any order, as many times as you like. "Short rounds" on the menu trims every game.
 
 | Game | How it works |
 |---|---|
@@ -28,7 +30,7 @@ The showrunner picks the lineup in the lobby: Quick (4 games), Classic (5), All 
 | Phrase Fever | Take turns on letters. Anyone can hit Solve and type the phrase. Five misses lose the puzzle. |
 | Name That Decade | Something happened. Pick the decade. |
 | Word Scramble | Unscramble the word. First in wins 150, everyone else can still score 40. |
-| Survey Says | Top 5 answers from this family's own secret surveys. Three strikes and the other team can steal. |
+| Survey Says | Find the top 5 answers. Three strikes and the other team can steal. The numbers are the show's own made-up poll of 1,000 people, not a real survey. |
 
 The look is "Studio 74", a 1970s game-show set: cocoa, mustard, orange and teal, with a marquee board and a dome buzzer.
 
@@ -36,7 +38,7 @@ The look is "Studio 74", a 1970s game-show set: cocoa, mustard, orange and teal,
 
 - `index.html` is the whole game in one file. `node build.js` rebuilds it from `src/`.
 - `src/content.js` holds every question, phrase and survey. The first option of each question is the right answer. Edit it to add your own.
-- `src/engine.js` is the rules, with no screen or network code. `node test/engine.test.js` plays 300 simulated games.
+- `src/engine.js` is the rules, with no screen or network code. `node test/engine.test.js` plays 300 simulated shows. `test/repro_vote.py` with `test/zombie-proxy.js` reproduces a phone whose connection has gone silent.
 - `src/app.js` is the TV screen, the phone screen and the relay connection.
 - Phones and TV talk through free public MQTT relays (EMQX, Eclipse, HiveMQ, Mosquitto) over secure websockets. The page connects to all four and needs only one to work.
 
@@ -44,4 +46,5 @@ The look is "Studio 74", a 1970s game-show set: cocoa, mustard, orange and teal,
 
 - The relays are public test services with no uptime promise. Room traffic (first names, answers) is not private. Do not type anything sensitive.
 - The TV page is the game's brain. Keep it open. If it reloads, it picks the game back up.
+- A phone that leaves the browser (camera, messages) loses its connection. It reconnects by itself about 5 seconds after it comes back, and it keeps resending a tap until the TV confirms it.
 - The host voice uses the browser's built-in speech. Some TV browsers have none; the host's words still show on screen.

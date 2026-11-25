@@ -14,22 +14,26 @@ function play(seed, nPlayers, teamSplit, skill) {
   var S = E.init('TEST', now);
   var pids = [];
   for (var i = 0; i < nPlayers; i++) { pids.push('p' + i); E.handle({ p: 'p' + i, t: 'hello', name: 'Bot<' + i + '>', team: teamSplit(i) }, now); }
-  for (i = 0; i < nPlayers; i++) { if (rnd() < 0.8) { E.handle({ p: pids[i], t: 'survey', a: [[Math.floor(rnd() * 10), Math.floor(rnd() * 10)], [1, 2], [Math.floor(rnd() * 10), 3]] }, now); } }
   assert.strictEqual(E.state().boss, 'p0');
-  E.handle({ p: 'p1', t: 'ctl', c: 'start' }, now); // not the boss: ignored
-  assert.strictEqual(E.state().phase, 'lobby');
-  var presets = ['classic', 'all', 'quick'];
-  var preset = presets[seed % 3];
-  E.handle({ p: 'p0', t: 'ctl', c: 'games', a: { keys: RC.content.presets[preset] } }, now);
-  assert.deepStrictEqual(E.state().lineup, RC.content.presets[preset]);
-  E.handle({ p: 'p0', t: 'ctl', c: 'games', a: { keys: ['nonsense'] } }, now);
-  assert.deepStrictEqual(E.state().lineup, RC.content.presets[preset], 'bad lineup must be ignored');
+  var orders = { classic: ['vote', 'board', 'zoom', 'phrase', 'feud'], all: RC.content.order.slice(), quick: ['likely', 'tf', 'zoom', 'feud'] };
+  var todo = orders[['classic', 'all', 'quick'][seed % 3]].slice();
+  var total = todo.length;
   E.handle({ p: 'p0', t: 'ctl', c: 'short', a: { on: seed % 4 === 0 } }, now);
-  E.handle({ p: 'p0', t: 'ctl', c: 'start' }, now);
+  E.handle({ p: 'p1', t: 'ctl', c: 'play', a: { key: todo[0] } }, now); // not the showrunner: ignored
+  assert.strictEqual(E.state().phase, 'lobby');
+  E.handle({ p: 'p0', t: 'ctl', c: 'play', a: { key: 'nonsense' } }, now);
+  assert.strictEqual(E.state().phase, 'lobby', 'unknown game must be ignored');
+  E.handle({ p: 'p0', t: 'ctl', c: 'play', a: { key: todo.shift() } }, now);
   assert.strictEqual(E.state().phase, 'intro');
   var seen = {}; var steps = 0;
   while (E.state().phase !== 'final' && steps < 200000) {
     steps++; now += 400;
+    if (E.state().phase === 'menu') {
+      seen.menu = 1;
+      if (todo.length) { E.handle({ p: 'p0', t: 'ctl', c: 'play', a: { key: todo.shift() } }, now); }
+      else { E.handle({ p: 'p0', t: 'ctl', c: 'end' }, now); }
+      continue;
+    }
     S = E.state(); var P = E._private();
     seen[S.phase] = (seen[S.phase] || 0) + 1;
     for (i = 0; i < nPlayers; i++) { if (rnd() < 0.3) { E.handle({ p: pids[i], t: 'hello', name: 'Bot<' + i + '>', team: teamSplit(i) }, now); } }
@@ -48,7 +52,7 @@ function play(seed, nPlayers, teamSplit, skill) {
       else if (rnd() < 0.5) { E.handle({ p: S.turn, t: 'letter', k: k, l: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.charAt(Math.floor(rnd() * 26)) }, now); }
     }
     else if (ph === 'phrase_solve' && rnd() < 0.4) { E.handle({ p: S.solver, t: 'solve', k: k, text: good ? P.ph.toLowerCase() : 'wrong answer' }, now); }
-    else if (ph === 'feud_pick' && rnd() < 0.5) { E.handle({ p: S.turn, t: 'fpick', k: k, o: Math.floor(rnd() * 10) }, now); }
+    else if (ph === 'feud_pick' && rnd() < 0.5) { E.handle({ p: S.turn, t: 'fpick', k: k, o: Math.floor(rnd() * 8) }, now); }
     if (rnd() < 0.01) { E.handle({ p: 'p0', t: 'ctl', c: 'pause' }, now); now += 5000; E.handle({ p: 'p0', t: 'ctl', c: 'pause' }, now); }
     E.tick(now);
     // dump/load must round-trip mid-game (TV page reload)
@@ -59,7 +63,7 @@ function play(seed, nPlayers, teamSplit, skill) {
   S = E.state();
   assert.strictEqual(S.phase, 'final', 'game did not finish, stuck in ' + S.phase);
   assert.ok(S.teams[0].score >= 0 && S.teams[1].score >= 0);
-  assert.ok(S.round === S.lineup.length, 'did not play the whole lineup');
+  assert.strictEqual(S.round, total, 'did not play every picked game');
   return { seen: seen, scores: [S.teams[0].score, S.teams[1].score], minutes: Math.round((now - 1000000) / 60000), fin: S.fin };
 }
 
@@ -72,7 +76,7 @@ for (var seed = 1; seed <= 300; seed++) {
   for (var k in r.seen) { phases[k] = 1; }
   if (seed <= 4) { out.push('seed ' + seed + ' players ' + n + ' scores ' + r.scores.join('-') + ' game minutes ' + r.minutes); }
 }
-var need = ['intro', 'vote_q', 'vote_reveal', 'board_pick', 'board_q', 'board_ans', 'board_reveal', 'zoom_q', 'zoom_ans', 'zoom_reveal', 'phrase_turn', 'phrase_solve', 'phrase_reveal', 'feud_face', 'feud_pick', 'feud_reveal', 'round_end', 'ml_q', 'ml_reveal', 'num_q', 'num_reveal', 'scr_q', 'scr_reveal'];
+var need = ['intro', 'vote_q', 'vote_reveal', 'board_pick', 'board_q', 'board_ans', 'board_reveal', 'zoom_q', 'zoom_ans', 'zoom_reveal', 'phrase_turn', 'phrase_solve', 'phrase_reveal', 'feud_face', 'feud_pick', 'feud_reveal', 'round_end', 'ml_q', 'ml_reveal', 'num_q', 'num_reveal', 'scr_q', 'scr_reveal', 'menu'];
 need.forEach(function (p) { assert.ok(phases[p], 'phase never reached: ' + p); });
 
 // content sanity
@@ -83,9 +87,9 @@ C.zoom.forEach(function (z) { assert.strictEqual(z.o.length, 4); });
 C.decades.forEach(function (q) { assert.strictEqual(new Set(q.o).size, 4, q.q); });
 C.words.forEach(function (w) { assert.ok(/^[A-Z]+$/.test(w.w), w.w); });
 C.numbers.forEach(function (n) { assert.ok(typeof n.a === 'number', n.q); });
-Object.keys(C.presets).forEach(function (k) { C.presets[k].forEach(function (g) { assert.ok(C.rounds.some(function (r) { return r.key === g; }), g); }); });
-C.surveys.forEach(function (s) { assert.strictEqual(s.o.length, 10, s.q); });
+C.order.forEach(function (g) { assert.ok(C.rounds.some(function (r) { return r.key === g; }), g); });
+C.surveys.forEach(function (s) { assert.strictEqual(s.a.length, 8, s.q); assert.strictEqual(s.a.reduce(function (t, x) { return t + x[1]; }, 0), 1000, s.q); for (var i = 1; i < 8; i++) { assert.ok(s.a[i][1] < s.a[i - 1][1], s.q); } });
 assert.ok(C.board.length >= 5 && C.zoom.length >= 5 && C.phrases.length >= 4 && C.surveys.length >= 3);
 
 console.log(out.join('\n'));
-console.log('OK: 300 simulated games finished (classic, quick and all-ten lineups), all ' + need.length + ' phases reached, content checks passed');
+console.log('OK: 300 simulated games finished (5-game, 4-game and all-ten sessions picked from the menu), all ' + need.length + ' phases reached, content checks passed');

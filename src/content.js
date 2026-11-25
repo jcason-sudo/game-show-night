@@ -114,13 +114,20 @@ RC.content = {
     { t: 'TWO PEAS IN A POD', h: 'Best friends' }
   ],
 
+  /* Survey Says. The numbers are the show's own made-up poll of 1,000 people, not a real survey. */
   surveys: [
-    { q: 'Name something a burglar would NOT want to find in your house.', o: ['A big dog', 'An alarm system', 'Security cameras', 'The owner wide awake', 'A police officer', 'A light-sleeping grandma', 'Booby traps', 'A talking parrot', 'Nosy neighbors', 'A karate trophy shelf'] },
-    { q: 'What is the funniest thing that can happen at a family dinner?', o: ['Someone burps loudly', 'Grandpa falls asleep', 'Someone spills a drink', 'The dog steals food', 'A kid says something embarrassing', 'Milk comes out of a nose', 'The main dish hits the floor', 'A chair breaks', 'The same old story, again', 'A silly ringtone goes off'] },
-    { q: 'What do people always forget to pack for a trip?', o: ['Toothbrush', 'Phone charger', 'Socks', 'Underwear', 'Sunscreen', 'Pajamas', 'Umbrella', 'Medicine', 'Swimsuit', 'Deodorant'] },
-    { q: 'What is the best thing to do on a rainy day?', o: ['Watch a movie', 'Play board games', 'Take a nap', 'Read a book', 'Bake cookies', 'Play video games', 'Do a puzzle', 'Splash in puddles', 'Build a pillow fort', 'Drink hot chocolate'] },
-    { q: 'Name an excuse kids give for not doing homework.', o: ['The dog ate it', 'I forgot', 'I left it at school', 'I did not understand it', 'The Wi-Fi was down', 'I was sick', 'I already did it', 'We had no homework', 'My brother ruined it', 'I was too tired'] },
-    { q: 'What does every grandparent have in their house?', o: ['A candy dish', 'Family photos', 'A comfy recliner', 'Old photo albums', 'A loud ticking clock', 'Cookies', 'A remote nobody else can work', 'Reading glasses everywhere', 'A very loud TV', 'Little statues on a shelf'] }
+    { q: 'Name something a burglar would NOT want to find in your house.', a: [['A big dog', 318], ['An alarm system', 214], ['The owner wide awake', 152], ['Security cameras', 121], ['A police officer', 84], ['Nosy neighbors', 51], ['A light-sleeping grandma', 37], ['A talking parrot', 23]] },
+    { q: 'What is the funniest thing that can happen at a family dinner?', a: [['Someone spills a drink', 246], ['A kid says something embarrassing', 221], ['The dog steals food', 173], ['Someone burps loudly', 141], ['Grandpa falls asleep', 96], ['Milk comes out of a nose', 62], ['A chair breaks', 38], ['A silly ringtone goes off', 23]] },
+    { q: 'What do people always forget to pack for a trip?', a: [['Phone charger', 302], ['Toothbrush', 251], ['Underwear', 133], ['Socks', 98], ['Sunscreen', 84], ['Medicine', 62], ['Pajamas', 41], ['Umbrella', 29]] },
+    { q: 'What is the best thing to do on a rainy day?', a: [['Watch a movie', 287], ['Take a nap', 196], ['Play board games', 158], ['Read a book', 124], ['Bake cookies', 93], ['Play video games', 71], ['Do a puzzle', 42], ['Splash in puddles', 29]] },
+    { q: 'Name an excuse kids give for not doing homework.', a: [['I forgot', 263], ['The dog ate it', 218], ['I left it at school', 164], ['I did not understand it', 127], ['I was sick', 92], ['We had no homework', 68], ['The Wi-Fi was down', 41], ['I was too tired', 27]] },
+    { q: 'What does every grandparent have in their house?', a: [['Family photos', 294], ['A candy dish', 187], ['A comfy recliner', 156], ['Cookies', 118], ['Reading glasses everywhere', 96], ['A very loud TV', 71], ['Old photo albums', 49], ['A loud ticking clock', 29]] },
+    { q: 'Name something people do when they cannot sleep.', a: [['Look at their phone', 281], ['Watch TV', 204], ['Read a book', 163], ['Get a snack', 127], ['Count sheep', 98], ['Toss and turn', 66], ['Drink warm milk', 38], ['Get up and clean', 23]] },
+    { q: 'Name something you find at every birthday party.', a: [['Cake', 334], ['Balloons', 198], ['Presents', 162], ['Candles', 104], ['Party hats', 76], ['Singing', 61], ['Ice cream', 42], ['A crying kid', 23]] },
+    { q: 'What is the first thing people do when they wake up?', a: [['Check their phone', 312], ['Go to the bathroom', 226], ['Hit snooze', 148], ['Make coffee', 121], ['Brush their teeth', 83], ['Stretch', 54], ['Take a shower', 36], ['Let the dog out', 20]] },
+    { q: 'Name something people lose all the time.', a: [['Keys', 296], ['Phone', 214], ['TV remote', 153], ['Glasses', 126], ['Socks', 87], ['Wallet', 64], ['Pens', 37], ['Their patience', 23]] },
+    { q: 'Name a food people eat with their hands.', a: [['Pizza', 268], ['Hamburger', 204], ['French fries', 151], ['Tacos', 118], ['Fried chicken', 97], ['Sandwich', 76], ['Hot dog', 54], ['Corn on the cob', 32]] },
+    { q: 'Name something you bring to the beach.', a: [['Towel', 274], ['Sunscreen', 226], ['Swimsuit', 141], ['Umbrella', 108], ['Cooler with drinks', 94], ['Sunglasses', 73], ['A good book', 49], ['A beach ball', 35]] }
   ],
 
   tf: [
@@ -204,13 +211,9 @@ RC.content = {
     { key: 'phrase', title: 'Phrase Fever', how: ['Take turns picking letters.', 'Anyone can hit SOLVE and type the phrase.', 'Five misses and the puzzle is lost.'] },
     { key: 'decade', title: 'Name That Decade', how: ['Something happened. In which decade?', 'Everyone answers on their own phone.', 'Grandparents, this one is yours.'] },
     { key: 'scramble', title: 'Word Scramble', how: ['The letters are mixed up. Type the word.', 'First to solve wins 150. Everyone else can still score 40.', 'Wrong tries cost nothing.'] },
-    { key: 'feud', title: 'Survey Says', how: ['The board comes from this family\'s own answers.', 'Find the top 5. Three strikes and the other team can steal.', 'The last survey is worth double.'] }
+    { key: 'feud', title: 'Survey Says', how: ['We asked 1,000 imaginary people. Find their top 5 answers.', 'Three strikes and the other team can steal.', 'The last survey is worth double.'] }
   ],
-  presets: {
-    quick: ['likely', 'tf', 'zoom', 'feud'],
-    classic: ['vote', 'board', 'zoom', 'phrase', 'feud'],
-    all: ['vote', 'likely', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'feud']
-  },
+  order: ['vote', 'likely', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'feud'],
 
   lines: {
     welcome: ['Welcome to Rain Check, the only game show that needs bad weather. I am your host, Drizzle McCloud.'],

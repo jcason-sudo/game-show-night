@@ -55,40 +55,40 @@ RC.createEngine = function (C, opts) {
   function trailing() { if (S.teams[0].score === S.teams[1].score) { return rnd() < 0.5 ? 0 : 1; } return S.teams[0].score < S.teams[1].score ? 0 : 1; }
   function activeTeam(t, now) { return teamPresent(t, now) ? t : (teamPresent(1 - t, now) ? 1 - t : t); }
 
-  function freshSurveys() {
-    var ids = shuffle(range(C.surveys.length)).slice(0, 3);
-    var out = [];
-    for (var i = 0; i < ids.length; i++) { out.push({ q: C.surveys[ids[i]].q, o: C.surveys[ids[i]].o.slice() }); }
-    return out;
-  }
-
   function init(room, now) {
     kc = 0;
     S = {
-      v: 1, room: room, boot: Math.floor(rnd() * 1e9), phase: 'lobby', k: 'lobby:0', paused: false, pleft: 0,
+      v: 2, room: room, boot: Math.floor(rnd() * 1e9), phase: 'lobby', k: 'lobby:0', paused: false, pleft: 0,
       teams: [{ name: 'Thunder', score: 0 }, { name: 'Lightning', score: 0 }],
       players: {}, order: [], boss: null, round: 0, rot: [-1, -1],
       say: { id: 0, text: '' }, fx: { id: 0, name: '' }, gain: null,
-      surveys: freshSurveys(), acted: {}, deadline: 0, turn: null,
-      lineup: C.presets.classic.slice(), short: false
+      acted: {}, deadline: 0, turn: null,
+      short: false, played: {}, cur: ''
     };
-    P = { sv: {} };
+    P = {};
     return S;
   }
 
   /* ---------- round flow ---------- */
-  function startRound(r, now) {
-    S.round = r;
-    var info = CAT[S.lineup[r - 1]];
-    S.intro = { n: r, of: S.lineup.length, title: info.title, how: info.how };
-    S.rt = info.title; S.rof = S.lineup.length;
-    S.turn = null;
-    setPhase('intro', now, 14000);
-    say('Round ' + r + '. ' + info.title + '. ' + info.how.join(' '));
+  function goMenu(now) {
+    S.turn = null; S.cur = '';
+    setPhase('menu', now, 0);
+    say(S.round ? 'Showrunner, pick the next game.' : 'Showrunner, pick the first game.');
+  }
+  function startGame(key, now) {
+    var info = CAT[key];
+    if (!info) { return; }
+    var first = S.round === 0;
+    S.round++; S.cur = key; S.played[key] = (S.played[key] || 0) + 1;
+    S.intro = { n: S.round, title: info.title, how: info.how };
+    S.rt = info.title;
+    S.turn = null; S.rv = null;
+    setPhase('intro', now, 12000);
+    say((first ? line('welcome') + ' ' : '') + info.title + '. ' + info.how.join(' '));
     fx('fanfare');
   }
   function beginRound(now) {
-    var key = S.lineup[S.round - 1];
+    var key = S.cur;
     if (key === 'vote') { P.vq = shuffle(C.votes).slice(0, cnt(8, 5)); P.vkind = 'mix'; S.vi = -1; nextVote(now); }
     else if (key === 'tf') { P.vq = shuffle(C.tf).slice(0, cnt(10, 6)); P.vkind = 'tf'; S.vi = -1; nextVote(now); }
     else if (key === 'decade') { P.vq = shuffle(C.decades).slice(0, cnt(8, 5)); P.vkind = 'decade'; S.vi = -1; nextVote(now); }
@@ -362,32 +362,32 @@ RC.createEngine = function (C, opts) {
 
   /* ---------- round 5: survey says ---------- */
   function setupFeud() {
-    P.fb = [];
-    for (var s = 0; s < S.surveys.length; s++) {
-      var votes = []; var n = S.surveys[s].o.length, i;
-      for (i = 0; i < n; i++) { votes.push(0); }
-      for (var pid in P.sv) { if (P.sv.hasOwnProperty(pid) && P.sv[pid][s]) { for (i = 0; i < P.sv[pid][s].length; i++) { var o = P.sv[pid][s][i]; if (o >= 0 && o < n) { votes[o]++; } } } }
-      var idx = range(n);
-      idx.sort(function (x, y) { return (votes[y] - votes[x]) || (x - y); });
-      P.fb.push({ top: idx.slice(0, 5), votes: votes });
+    var pick = shuffle(C.surveys).slice(0, cnt(3, 2));
+    P.fq = [];
+    for (var s = 0; s < pick.length; s++) {
+      var ord = shuffle(range(pick[s].a.length)), o = [], votes = [], top = [], i;
+      for (i = 0; i < ord.length; i++) { o.push(pick[s].a[ord[i]][0]); votes.push(pick[s].a[ord[i]][1]); }
+      var idx = range(o.length);
+      idx.sort(function (x, y) { return votes[y] - votes[x]; });
+      top = idx.slice(0, 5);
+      P.fq.push({ q: pick[s].q, o: o, votes: votes, top: top });
     }
   }
   function nextFeud(now) {
     S.fi++;
-    P.fn = cnt(S.surveys.length, 2);
-    if (S.fi >= P.fn) { return roundEnd(now); }
-    var sv = S.surveys[S.fi];
-    S.f = { n: S.fi + 1, of: P.fn, q: sv.q, o: sv.o, mult: S.fi === P.fn - 1 ? 2 : 1, tried: [], slots: [null, null, null, null, null], strikes: 0, pot: 0, play: -1, mode: 'face', x: 0 };
+    if (S.fi >= P.fq.length) { return roundEnd(now); }
+    var sv = P.fq[S.fi];
+    S.f = { n: S.fi + 1, of: P.fq.length, q: sv.q, o: sv.o, mult: S.fi === P.fq.length - 1 ? 2 : 1, tried: [], slots: [null, null, null, null, null], strikes: 0, pot: 0, play: -1, mode: 'face', x: 0 };
     S.rv = null; S.turn = null;
     var r = readMs(sv.q);
     S.openAt = now + r;
     setPhase('feud_face', now, r + 12000);
-    say('We asked this family: ' + sv.q + ' Buzz in!');
+    say('We asked 1,000 people: ' + sv.q + ' Buzz in!');
   }
-  function slotPts(rank) { return SLOT_PTS[rank] * S.f.mult; }
+  function slotPts(rank) { var sv = P.fq[S.fi]; return Math.round(sv.votes[sv.top[rank]] / 10) * 5 * S.f.mult; }
   function revealSlot(rank, hit) {
-    var o = P.fb[S.fi].top[rank];
-    S.f.slots[rank] = { text: S.f.o[o], pts: slotPts(rank), votes: P.fb[S.fi].votes[o], hit: hit };
+    var o = P.fq[S.fi].top[rank];
+    S.f.slots[rank] = { text: S.f.o[o], pts: slotPts(rank), votes: P.fq[S.fi].votes[o], hit: hit };
   }
   function slotsOpen() { var n = 0; for (var i = 0; i < 5; i++) { if (!S.f.slots[i]) { n++; } } return n; }
   function feudPlayTurn(now) {
@@ -407,7 +407,7 @@ RC.createEngine = function (C, opts) {
   }
   function feudPick(o, now) { // o = option index, or -1 on timeout
     var f = S.f, team = S.turn && pl(S.turn) ? pl(S.turn).t : f.play;
-    var rank = o >= 0 ? P.fb[S.fi].top.indexOf(o) : -1;
+    var rank = o >= 0 ? P.fq[S.fi].top.indexOf(o) : -1;
     if (o >= 0) { f.tried.push(o); }
     var hit = rank >= 0 && !f.slots[rank];
     if (hit) { revealSlot(rank, true); f.pot += slotPts(rank); if (S.turn && pl(S.turn)) { pl(S.turn).pts += slotPts(rank); } fx('ding'); say(line('survey') + ' ' + f.slots[rank].text + '!'); }
@@ -439,7 +439,7 @@ RC.createEngine = function (C, opts) {
   /* ---------- advance: called on deadline or when the showrunner taps Next ---------- */
   function advance(now, timedOut) {
     var ph = S.phase;
-    if (ph === 'lobby') { if (!timedOut) { startShow(now); } }
+    if (ph === 'lobby') { if (!timedOut) { goMenu(now); } }
     else if (ph === 'intro') { beginRound(now); }
     else if (ph === 'vote_q') { endVote(now); }
     else if (ph === 'vote_reveal') { nextVote(now); }
@@ -462,19 +462,13 @@ RC.createEngine = function (C, opts) {
     else if (ph === 'feud_face') { S.f.play = activeTeam(trailing(), now); feudPlayTurn(now); }
     else if (ph === 'feud_pick') { feudPick(-1, now); }
     else if (ph === 'feud_reveal') { nextFeud(now); }
-    else if (ph === 'round_end') { if (S.round >= S.lineup.length) { finale(now); } else { startRound(S.round + 1, now); } }
+    else if (ph === 'round_end') { goMenu(now); }
   }
-  function startShow(now) {
-    S.teams[0].score = 0; S.teams[1].score = 0;
-    say(line('welcome'));
-    startRound(1, now);
-    S.say.text = line('welcome') + ' ' + S.say.text;
-  }
-
   /* ---------- showrunner commands ---------- */
   function cmd(c, a, now) {
     a = a || {};
-    if (c === 'start') { if (S.phase === 'lobby') { startShow(now); } }
+    if (c === 'play') { if (S.phase === 'lobby' || S.phase === 'menu' || S.phase === 'round_end') { startGame(clean(a.key, 12), now); } }
+    else if (c === 'menu') { if (S.phase !== 'final') { if (S.paused) { cmd('pause', null, now); } goMenu(now); } }
     else if (c === 'next') { if (S.paused) { cmd('pause', null, now); } advance(now, false); }
     else if (c === 'pause') {
       if (!S.paused) { S.paused = true; S.pleft = S.deadline ? Math.max(0, S.deadline - now) : 0; S.pat = now; }
@@ -486,21 +480,14 @@ RC.createEngine = function (C, opts) {
     }
     else if (c === 'skip') { if (S.phase !== 'lobby' && S.phase !== 'final' && S.phase !== 'round_end') { roundEnd(now); } }
     else if (c === 'adj') { var t = a.team === 1 ? 1 : 0; var d2 = Math.max(-500, Math.min(500, parseInt(a.d, 10) || 0)); S.teams[t].score += d2; }
-    else if (c === 'games') {
-      if (S.phase === 'lobby' && a.keys && a.keys.length) {
-        var keep = [];
-        for (var g = 0; g < C.presets.all.length; g++) { if (a.keys.indexOf(C.presets.all[g]) >= 0) { keep.push(C.presets.all[g]); } }
-        if (keep.length) { S.lineup = keep; }
-      }
-    }
-    else if (c === 'short') { if (S.phase === 'lobby') { S.short = !!a.on; } }
+    else if (c === 'short') { if (S.phase === 'lobby' || S.phase === 'menu') { S.short = !!a.on; } }
     else if (c === 'boss') { if (pl(a.pid)) { S.boss = a.pid; } }
     else if (c === 'teams') { if (a.names && a.names.length === 2) { S.teams[0].name = clean(a.names[0], 14) || 'Thunder'; S.teams[1].name = clean(a.names[1], 14) || 'Lightning'; } }
     else if (c === 'kick') { if (pl(a.pid)) { delete S.players[a.pid]; S.order.splice(S.order.indexOf(a.pid), 1); if (S.boss === a.pid) { S.boss = S.order[0] || null; } } }
-    else if (c === 'end') { if (S.phase !== 'lobby') { finale(now); } }
+    else if (c === 'end') { if (S.round > 0) { if (S.paused) { cmd('pause', null, now); } finale(now); } }
     else if (c === 'again') {
-      S.teams[0].score = 0; S.teams[1].score = 0; S.round = 0; S.rot = [-1, -1]; S.surveys = freshSurveys(); P = { sv: {} };
-      for (var i = 0; i < S.order.length; i++) { var p = pl(S.order[i]); p.pts = 0; p.bz = 0; p.sd = false; }
+      S.teams[0].score = 0; S.teams[1].score = 0; S.round = 0; S.rot = [-1, -1]; S.played = {}; S.cur = ''; P = {};
+      for (var i = 0; i < S.order.length; i++) { var p = pl(S.order[i]); p.pts = 0; p.bz = 0; }
       S.q = null; S.rv = null; S.fin = null; S.turn = null;
       setPhase('lobby', now, 0);
     }
@@ -516,25 +503,20 @@ RC.createEngine = function (C, opts) {
       if (!name) { return; }
       if (!p) {
         if (S.order.length >= 30) { return; }
-        S.players[pid] = p = { n: name, t: team, seen: now, pts: 0, bz: 0, sd: false };
+        S.players[pid] = p = { n: name, t: team, seen: now, pts: 0, bz: 0, e: 0, rtt: 0, late: 0 };
         S.order.push(pid);
         if (!S.boss) { S.boss = pid; }
         fx('join');
       } else { p.n = name; if (S.phase === 'lobby') { p.t = team; } }
       p.seen = now;
+      if (m.ts > 0) { p.e = +m.ts; }
+      if (m.rtt > 0) { p.rtt = Math.min(9999, Math.round(+m.rtt)); }
       return;
     }
     if (!p) { return; }
     p.seen = now;
-    if (m.t === 'survey') {
-      if (S.phase !== 'lobby' || !m.a || !m.a.length) { return; }
-      var rec = [];
-      for (var s = 0; s < S.surveys.length; s++) { var row = []; var src = m.a[s] || []; for (var j = 0; j < src.length && j < 2; j++) { var o = parseInt(src[j], 10); if (o >= 0 && o < S.surveys[s].o.length && row.indexOf(o) < 0) { row.push(o); } } rec.push(row); }
-      P.sv[pid] = rec; p.sd = true;
-      return;
-    }
     if (m.t === 'ctl') { if (pid === S.boss) { cmd(clean(m.c, 10), m.a, now); } return; }
-    if (S.paused || m.k !== S.k) { return; }
+    if (S.paused || m.k !== S.k) { if (!m.n && m.k !== S.k) { p.late = (p.late || 0) + 1; } return; }
     var ph = S.phase, team2 = p.t, a;
     if (m.t === 'vote' && ph === 'vote_q') {
       a = parseInt(m.a, 10);

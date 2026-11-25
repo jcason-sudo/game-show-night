@@ -35,26 +35,16 @@ async def main():
             await p.click('[data-a=join]')
             phones.append(p)
             await asyncio.sleep(0.4)
-        # surveys
-        for i, p in enumerate(phones):
-            for step in range(3):
-                await p.wait_for_selector('[data-a=sv]')
-                if i == 0 and step == 0: await p.screenshot(path='test/shots/03_phone_survey.png')
-                for v in random.sample(range(10), 2): await p.click('[data-a=sv][data-v="%d"]' % v)
-                await p.click('[data-a=svnext]')
-                await asyncio.sleep(0.15)
         await asyncio.sleep(2)
         await tv.screenshot(path='test/shots/04_tv_lobby.png')
         await phones[0].screenshot(path='test/shots/05_phone_boss_lobby.png', full_page=True)
-        await phones[0].click('[data-a=c_set][data-v=all]')
+        await phones[1].screenshot(path='test/shots/05c_phone_player_lobby.png')
+        await phones[0].click('[data-a=c_preset]')
         await asyncio.sleep(0.6)
         await phones[0].click('[data-a=c_short]')
         await asyncio.sleep(0.6)
-        await phones[0].screenshot(path='test/shots/05b_phone_boss_games.png', full_page=True)
-        await tv.screenshot(path='test/shots/04b_tv_lobby_lineup.png')
-        await phones[0].click('[data-a=c_preset]')
-        await asyncio.sleep(0.6)
-        await phones[0].click('[data-a=c_start]')
+        todo = ['vote', 'likely', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'feud']
+        await phones[0].click('[data-a=c_play][data-v=%s]' % todo.pop(0))
         shot = {}; pshot = {}
         steps = 0
         last_phase = None; same = 0
@@ -69,6 +59,19 @@ async def main():
                 shot[ph] = 1
                 await tv.screenshot(path='test/shots/tv_%02d_%s.png' % (len(shot), ph))
             if ph == 'final' and same >= 6: break
+            if ph == 'menu' and same >= 3:
+                if 'menu_phone' not in pshot:
+                    pshot['menu_phone'] = 1
+                    await phones[0].screenshot(path='test/shots/06_phone_boss_menu.png', full_page=True)
+                    await phones[1].screenshot(path='test/shots/06b_phone_player_menu.png')
+                if todo:
+                    if len(todo) == 5:   # pick one game from the TV itself, the rest from the phone
+                        await tv.click('[data-a=s_game][data-v=%s]' % todo.pop(0))
+                    else:
+                        await phones[0].click('[data-a=c_play][data-v=%s]' % todo.pop(0))
+                else:
+                    await phones[0].click('[data-a=c_end]')
+                await asyncio.sleep(0.8); continue
             # showrunner moves the show along on passive screens
             if ph in ('intro', 'vote_reveal', 'board_reveal', 'zoom_reveal', 'phrase_reveal', 'feud_reveal', 'round_end', 'ml_reveal', 'num_reveal', 'scr_reveal') and same >= 6:
                 b = await phones[0].query_selector('[data-a=c_next]')

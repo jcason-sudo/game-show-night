@@ -212,3 +212,16 @@ button { touch-action: manipulation; cursor: pointer; }
 .plist { text-align: left; font-size: 18px; font-weight: 800; margin: 6px 0 14px; }
 .plist b.t0c, .plist b.t1c { display: block; margin-top: 10px; font-size: 20px; font-weight: 900; }
 .small { font-size: 15px; font-weight: 800; }
+
+/* game menu */
+.gmenu { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-justify-content: center; justify-content: center; width: 86vw; }
+.gtile { width: 15.6vw; height: 13.5vh; margin: 0.8vh 0.6vw; border: 0; border-radius: 2.6vh; background: #17696B; color: #FFFFFF; font-size: 3.1vh; font-weight: 900; line-height: 1.1; padding: 0 0.6vw; box-shadow: 0 0.9vh 0 #3A2214; }
+.gtile:focus { outline: 0.7vh solid #F2B705; }
+.gtile.done { background: #FFFFFF; color: #3A2214; box-shadow: inset 0 0 0 0.5vh #3A2214; }
+.gtile small { display: block; font-size: 2vh; color: #C4520F; margin-top: 0.4vh; }
+.pbtn.game { background: #17696B; }
+.half .pbtn.game { min-height: 76px; font-size: 18px; }
+.pbtn.game.done { background: #FFFFFF; color: #3A2214; box-shadow: inset 0 0 0 3px #3A2214; }
+.pbtn.game small { display: block; font-size: 13px; color: #C4520F; }
+.bossbar button.alt.wide { -webkit-flex: 1; flex: 1; width: auto; }
+button.banner { display: block; width: 100%; border: 0; }

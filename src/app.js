@@ -32,7 +32,7 @@
     var base = 'raincheck1/' + room + '/';
     net.base = base;
     BROKERS.forEach(function (b, idx) {
-      var c = { up: false, client: null, timer: null };
+      var c = { up: false, client: null, timer: null, open: null };
       net.conns.push(c);
       function retry(ms) { if (c.timer) { return; } c.timer = setTimeout(function () { c.timer = null; open(); }, ms); }
       function open() {
@@ -49,9 +49,22 @@
           });
         } catch (e) { retry(6000); }
       }
+      c.open = open;
       open();
     });
     function count() { var n = 0; net.conns.forEach(function (c) { if (c.up) { n++; } }); net.up = n; if (net.onCount) { net.onCount(); } }
+    net.count = count;
+  }
+  /* Drop every relay connection and dial again. Used when a connection looks alive but nothing arrives,
+     which is what happens after a phone's browser was in the background. */
+  function netKick() {
+    net.conns.forEach(function (c) {
+      var old = c.client; c.client = null; c.up = false;
+      if (c.timer) { clearTimeout(c.timer); c.timer = null; }
+      try { if (old) { old.disconnect(); } } catch (e) { }
+      if (c.open) { c.open(); }
+    });
+    if (net.count) { net.count(); }
   }
   function netSend(topic, str, retained) {
     net.conns.forEach(function (c) {
@@ -62,6 +75,7 @@
   function dotsHtml() { var s = '<span class="dots">'; net.conns.forEach(function (c) { s += '<i class="' + (c.up ? 'on' : '') + '"></i>'; }); return s + '</span>'; }
 
   /* ---------------- shared ---------------- */
+  var VERSION = 2;         // must match the engine's state version
   var S = null;            // latest public state
   var clockOff = 0;        // my clock minus the TV's clock
   function hnow() { var n = Date.now() - clockOff; if (S && S.paused && S.pat) { return S.pat; } return n; }
@@ -128,9 +142,9 @@
   function screen() {
     var E = RC.createEngine(C);
     var saved = lsGet('rc_host_' + ROOM);
-    if (!(saved && E.load(saved) && E.state().room === ROOM && E.state().lineup)) { E.init(ROOM, Date.now()); } // a room saved by an older version starts fresh
+    if (!(saved && E.load(saved) && E.state().room === ROOM && E.state().v === VERSION)) { E.init(ROOM, Date.now()); } // a room saved by an older version starts fresh
     S = E.state();
-    var seen = {}, seenList = [], dirty = true, lastPub = 0, lastSeq = 0;
+    var seen = {}, seenList = [], dirty = true, lastPub = 0, lastSeq = 0, lastIn = Date.now(), lastKick = 0;
     var unlocked = false, soundOn = true, menuOpen = false, lastSay = S.say.id, lastFx = S.fx.id, talkTimer = null, lastX = S.f ? S.f.x : 0;
     var qrSvg = '';
     try { var qr = qrcode(0, 'M'); qr.addData(HERE + '?r=' + ROOM + (qs.relay ? '&relay=' + qs.relay : '')); qr.make(); qrSvg = qr.createSvgTag(6, 12); } catch (e) { }
@@ -158,6 +172,7 @@
       var m = JSON.parse(str);
       if (!m || !m.i || seen[m.i]) { return; }
       seen[m.i] = 1; seenList.push(m.i); if (seenList.length > 800) { delete seen[seenList.shift()]; }
+      lastIn = Date.now();
       E.handle(m, Date.now()); dirty = true;
     });
     net.onUp = function () { dirty = true; };
@@ -165,9 +180,14 @@
     setInterval(function () {
       var now = Date.now();
       if (E.tick(now)) { dirty = true; }
-      if (dirty || now - lastPub > 3000) { publish(); }
+      if (dirty || now - lastPub > 2000) { publish(); }
+      // phones say hello every 4 seconds; long silence with players in the room means our own connections went stale
+      if (S.order.length && now - lastIn > 15000 && now - lastKick > 15000) { lastKick = now; netKick(); }
       tickUI();
     }, 100);
+    function wake() { if (!document.hidden && Date.now() - lastIn > 6000 && S.order.length) { lastKick = Date.now(); netKick(); } }
+    document.addEventListener('visibilitychange', wake);
+    window.addEventListener('online', function () { lastKick = Date.now(); netKick(); });
 
     /* sound */
     var actx = null, voice = null;
@@ -213,25 +233,33 @@
 
     /* drawing */
     function topHtml() {
-      var sub = S.phase === 'lobby' ? 'Join on your phone' : (S.phase === 'final' ? 'Final score' : 'Game ' + S.round + ' of ' + (S.rof || 1) + ' &middot; ' + esc(S.rt || ''));
+      var sub = S.phase === 'lobby' ? 'Join on your phone' : (S.phase === 'menu' ? 'Pick a game' : (S.phase === 'final' ? 'Final score' : 'Game ' + S.round + ' &middot; ' + esc(S.rt || '')));
       function tm(t) { var ctrl = (S.turn && pteam(S.turn) === t) ? ' ctrl' : ''; return '<div class="tm t' + t + ctrl + '"><div class="tn">' + esc(tname(t)) + '</div><div class="ts">' + S.teams[t].score + '</div></div>'; }
       return tm(0) + '<div class="mid"><div class="logo">Rain Check!</div><div class="sub">' + sub + '</div></div>' + tm(1);
     }
     function who(pid) { return '<span class="t' + pteam(pid) + 'c">' + esc(pname(pid)) + '</span>'; }
     function lobbyHtml() {
       var cols = ['', ''];
-      S.order.forEach(function (pid) { var p = S.players[pid]; if (!p) { return; } cols[p.t] += '<div class="chip' + ((Date.now() - p.seen) > 30000 ? ' off' : '') + '">' + esc(p.n) + (pid === S.boss ? ' <small>RUNS THE SHOW</small>' : '') + (p.sd ? ' <small>READY</small>' : '') + '</div>'; });
-      var names = [];
-      for (var gi = 0; gi < S.lineup.length; gi++) { names.push(gameTitle(S.lineup[gi])); }
+      S.order.forEach(function (pid) { var p = S.players[pid]; if (!p) { return; } cols[p.t] += '<div class="chip' + ((Date.now() - p.seen) > 30000 ? ' off' : '') + '">' + esc(p.n) + (pid === S.boss ? ' <small>RUNS THE SHOW</small>' : '') + '</div>'; });
       return '<div class="lobby"><div class="qr">' + qrSvg + '<div class="url">' + esc(SHORT) + '</div><div class="code">' + ROOM + '</div></div>' +
-        '<div class="teams"><div class="col t0"><h3>' + esc(tname(0)) + '</h3>' + cols[0] + '</div><div class="col t1"><h3>' + esc(tname(1)) + '</h3>' + cols[1] + '</div></div></div><div class="lineup"><b>Tonight:</b> ' + esc(names.join(', ')) + (S.short ? ' (short rounds)' : '') + '</div>';
+        '<div class="teams"><div class="col t0"><h3>' + esc(tname(0)) + '</h3>' + cols[0] + '</div><div class="col t1"><h3>' + esc(tname(1)) + '</h3>' + cols[1] + '</div></div></div><div class="lineup">' + (S.boss ? '<b>' + esc(pname(S.boss)) + '</b> runs the show. Tap a game on that phone to start.' : 'The first player to join runs the show.') + '</div>';
+    }
+    function gmenuHtml() {
+      var h = '<div class="h2">Pick a game</div><div class="gmenu">';
+      for (var i = 0; i < C.order.length; i++) { var k = C.order[i], n = S.played[k] || 0; h += '<button class="gtile' + (n ? ' done' : '') + '" data-a="s_game" data-v="' + k + '">' + esc(gameTitle(k)) + (n ? '<small>played</small>' : '') + '</button>'; }
+      return h + '</div><div class="lineup">' + (S.boss ? '<b>' + esc(pname(S.boss)) + '</b> picks on the phone' : 'Pick here') + (S.short ? ' &middot; short rounds' : '') + ' &middot; ' + S.round + ' played so far</div>';
+    }
+    function waitHtml() { // names of players who are here but have not answered yet
+      var miss = [], now = S.now || Date.now();
+      for (var i = 0; i < S.order.length; i++) { var p = S.players[S.order[i]]; if (p && now - p.seen < 30000 && !S.acted[S.order[i]]) { miss.push(p.n); } }
+      return S.nv + ' answered' + (miss.length && miss.length <= 4 ? '. Waiting for ' + esc(miss.join(', ')) : '');
     }
     function voteHtml() {
       var q = S.q, rv = S.phase === 'vote_reveal' ? S.rv : null, h = '<div class="tag">Question ' + q.n + ' of ' + q.of + '</div><div class="h2">' + esc(q.text) + '</div><div class="opts">';
       for (var i = 0; i < q.o.length; i++) { h += '<div class="opt o' + i + (rv ? (rv.a === i ? ' win' : ' dim') : '') + '"><span class="l">' + 'ABCD'.charAt(i) + '</span>' + esc(q.o[i]) + (rv ? '<span class="n">' + rv.counts[i] + '</span>' : '') + '</div>'; }
       h += '</div>';
       if (rv) { h += '<div class="status"><span class="t0c">' + esc(tname(0)) + ' +' + rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + rv.gains[1] + '</span>' + (rv.fast ? ' &nbsp; Fastest: ' + esc(rv.fast) : '') + '</div>'; }
-      else { h += '<div class="status">' + S.nv + ' answered</div>' + timerHtml(q.kind === 'tf' ? 16000 : 26000); }
+      else { h += '<div class="status">' + waitHtml() + '</div>' + timerHtml(q.kind === 'tf' ? 16000 : 26000); }
       return h;
     }
     function boardHtml() {
@@ -293,7 +321,7 @@
       var f = S.f, h = '<div class="tag' + (f.mult > 1 ? ' red' : '') + '">Survey ' + f.n + ' of ' + f.of + (f.mult > 1 ? ' &middot; DOUBLE POINTS' : '') + '</div><div class="h2">' + esc(f.q) + '</div><div class="fwrap"><div class="slots">';
       for (var i = 0; i < 5; i++) {
         var s = f.slots[i];
-        h += s ? '<div class="slot shown' + (s.hit ? '' : ' missed') + '"><span class="no">' + (i + 1) + '</span>' + esc(s.text) + '<span class="vt">' + s.votes + (s.votes === 1 ? ' vote' : ' votes') + '</span><span class="pt">' + s.pts + '</span></div>' : '<div class="slot"><span class="no">' + (i + 1) + '</span></div>';
+        h += s ? '<div class="slot shown' + (s.hit ? '' : ' missed') + '"><span class="no">' + (i + 1) + '</span>' + esc(s.text) + '<span class="vt">' + s.votes + ' said this</span><span class="pt">' + s.pts + '</span></div>' : '<div class="slot"><span class="no">' + (i + 1) + '</span></div>';
       }
       h += '</div><div class="fside"><div class="strikes">';
       for (var k = 0; k < 3; k++) { h += '<b class="' + (k < f.strikes ? 'x' : '') + '">X</b>'; }
@@ -311,15 +339,16 @@
     function stageHtml() {
       var ph = S.phase;
       if (ph === 'lobby') { return lobbyHtml(); }
-      if (ph === 'intro') { var how = ''; S.intro.how.forEach(function (x) { how += '<div>' + esc(x) + '</div>'; }); return '<div class="tag red">Round ' + S.intro.n + ' of ' + S.intro.of + '</div><div class="h1">' + esc(S.intro.title) + '</div><div class="how">' + how + '</div>' + timerHtml(14000); }
+      if (ph === 'menu') { return gmenuHtml(); }
+      if (ph === 'intro') { var how = ''; S.intro.how.forEach(function (x) { how += '<div>' + esc(x) + '</div>'; }); return '<div class="tag red">Game ' + S.intro.n + '</div><div class="h1">' + esc(S.intro.title) + '</div><div class="how">' + how + '</div>' + timerHtml(14000); }
       if (ph === 'vote_q' || ph === 'vote_reveal') { return voteHtml(); }
-      if (ph === 'ml_q') { return '<div class="tag">Question ' + S.ml.n + ' of ' + S.ml.of + '</div><div class="h2">' + esc(S.ml.text) + '</div><div class="status">Vote on your phone. ' + S.nv + ' answered</div>' + timerHtml(26000); }
+      if (ph === 'ml_q') { return '<div class="tag">Question ' + S.ml.n + ' of ' + S.ml.of + '</div><div class="h2">' + esc(S.ml.text) + '</div><div class="status">Vote on your phone. ' + waitHtml() + '</div>' + timerHtml(26000); }
       if (ph === 'ml_reveal') {
         var tl = ''; S.rv.top.forEach(function (x) { tl += (tl ? ', ' : '') + esc(x.n) + ' ' + x.c; });
         return '<div class="h2">' + esc(S.ml.text) + '</div><div class="answer">' + (S.rv.win.length ? esc(S.rv.win.join(' and ')) : 'No votes') + '</div><div class="tally">' + tl + '</div>' +
           '<div class="status"><span class="t0c">' + esc(tname(0)) + ' +' + S.rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + S.rv.gains[1] + '</span></div>';
       }
-      if (ph === 'num_q') { return '<div class="tag">Question ' + S.nm.n + ' of ' + S.nm.of + '</div><div class="h2">' + esc(S.nm.text) + '</div><div class="status">Type your best guess. ' + S.nv + ' answered</div>' + timerHtml(30000); }
+      if (ph === 'num_q') { return '<div class="tag">Question ' + S.nm.n + ' of ' + S.nm.of + '</div><div class="h2">' + esc(S.nm.text) + '</div><div class="status">Type your best guess. ' + waitHtml() + '</div>' + timerHtml(30000); }
       if (ph === 'num_reveal') {
         var nl = ''; S.rv.list.forEach(function (x) { nl += (nl ? ', ' : '') + '<span class="t' + x.t + 'c">' + esc(x.n) + '</span> ' + esc(x.v); });
         return '<div class="h2">' + esc(S.nm.text) + '</div><div class="answer">' + esc(S.rv.a) + '</div><div class="tally">' + nl + '</div>' +
@@ -336,7 +365,7 @@
       if (ph === 'zoom_q' || ph === 'zoom_ans' || ph === 'zoom_reveal') { return zoomHtml(); }
       if (ph === 'phrase_turn' || ph === 'phrase_solve' || ph === 'phrase_reveal') { return phraseHtml(); }
       if (ph === 'feud_face' || ph === 'feud_pick' || ph === 'feud_reveal') { return feudHtml(); }
-      if (ph === 'round_end') { return '<div class="tag">End of round ' + S.re.n + '</div><div class="h1">' + esc(S.re.title) + '</div>' + barsHtml(); }
+      if (ph === 'round_end') { return '<div class="tag">Scores after</div><div class="h1">' + esc(S.re.title) + '</div>' + barsHtml(); }
       if (ph === 'final') {
         var conf = '', cols = ['#C4520F', '#17696B', '#F2B705', '#FBF0D9'];
         for (var i = 0; i < 28; i++) { conf += '<div class="conf" style="left:' + ((i * 37) % 100) + '%;background:' + cols[i % 4] + ';-webkit-animation-delay:' + ((i * 0.23) % 3.4) + 's;animation-delay:' + ((i * 0.23) % 3.4) + 's"></div>'; }
@@ -352,19 +381,19 @@
       // zoom keeps one DOM node per picture so the image does not flicker while it zooms
       var st = stageHtml();
       put('stage', st);
-      put('bubble', esc(S.say.text || 'Scan the code with your phone camera to join. The first player in runs the show.'));
+      put('bubble', esc(S.phase === 'lobby' || !S.say.text ? 'Scan the code with your phone camera to join. The first player in runs the show.' : S.say.text));
       put('joinbox', 'Join at ' + esc(SHORT) + '<br>Room <b>' + ROOM + '</b><br>Relay ' + dotsHtml() + (net.up ? '' : ' connecting...'));
       put('pausel', S.paused ? '<div class="paused">PAUSED</div>' : '');
       put('menu', menuOpen ? '<div class="menu">' +
-        '<button data-a="s_next">' + (S.phase === 'lobby' ? 'Start the show' : 'Next') + '</button><button data-a="s_pause">' + (S.paused ? 'Resume' : 'Pause') + '</button>' +
-        '<button data-a="s_skip">Skip this round</button><button data-a="s_sound">Sound: ' + (soundOn ? 'on' : 'off') + '</button><button data-a="s_full">Full screen</button>' +
-        '<button data-a="s_again">New game, same players</button><button data-a="s_menu">Close</button></div>' : '');
+        '<button data-a="s_next">' + (S.phase === 'lobby' ? 'Open the game menu' : 'Next') + '</button><button data-a="s_pause">' + (S.paused ? 'Resume' : 'Pause') + '</button>' +
+        '<button data-a="s_skip">Back to the game menu</button><button data-a="s_end">Finish the show</button><button data-a="s_sound">Sound: ' + (soundOn ? 'on' : 'off') + '</button><button data-a="s_full">Full screen</button>' +
+        '<button data-a="s_again">New show, same players</button><button data-a="s_menu">Close</button></div>' : '');
       if (S.say.id !== lastSay) { lastSay = S.say.id; speak(S.say.text); }
       if (S.fx.id !== lastFx) { lastFx = S.fx.id; sfx(S.fx.name); }
       if (S.f && S.f.x !== lastX) { if (S.f.x > lastX && (S.phase === 'feud_pick' || S.phase === 'feud_reveal')) { cache.xl = null; put('xl', '<div class="bigx">X</div>'); } lastX = S.f.x; }
       tickUI();
     }
-    function act(a) {
+    function act(a, v) {
       var now = Date.now();
       if (a === 's_unlock') {
         unlocked = true;
@@ -376,13 +405,15 @@
       else if (a === 's_menu') { menuOpen = !menuOpen; }
       else if (a === 's_next') { E.cmd('next', null, now); menuOpen = false; }
       else if (a === 's_pause') { E.cmd('pause', null, now); }
-      else if (a === 's_skip') { E.cmd('skip', null, now); menuOpen = false; }
+      else if (a === 's_skip') { E.cmd('menu', null, now); menuOpen = false; }
+      else if (a === 's_end') { E.cmd('end', null, now); menuOpen = false; }
+      else if (a === 's_game') { E.cmd('play', { key: v }, now); menuOpen = false; }
       else if (a === 's_again') { E.cmd('again', null, now); menuOpen = false; }
       else if (a === 's_sound') { soundOn = !soundOn; if (!soundOn) { try { window.speechSynthesis.cancel(); } catch (e) { } } }
       else if (a === 's_full') { try { var d = document.documentElement; (d.requestFullscreen || d.webkitRequestFullscreen).call(d); } catch (e) { } menuOpen = false; }
       dirty = true; render();
     }
-    app.addEventListener('click', function (e) { var b = closest(e.target, 'data-a'); if (b) { act(b.getAttribute('data-a')); } });
+    app.addEventListener('click', function (e) { var b = closest(e.target, 'data-a'); if (b) { act(b.getAttribute('data-a'), b.getAttribute('data-v')); } });
     document.addEventListener('keydown', function (e) {
       if (e.target && e.target.tagName === 'BUTTON') { return; }
       var k = e.keyCode;
@@ -400,15 +431,21 @@
   function phone() {
     var pid = lsGet('rc_pid'); if (!pid) { pid = rid(8); lsSet('rc_pid', pid); }
     if (qs.pid) { pid = qs.pid; } // for tests: several players in one browser
-    var ui = { name: lsGet('rc_name') || '', team: -1, joined: false, step: 0, picks: [[], [], []], svSent: false, menu: false, sent: null, names: null };
-    if (lsGet('rc_room') === ROOM && ui.name && !qs.pid) { ui.joined = true; ui.team = +lsGet('rc_team') || 0; ui.svFor = lsGet('rc_sv') || ''; try { ui.picks = JSON.parse(lsGet('rc_picks')) || ui.picks; } catch (e) { } }
-    var lastSeq = 0, lastBoot = 0, lastState = 0, pending = null, bestOff = null, bestAt = 0;
+    var ui = { name: lsGet('rc_name') || '', team: -1, joined: false, menu: false, sent: null, failK: '', rtt: 0, lastE: 0 };
+    if (lsGet('rc_room') === ROOM && ui.name && !qs.pid) { ui.joined = true; ui.team = +lsGet('rc_team') || 0; }
+    var lastSeq = 0, lastBoot = 0, lastState = 0, pending = null, offCur = null, offPrev = null, offAt = 0, lastKick = Date.now();
     app.innerHTML = '<div class="ph"><div id="pbanner"></div><div id="ptop"></div><div id="pnote"></div><div class="pbody" id="pbody"></div><div id="psheet"></div><div id="pboss"></div></div>';
 
-    function svSig() { var x = ''; if (S && S.surveys) { for (var i = 0; i < S.surveys.length; i++) { x += S.surveys[i].q.substring(0, 24) + '|'; } } return x; }
-    function send(m) { m.p = pid; if (!m.i) { m.i = rid(10); } netSend('in', JSON.stringify(m), false); }
-    function hello() { if (ui.joined && ui.name) { send({ t: 'hello', name: ui.name, team: ui.team < 0 ? 0 : ui.team }); } }
-    function doAct(m, label) { m.k = S.k; m.i = rid(10); pending = { k: S.k, m: m, tries: 0 }; ui.sent = { k: S.k, label: label }; send(m); render(); }
+    function send(m) { m.p = pid; m.i = rid(10); netSend('in', JSON.stringify(m), false); } // a fresh id every time, so a retry is never mistaken for a duplicate
+    function hello() { if (ui.joined && ui.name) { send({ t: 'hello', name: ui.name, team: ui.team < 0 ? 0 : ui.team, ts: Date.now(), rtt: ui.rtt }); } }
+    function doAct(m, label) { m.k = S.k; m.n = 0; pending = { k: S.k, m: m, tries: 0 }; ui.sent = { k: S.k, label: label }; ui.failK = ''; send(m); render(); }
+    function retry() { // keep sending the last tap until the TV shows it arrived
+      if (!pending || !S) { return; }
+      if (S.k !== pending.k || (S.acted && S.acted[pid])) { pending = null; return; }
+      if (pending.tries >= 25) { pending = null; ui.sent = null; ui.failK = S.k; return; }
+      pending.tries++; pending.m.n = pending.tries; send(pending.m);
+    }
+    function wakeLock() { try { if (navigator.wakeLock && navigator.wakeLock.request) { navigator.wakeLock.request('screen').then(function () { }, function () { }); } } catch (e) { } }
     function ctl(c, a) { send({ t: 'ctl', c: c, a: a || null }); }
 
     netStart(ROOM, 'state', function (topic, str) {
@@ -418,25 +455,26 @@
       if (st.boot === lastBoot && st.seq <= lastSeq) { return; }
       lastBoot = st.boot; lastSeq = st.seq; lastState = Date.now();
       var off = Date.now() - st.now;
-      if (bestOff === null || off < bestOff || Date.now() - bestAt > 60000) { bestOff = off; bestAt = Date.now(); }
-      clockOff = bestOff;
+      if (Date.now() - offAt > 30000) { offPrev = offCur; offCur = null; offAt = Date.now(); }
+      if (offCur === null || off < offCur) { offCur = off; }
+      clockOff = offPrev === null ? offCur : Math.min(offPrev, offCur);
       S = st;
-      var sig = svSig();
-      if (ui.lastSig && ui.lastSig !== sig) { ui.step = 0; ui.picks = [[], [], []]; }
-      ui.lastSig = sig; ui.svSent = (ui.svFor === sig);
+      var mine = S.players[pid];
+      if (mine && mine.e && mine.e !== ui.lastE) { ui.lastE = mine.e; var r = Date.now() - mine.e; if (r >= 0 && r < 30000) { ui.rtt = r; } }
       render();
     });
-    net.onUp = function () { hello(); render(); };
+    net.onUp = function () { hello(); retry(); render(); };
     net.onCount = function () { render(); };
     setInterval(hello, 4000);
-    setInterval(function () {
-      if (pending && S) {
-        if (S.k !== pending.k || (S.acted && S.acted[pid]) || pending.tries >= 5) { pending = null; }
-        else { pending.tries++; send(pending.m); }
-      }
-      if (ui.svSent && S && S.phase === 'lobby' && S.players[pid] && !S.players[pid].sd) { send({ t: 'survey', a: ui.picks }); }
-      render();
-    }, 1300);
+    setInterval(function () { retry(); render(); }, 900);
+    // watchdog: the TV speaks every 2 seconds. If we hear nothing for 5, our connections are stale: dial again.
+    var born = Date.now();
+    function kick() { lastKick = Date.now(); netKick(); }
+    setInterval(function () { if (ui.joined && Date.now() - (lastState || born) > 5000 && Date.now() - lastKick > 6000) { kick(); } }, 1000);
+    function onWake() { if (document.hidden) { return; } if (ui.joined) { wakeLock(); if (Date.now() - (lastState || born) > 3500) { kick(); } hello(); } }
+    document.addEventListener('visibilitychange', onWake);
+    window.addEventListener('pageshow', onWake);
+    window.addEventListener('online', function () { if (ui.joined) { kick(); } });
     setInterval(tickUI, 100);
 
     function me() { return S && S.players[pid]; }
@@ -458,33 +496,29 @@
         '<button class="pbtn c o1' + (ui.team === 1 ? ' sel' : '') + '" data-a="team" data-v="1">' + esc(n1) + '</button>' +
         '<button class="pbtn go" data-a="join"' + (ui.team < 0 ? ' disabled' : '') + '>I am in</button>';
     }
-    function surveyHtml() {
-      var sv = S.surveys[ui.step], picks = ui.picks[ui.step], h = '<p class="small">Secret survey ' + (ui.step + 1) + ' of ' + S.surveys.length + '. Do not show anyone.</p><div class="q">' + esc(sv.q) + '</div><p class="small">Pick your top 2</p>';
-      for (var i = 0; i < sv.o.length; i++) { h += '<button class="pbtn plain c' + (picks.indexOf(i) >= 0 ? ' sel' : '') + '" data-a="sv" data-v="' + i + '">' + esc(sv.o[i]) + '</button>'; }
-      return h + '<button class="pbtn go" data-a="svnext"' + (picks.length ? '' : ' disabled') + '>' + (ui.step < S.surveys.length - 1 ? 'Next' : 'Done') + '</button>';
+    function pickerHtml() {
+      var h = '<div class="half">';
+      for (var i = 0; i < C.order.length; i++) { var k = C.order[i], n = S.played[k] || 0; h += '<button class="pbtn game c' + (n ? ' done' : '') + '" data-a="c_play" data-v="' + k + '">' + esc(gameTitle(k)) + (n ? '<small>played</small>' : '') + '</button>'; }
+      h += '</div><button class="pbtn plain c' + (S.short ? ' sel' : '') + '" data-a="c_short">Short rounds: ' + (S.short ? 'on' : 'off') + '</button>';
+      if (S.round > 0) { h += '<button class="pbtn plain c" data-a="c_end">Finish the show and see the winner</button>'; }
+      return h;
     }
-    function sameList(a, b) { return a.join(',') === b.join(','); }
-    function gamesHtml() {
-      var h = '<h3>Pick tonight\'s games</h3><div class="half">' +
-        '<button class="pbtn plain c' + (sameList(S.lineup, C.presets.quick) ? ' sel' : '') + '" data-a="c_set" data-v="quick">Quick, 4 games</button>' +
-        '<button class="pbtn plain c' + (sameList(S.lineup, C.presets.classic) ? ' sel' : '') + '" data-a="c_set" data-v="classic">Classic, 5 games</button>' +
-        '<button class="pbtn plain c' + (sameList(S.lineup, C.presets.all) ? ' sel' : '') + '" data-a="c_set" data-v="all">All 10 games</button>' +
-        '<button class="pbtn plain c' + (S.short ? ' sel' : '') + '" data-a="c_short">Short rounds: ' + (S.short ? 'on' : 'off') + '</button></div><p class="small">Or tap games on and off:</p><div class="half">';
-      for (var i = 0; i < C.presets.all.length; i++) { var k = C.presets.all[i]; h += '<button class="pbtn plain c' + (S.lineup.indexOf(k) >= 0 ? ' sel' : '') + '" data-a="c_game" data-v="' + k + '">' + esc(gameTitle(k)) + '</button>'; }
-      return h + '</div>';
+    function locked(text) { // shared by every "everyone answers" screen
+      var s = sentHere();
+      if (S.acted && S.acted[pid]) { return '<h2>' + text + (s && s.label ? ': ' + esc(s.label) : '') + '</h2>' + watch('Waiting for the others.'); }
+      if (s) { return '<h2>Sending...</h2><p>Hold on a second.</p>'; }
+      return '';
     }
     function lobbyHtml() {
       var m = me(), lists = ['', ''];
       S.order.forEach(function (id) { var p = S.players[id]; if (p) { lists[p.t] += esc(p.n) + (id === S.boss ? ' (showrunner)' : '') + '<br>'; } });
-      var h = '<h2>You are in, ' + esc(m.n) + '!</h2><p>Waiting for the show to start.</p>' +
+      var h = '<h2>You are in, ' + esc(m.n) + '!</h2>' + (S.boss === pid ? '' : '<p>' + esc(pname(S.boss)) + ' will start the show.</p>') +
         '<div class="plist"><b class="t0c">' + esc(tname(0)) + '</b>' + (lists[0] || '<span class="small">nobody yet</span>') + '<b class="t1c">' + esc(tname(1)) + '</b>' + (lists[1] || '<span class="small">nobody yet</span>') + '</div>' +
         '<button class="pbtn plain c" data-a="switch">Switch my team</button>';
       if (S.boss === pid) {
-        h += '<h2>You run the show</h2><p class="small">Start when everyone is in. You also get Next and Pause buttons during the game.</p>' +
-          '<input class="field" id="tn0" maxlength="14" value="' + esc(tname(0)) + '" style="font-size:19px;margin:4px 0"><input class="field" id="tn1" maxlength="14" value="' + esc(tname(1)) + '" style="font-size:19px;margin:4px 0">' +
-          '<button class="pbtn plain c" data-a="c_names">Save team names</button><button class="pbtn plain c" data-a="c_preset">Kids vs Adults</button>' +
-          gamesHtml() +
-          '<button class="pbtn go" data-a="c_start">START THE SHOW</button>';
+        h += '<h2>You run the show</h2><p>When everyone is in, tap a game to start it. After each game you come back here and pick the next one.</p>' + pickerHtml() +
+          '<h3>Team names</h3><input class="field" id="tn0" maxlength="14" value="' + esc(tname(0)) + '" style="font-size:19px;margin:4px 0"><input class="field" id="tn1" maxlength="14" value="' + esc(tname(1)) + '" style="font-size:19px;margin:4px 0">' +
+          '<div class="half" style="margin-top:8px"><button class="pbtn plain c" data-a="c_names">Save names</button><button class="pbtn plain c" data-a="c_preset">Kids vs Adults</button></div>';
       }
       return h;
     }
@@ -494,25 +528,31 @@
       var m = me();
       if (!m) { return '<h2>Joining...</h2><p>Hang on, ' + esc(ui.name) + '.</p>'; }
       var ph = S.phase, mine = S.turn === pid, s = sentHere(), h = '';
-      if (ph === 'lobby') { if (!ui.svSent && !m.sd) { return surveyHtml(); } return lobbyHtml(); }
+      if (ph === 'lobby') { return lobbyHtml(); }
+      if (ph === 'menu') {
+        var sc = '<p>' + esc(tname(0)) + ' ' + S.teams[0].score + ' &middot; ' + esc(tname(1)) + ' ' + S.teams[1].score + '</p>';
+        if (S.boss === pid) { return '<h2>Pick the next game</h2>' + sc + pickerHtml(); }
+        return '<h2>' + esc(pname(S.boss)) + ' is picking the next game</h2>' + sc + watch();
+      }
+      var lk;
       if (S.paused) { return '<h2>Paused</h2>' + watch(); }
-      if (ph === 'intro') { return '<h2>Round ' + S.intro.n + ': ' + esc(S.intro.title) + '</h2>' + watch(); }
+      if (ph === 'intro') { return '<h2>' + esc(S.intro.title) + '</h2>' + watch(); }
       if (ph === 'vote_q') {
-        if (s || (S.acted && S.acted[pid])) { return '<h2>Locked in' + (s ? ': ' + esc(s.label) : '') + '</h2>' + watch('Waiting for the others.'); }
+        lk = locked('Locked in'); if (lk) { return lk; }
         h = '<div class="q">' + esc(S.q.text) + '</div>';
         for (var i = 0; i < S.q.o.length; i++) { h += '<button class="pbtn o' + i + '" data-a="vote" data-v="' + i + '">' + 'ABCD'.charAt(i) + '. ' + esc(S.q.o[i]) + '</button>'; }
         return h;
       }
       if (ph === 'vote_reveal') { return '<h2>Answer: ' + esc(S.q.o[S.rv.a]) + '</h2>' + watch(); }
       if (ph === 'ml_q') {
-        if (s || (S.acted && S.acted[pid])) { return '<h2>Vote locked in</h2>' + watch('Waiting for the others.'); }
+        lk = locked('Vote locked in'); if (lk) { return lk; }
         h = '<div class="q">' + esc(S.ml.text) + '</div><div class="half">';
         for (var w = 0; w < S.ml.who.length; w++) { h += '<button class="pbtn plain c" data-a="mlv" data-v="' + esc(S.ml.who[w].p) + '">' + esc(S.ml.who[w].n) + '</button>'; }
         return h + '</div>';
       }
       if (ph === 'ml_reveal') { return '<h2>' + (S.rv.win.length ? esc(S.rv.win.join(' and ')) : 'No votes') + '</h2>' + watch(); }
       if (ph === 'num_q') {
-        if (s || (S.acted && S.acted[pid])) { return '<h2>Guess locked in' + (s ? ': ' + esc(s.label) : '') + '</h2>' + watch('Waiting for the others.'); }
+        lk = locked('Guess locked in'); if (lk) { return lk; }
         return '<div class="q">' + esc(S.nm.text) + '</div><input class="field" id="numin" type="number" inputmode="decimal" autocomplete="off" placeholder="Your number"><button class="pbtn go" data-a="num">Lock it in</button>';
       }
       if (ph === 'num_reveal') { return '<h2>Answer: ' + esc(S.rv.a) + '</h2>' + (S.rv.who ? '<p>Closest: ' + esc(S.rv.who) + '</p>' : '') + watch(); }
@@ -562,34 +602,47 @@
       if (ph === 'feud_pick') {
         if (!mine) { return '<h2>' + esc(pname(S.turn)) + ' is choosing</h2>' + watch(pteam(S.turn) === m.t ? 'Help your teammate. Shout it out!' : ''); }
         if (s) { return '<h2>' + esc(s.label) + '</h2>' + watch(); }
-        h = '<h2>' + (S.f.mode === 'steal' ? 'Steal! One guess.' : 'What did the family say?') + '</h2><div class="q">' + esc(S.f.q) + '</div>';
+        h = '<h2>' + (S.f.mode === 'steal' ? 'Steal! One guess.' : 'What did most people say?') + '</h2><div class="q">' + esc(S.f.q) + '</div>';
         for (var o = 0; o < S.f.o.length; o++) { if (S.f.tried.indexOf(o) < 0) { h += '<button class="pbtn plain c" data-a="fpick" data-v="' + o + '">' + esc(S.f.o[o]) + '</button>'; } }
         return h;
       }
       if (ph === 'feud_reveal' || ph === 'round_end') { return '<h2>' + esc(tname(0)) + ' ' + S.teams[0].score + ' &middot; ' + esc(tname(1)) + ' ' + S.teams[1].score + '</h2>' + watch(); }
-      if (ph === 'final') { return '<h2>' + (S.fin.winner < 0 ? 'A tie!' : esc(tname(S.fin.winner)) + ' win!') + '</h2><p>You scored ' + m.pts + ' points for your team.</p>' + (S.boss === pid ? '<button class="pbtn go" data-a="c_again">New game, same players</button>' : ''); }
+      if (ph === 'final') { return '<h2>' + (S.fin.winner < 0 ? 'A tie!' : esc(tname(S.fin.winner)) + ' win!') + '</h2><p>You scored ' + m.pts + ' points for your team.</p>' + (S.boss === pid ? '<button class="pbtn go" data-a="c_again">New show, same players</button>' : ''); }
       return watch();
     }
     function render() {
       var m = me();
-      var stale = S && ui.joined && (Date.now() - lastState > 12000);
-      put('pbanner', !net.up ? '<div class="banner">Connecting to the game relay...</div>' : (stale ? '<div class="banner">Lost the TV. Is the TV page still open?</div>' : ''));
+      var stale = S && ui.joined && (Date.now() - lastState > 5000);
+      var ban = '';
+      if (S && S.v !== VERSION) { ban = '<button class="banner" data-a="reload">This phone has an old copy of the game. Tap here to refresh.</button>'; }
+      else if (!net.up) { ban = '<div class="banner">Connecting to the game...</div>'; }
+      else if (stale) { ban = '<div class="banner">Reconnecting to the TV...</div>'; }
+      else if (ui.rtt > 2500) { ban = '<div class="banner">This phone has a slow connection. Move closer to the Wi-Fi.</div>'; }
+      put('pbanner', ban);
       put('ptop', m ? '<div class="ptop t' + m.t + '"><span class="pill">' + esc(m.n) + ', ' + esc(tname(m.t)) + '</span><span class="sc">' + S.teams[0].score + ' to ' + S.teams[1].score + '</span></div>' : '<div class="ptop tn"><span class="sc">Rain Check!</span><span>Room ' + ROOM + '</span></div>');
       // do not redraw a screen with a text box while someone is typing in it
       var wr = S && S.phase === 'scr_q' && S.wr ? (S.wr[pid] || 0) : 0;
-      put('pnote', wr && !(S.acted && S.acted[pid]) ? '<div class="pnote bad">Not it. Try again. (' + wr + (wr === 1 ? ' try' : ' tries') + ')</div>' : '');
+      put('pnote', S && ui.failK && ui.failK === S.k ? '<div class="pnote bad">That did not reach the TV. Tap again.</div>' : (wr && !(S.acted && S.acted[pid]) ? '<div class="pnote bad">Not it. Try again. (' + wr + (wr === 1 ? ' try' : ' tries') + ')</div>' : ''));
       var ae = document.activeElement, html = bodyHtml();
       if (ae && ae.tagName === 'INPUT' && cache.pbody && cache.pbody.replace(/value="[^"]*"/g, '') === html.replace(/value="[^"]*"/g, '')) { /* keep */ }
       else if (ae && ae.tagName === 'INPUT' && ae.id === 'nm' && !ui.joined) { /* typing a name: wait */ }
       else if (ae && ae.tagName === 'INPUT' && (ae.id === 'tn0' || ae.id === 'tn1') && S && S.phase === 'lobby') { /* typing team names: wait */ }
       else if (ae && ae.tagName === 'INPUT' && (ae.id === 'wordin' || ae.id === 'numin') && S && cache.pbodyK === S.k && !(S.acted && S.acted[pid]) && !sentHere()) { /* typing an answer: wait */ }
       else { if (put('pbody', html)) { cache.pbodyK = S ? S.k : ''; } }
-      var boss = S && m && S.boss === pid && S.phase !== 'lobby' && S.phase !== 'final';
-      put('pboss', boss ? '<div class="bossbar"><button data-a="c_next">NEXT</button><button class="alt" data-a="c_pause">' + (S.paused ? 'Go' : 'Pause') + '</button><button class="alt" data-a="c_menu">More</button></div>' : '');
-      put('psheet', boss && ui.menu ? '<div class="sheet"><p class="small">Showrunner tools</p>' +
-        '<div class="r2"><button class="pbtn plain c" data-a="c_adj" data-v="0,50">' + esc(tname(0)) + ' +50</button><button class="pbtn plain c" data-a="c_adj" data-v="0,-50">' + esc(tname(0)) + ' -50</button></div>' +
-        '<div class="r2"><button class="pbtn plain c" data-a="c_adj" data-v="1,50">' + esc(tname(1)) + ' +50</button><button class="pbtn plain c" data-a="c_adj" data-v="1,-50">' + esc(tname(1)) + ' -50</button></div>' +
-        '<button class="pbtn plain c" data-a="c_skip">Skip to the end of this round</button><button class="pbtn plain c" data-a="c_end">End the game now</button><button class="pbtn dark" data-a="c_menu">Close</button></div>' : '');
+      var boss = S && m && S.boss === pid && S.phase !== 'lobby' && S.phase !== 'menu' && S.phase !== 'final';
+      var passive = S && /^intro$|_reveal$|^round_end$/.test(S.phase);
+      put('pboss', boss ? '<div class="bossbar">' + (passive ? '<button data-a="c_next">NEXT</button>' : '<button class="alt wide" data-a="c_next">Skip this one</button>') + '<button class="alt" data-a="c_pause">' + (S.paused ? 'Go' : 'Pause') + '</button><button class="alt" data-a="c_menu">Menu</button></div>' : '');
+      var sheet = '';
+      if (boss && ui.menu) {
+        var conn = '', tnow = S.now || Date.now();
+        S.order.forEach(function (id) { var p = S.players[id]; if (p) { conn += esc(p.n) + ': ' + (tnow - p.seen > 10000 ? 'no signal' : (p.rtt ? (p.rtt < 700 ? 'good' : (p.rtt < 2000 ? 'slow' : 'very slow')) + ' (' + p.rtt + ' ms)' : 'checking')) + (p.late ? ', ' + p.late + ' late taps' : '') + '<br>'; } });
+        sheet = '<div class="sheet"><button class="pbtn go" data-a="c_tomenu">Back to the game menu</button>' +
+          '<div class="r2"><button class="pbtn plain c" data-a="c_adj" data-v="0,50">' + esc(tname(0)) + ' +50</button><button class="pbtn plain c" data-a="c_adj" data-v="0,-50">' + esc(tname(0)) + ' -50</button></div>' +
+          '<div class="r2"><button class="pbtn plain c" data-a="c_adj" data-v="1,50">' + esc(tname(1)) + ' +50</button><button class="pbtn plain c" data-a="c_adj" data-v="1,-50">' + esc(tname(1)) + ' -50</button></div>' +
+          '<h3>Phone connections</h3><div class="plist">' + conn + '</div>' +
+          '<button class="pbtn plain c" data-a="c_end">Finish the show and see the winner</button><button class="pbtn dark" data-a="c_menu">Close</button></div>';
+      }
+      put('psheet', sheet);
       tickUI();
     }
     function onAct(b) {
@@ -600,32 +653,29 @@
         if (!name) { if (el) { el.focus(); } return; }
         if (ui.team < 0) { return; }
         ui.name = name; ui.joined = true; lsSet('rc_name', name); lsSet('rc_room', ROOM); lsSet('rc_team', String(ui.team));
-        try { if (navigator.wakeLock && navigator.wakeLock.request) { navigator.wakeLock.request('screen').then(function () { }, function () { }); } } catch (e) { }
+        wakeLock();
         if (el) { el.blur(); }
         hello();
       }
       else if (a === 'switch') { ui.team = 1 - pteam(pid); lsSet('rc_team', String(ui.team)); hello(); }
-      else if (a === 'sv') { var p = ui.picks[ui.step], i = p.indexOf(+v); if (i >= 0) { p.splice(i, 1); } else { if (p.length >= 2) { p.shift(); } p.push(+v); } }
-      else if (a === 'svnext') { if (ui.step < S.surveys.length - 1) { ui.step++; try { window.scrollTo(0, 0); } catch (e) { } } else { ui.svSent = true; ui.svFor = svSig(); lsSet('rc_sv', ui.svFor); lsSet('rc_picks', JSON.stringify(ui.picks)); send({ t: 'survey', a: ui.picks }); } }
+      else if (a === 'reload') { try { location.reload(true); } catch (e) { location.href = location.href; } return; }
       else if (!S) { return; }
       else if (a === 'vote') { doAct({ t: 'vote', a: +v }, S.q.kind === 'mix' ? 'ABCD'.charAt(+v) : S.q.o[+v]); }
       else if (a === 'mlv') { doAct({ t: 'mlv', v: v }, 'Voted'); }
       else if (a === 'num') { el = document.getElementById('numin'); if (!el || el.value === '' || isNaN(parseFloat(el.value))) { if (el) { el.focus(); } return; } var nval = parseFloat(el.value); el.blur(); doAct({ t: 'num', v: nval }, String(nval)); }
-      else if (a === 'word') { el = document.getElementById('wordin'); if (!el || !el.value) { if (el) { el.focus(); } return; } send({ t: 'word', k: S.k, text: el.value }); el.value = ''; return; }
-      else if (a === 'c_set') { ctl('games', { keys: C.presets[v] }); }
+      else if (a === 'word') { el = document.getElementById('wordin'); if (!el || !el.value) { if (el) { el.focus(); } return; } send({ t: 'word', k: S.k, n: 1, text: el.value }); el.value = ''; return; }
+      else if (a === 'c_play') { ctl('play', { key: v }); try { window.scrollTo(0, 0); } catch (e) { } }
       else if (a === 'c_short') { ctl('short', { on: !S.short }); }
-      else if (a === 'c_game') { var cur = S.lineup.slice(), gi2 = cur.indexOf(v); if (gi2 >= 0) { cur.splice(gi2, 1); } else { cur.push(v); } if (cur.length) { ctl('games', { keys: cur }); } }
+      else if (a === 'c_tomenu') { ctl('menu'); ui.menu = false; }
       else if (a === 'tile') { var cl = v.split(','); doAct({ t: 'pick', c: +cl[0], l: +cl[1] }, 'Picked'); }
       else if (a === 'buzz') { if (S.phase !== 'phrase_turn' && hnow() < (S.openAt || 0) - 150) { return; } if (sentHere()) { return; } try { if (navigator.vibrate) { navigator.vibrate(60); } } catch (e) { } doAct({ t: 'buzz' }, 'Buzzed'); }
       else if (a === 'ans') { doAct({ t: 'ans', a: +v }, 'Answer sent'); }
       else if (a === 'letter') { doAct({ t: 'letter', l: v }, v); }
       else if (a === 'solve') { el = document.getElementById('solve'); if (!el || !el.value) { return; } var txt = el.value; el.blur(); doAct({ t: 'solve', text: txt }, 'Sent'); }
       else if (a === 'fpick') { doAct({ t: 'fpick', o: +v }, 'Answer sent'); }
-      else if (a === 'c_start') { ctl('start'); }
       else if (a === 'c_next') { ctl('next'); }
       else if (a === 'c_pause') { ctl('pause'); }
       else if (a === 'c_menu') { ui.menu = !ui.menu; }
-      else if (a === 'c_skip') { ctl('skip'); ui.menu = false; }
       else if (a === 'c_end') { ctl('end'); ui.menu = false; }
       else if (a === 'c_again') { ctl('again'); }
       else if (a === 'c_adj') { var ad = v.split(','); ctl('adj', { team: +ad[0], d: +ad[1] }); }
