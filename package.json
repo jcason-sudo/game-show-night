@@ -1,0 +1,17 @@
+{
+  "name": "raincheck",
+  "version": "1.0.0",
+  "description": "Rain Check! A family game show for the TV with phones as buzzers.",
+  "private": true,
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/engine.test.js",
+    "serve": "node test/serve.js"
+  },
+  "devDependencies": {
+    "aedes": "0.51.3",
+    "paho-mqtt": "1.1.0",
+    "qrcode-generator": "1.4.4",
+    "websocket-stream": "^5.5.2"
+  }
+}

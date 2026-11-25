@@ -1,0 +1,4 @@
+node_modules/
+test/shots/
+dist/
+package-lock.json
