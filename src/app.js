@@ -128,7 +128,7 @@
   function screen() {
     var E = RC.createEngine(C);
     var saved = lsGet('rc_host_' + ROOM);
-    if (!(saved && E.load(saved) && E.state().room === ROOM)) { E.init(ROOM, Date.now()); }
+    if (!(saved && E.load(saved) && E.state().room === ROOM && E.state().lineup)) { E.init(ROOM, Date.now()); } // a room saved by an older version starts fresh
     S = E.state();
     var seen = {}, seenList = [], dirty = true, lastPub = 0, lastSeq = 0;
     var unlocked = false, soundOn = true, menuOpen = false, lastSay = S.say.id, lastFx = S.fx.id, talkTimer = null, lastX = S.f ? S.f.x : 0;
