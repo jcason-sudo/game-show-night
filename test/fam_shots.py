@@ -23,7 +23,11 @@ async def main():
             p = await (await br.new_context(viewport={'width': 390, 'height': 800}, has_touch=True, is_mobile=True)).new_page()
             p.on('pageerror', lambda e, n=name: errors.append(n + ': ' + str(e)))
             await p.goto(BASE + '?r=' + room + '&' + RELAY + '&pid=u' + str(i) + ('&h=' + key if i == 0 else ''))
-            await p.wait_for_selector('#nm'); await p.fill('#nm', name); await p.click('[data-a=team][data-v="%d"]' % team); await p.click('[data-a=join]'); await asyncio.sleep(0.6)
+            await p.wait_for_selector('#nm'); await p.fill('#nm', name)
+            tb = await p.query_selector('[data-a=team][data-v="%d"]' % team)
+            if tb: await tb.click()
+            await p.click('[data-a=join]'); await asyncio.sleep(0.6)
+            if i == 0: await p.click('[data-a=c_nteams][data-v="2"]'); await asyncio.sleep(0.5)
             phones.append(p)
         james = phones[0]
         await james.click('#pbody [data-a=c_play][data-v=fam]'); await asyncio.sleep(1.5)

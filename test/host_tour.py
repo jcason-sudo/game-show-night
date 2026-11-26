@@ -94,7 +94,9 @@ async def main():
         ok((await S())['phase'] == 'zoom_q', 'started a second game (Zoom In)')
         # the buzzer: Leo taps on WAIT, Mia waits for GO
         await others[1].tap('.buzz'); await asyncio.sleep(1.0)
-        st = await S(); ok(st['early'].get('u3') == 1 and st['players']['u3']['pts'] == -50, 'Leo tapped before GO: out and minus 50')
+        st = await S(); ok(not st['early'].get('u3') and st['players']['u3']['pts'] == -50, 'Leo tapped before GO: minus 50, but still in')
+        ok('TOO EARLY' in await others[1].inner_text('.buzz'), 'Leo sees TOO EARLY for a moment')
+        await asyncio.sleep(2.8); ok(await others[1].query_selector('.buzz[data-a=buzz]') is not None, 'then Leo can buzz again')
         await others[1].screenshot(path='test/shots/host_09_leo_early.png'); await tv.screenshot(path='test/shots/host_10_tv_early.png')
         await mia.wait_for_selector('.buzz.isopen', timeout=9000); await mia.screenshot(path='test/shots/host_11_mia_go.png'); await mia.tap('.buzz'); await asyncio.sleep(1.4)
         st = await S(); ok(st['phase'] == 'zoom_ans' and st['turn'] == 'u0', 'Mia waited for GO and gets to answer')

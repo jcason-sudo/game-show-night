@@ -111,7 +111,7 @@
     }
     var FW = fr.clientWidth, FH = fr.clientHeight;
     if (!FW || !FH) { return; }
-    var a = z.w / z.h, F = FW / FH, Z = 9 * Math.max(F / a, a / F);
+    var a = z.w / z.h, F = FW / FH, Z = 3 * Math.max(F / a, a / F);
     var sc = Math.pow(Z, 1 - f), g = (sc - 1) / (Z - 1);
     var tx = (FW / 2 - (el.offsetLeft + el.offsetWidth * z.fx / 100)) * g, ty = (FH / 2 - (el.offsetTop + el.offsetHeight * z.fy / 100)) * g;
     var tr = 'translate3d(' + tx.toFixed(2) + 'px,' + ty.toFixed(2) + 'px,0) scale(' + sc.toFixed(4) + ')';
@@ -119,9 +119,10 @@
     el.style.webkitTransform = el.style.transform = tr;
     var sh = document.getElementById('zsharp');
     if (sh) {
-      var o = Math.max(0, Math.min(1, (f - 0.2) / 0.6)); o = o * o * (3 - 2 * o);
+      var o = Math.max(0, Math.min(1, 0.25 + f / 0.3)); o = o * o * (3 - 2 * o);
       if (!(sh.complete && sh.naturalWidth > 0)) { o = 0; }
       sh.style.opacity = o.toFixed(3);
+      var zc = document.getElementById('zcredit'); if (zc) { zc.style.visibility = S.phase === 'zoom_reveal' ? 'visible' : 'hidden'; }
       var ld = document.getElementById('zload');
       if (ld) { ld.style.display = (sh.complete && sh.naturalWidth === 0) ? '' : 'none'; }
     }
@@ -379,7 +380,7 @@
       if (S.phase === 'zoom_reveal') { side = '<div class="answer">' + esc(S.rv.text) + '</div><div class="status">' + (S.rv.who ? '<span class="t' + S.rv.team + 'c">' + esc(S.rv.who) + '</span> +' + S.rv.val : 'No points') + '</div>'; }
       else if (S.phase === 'zoom_ans') { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status">' + who(S.turn) + ' is answering' + (S.bzr && S.bzr.length ? '<br><small>fastest finger: ' + secs(S.bzr[0].dt) + '</small>' : '') + '</div>'; }
       else if (S.bzw) { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status go">BUZZ!</div>'; }
-      else { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="GO! Buzz when you know it" data-off="WAIT for GO...">WAIT for GO...</div><div class="pickwhy">Early buzz: out, and lose 50</div>'; }
+      else { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="GO! Buzz when you know it" data-off="WAIT for GO...">WAIT for GO...</div><div class="pickwhy">Early buzz: lose 50</div>'; }
       return '<div class="tag">Picture ' + z.n + ' of ' + z.of + '</div><br>' + side;
     }
     function zoomPic() {
@@ -389,7 +390,7 @@
       return '<div class="zf"><div class="zbg" style="background-image:url(' + base + '_s.jpg)"></div>' +
         '<div class="zi" id="zimg" style="' + box + '"><img class="zphoto" src="' + base + '_s.jpg" alt=""><img class="zphoto zsharp" id="zsharp" src="' + base + '.jpg" alt="" style="opacity:0"></div>' +
         '<div class="zload" id="zload" style="display:none">The picture did not load. Host: tap Skip.</div></div>' +
-        '<div class="zcredit">Photo: ' + esc(z.by) + (z.lic ? ', ' + esc(z.lic) : '') + ', via Wikimedia Commons</div>';
+        '<div class="zcredit" id="zcredit" style="visibility:hidden">Photo: ' + esc(z.by) + (z.lic ? ', ' + esc(z.lic) : '') + ', via Wikimedia Commons</div>';
     }
     // the shell stays the same for the whole picture, so the photo is never rebuilt while it zooms
     function zoomHtml() { return '<div class="zwrap" data-img="' + S.z.img + S.z.n + '"><div class="zcol" id="zpic"></div><div class="zside" id="zsidebox"></div></div>'; }
@@ -425,7 +426,7 @@
       h += '</div><div class="fside"><div class="strikes">';
       for (var k = 0; k < 3; k++) { h += '<b class="' + (k < f.strikes ? 'x' : '') + '">X</b>'; }
       h += '</div><div class="tag yel">Pot</div><div class="pot">' + f.pot + '</div>';
-      if (S.phase === 'feud_face') { h += S.bzw ? '<div class="status go">BUZZ!</div>' : '<div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="GO! BUZZ NOW!" data-off="WAIT for GO...">WAIT for GO...</div><div class="pickwhy">Early buzz: out, and lose 50</div>'; }
+      if (S.phase === 'feud_face') { h += S.bzw ? '<div class="status go">BUZZ!</div>' : '<div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="GO! BUZZ NOW!" data-off="WAIT for GO...">WAIT for GO...</div><div class="pickwhy">Early buzz: lose 50</div>'; }
       else if (S.phase === 'feud_pick') { h += '<div class="status">' + (f.mode === 'steal' ? 'STEAL: ' : '') + who(S.turn) + ' is choosing' + (f.mode === 'face' && S.bzr && S.bzr.length ? '<br><small>fastest finger: ' + secs(S.bzr[0].dt) + '</small>' : '') + '</div>'; }
       else { h += '<div class="status">' + (S.rv.solo ? 'Board finished' : (S.rv.team >= 0 ? '<span class="t' + S.rv.team + 'c">' + esc(tname(S.rv.team)) + '</span> +' + S.rv.pot : 'No points')) + '</div>'; }
       return h + '</div></div>' + (S.phase === 'feud_pick' ? timerHtml(f.mode === 'steal' ? 25000 : (f.mode === 'face' ? 14000 : 18000)) : '');
@@ -517,7 +518,7 @@
         put('zpic', zoomPic()); put('zsidebox', zoomSide());
       }
       put('bubble', esc(S.phase === 'lobby' || !S.say.text ? (S.boss ? 'Scan the code with your phone camera to join. ' + pname(S.boss) + ' is the host.' : 'Host, scan the code with your phone camera to take control.') : S.say.text));
-      if (S.fs && S.fs.id !== lastFs) { lastFs = S.fs.id; cache.toast = null; put('toast', '<div class="toast">' + esc(S.fs.n) + ' buzzed before GO. Out, and minus 50.</div>'); }
+      if (S.fs && S.fs.id !== lastFs) { lastFs = S.fs.id; cache.toast = null; put('toast', '<div class="toast">' + esc(S.fs.n) + ' buzzed before GO. Minus 50.</div>'); }
       put('joinbox', 'Join at ' + esc(SHORT) + '<br>Room <b>' + ROOM + '</b><br>Relay ' + dotsHtml() + (net.up ? '' : ' connecting...'));
       put('pausel', S.paused ? '<div class="paused">PAUSED</div>' : '');
       put('menu', menuOpen ? '<div class="menu">' +
@@ -626,10 +627,11 @@
     function sentHere() { return ui.sent && S && ui.sent.k === S.k ? ui.sent : null; }
     function buzzBtn() {
       var s = sentHere();
-      if (s) { return '<button class="buzz sent" disabled>' + (s.label === 'early' ? 'TOO EARLY' : 'BUZZED') + '</button>'; }
-      return '<button class="buzz wait" data-a="buzz" data-open="' + (S.openAt || 0) + '" data-on="GO!" data-off="WAIT">WAIT</button><p class="small">Tap only after it turns green and says GO. Tap early and you are out for this one and lose 50 points.</p>';
+      if (s) { return '<button class="buzz sent" disabled>BUZZED</button>'; }
+      if (ui.earlyUntil && Date.now() < ui.earlyUntil) { return '<button class="buzz sent" disabled>TOO EARLY<br>-50</button><p class="small">Wait for GO. You can buzz again in a moment.</p>'; }
+      return '<button class="buzz wait" data-a="buzz" data-open="' + (S.openAt || 0) + '" data-on="GO!" data-off="WAIT">WAIT</button><p class="small">Tap only after it turns green and says GO. Every early tap costs 50 points.</p>';
     }
-    function earlyHtml() { return '<h2>Too early!</h2><p>You tapped before GO. You sit this one out and lose 50 points.</p>' + watch(); }
+    function earlyHtml() { return '<h2>Too early!</h2><p>You tapped before GO and lose 50 points.</p>' + watch(); }
     function teamBtns(action, cur) {
       var h = '';
       for (var t = 0; t < NT(); t++) { h += '<button class="pbtn c tb' + t + (cur === t ? ' sel' : '') + '" data-a="' + action + '" data-v="' + t + '">' + esc(tname(t)) + '</button>'; }
@@ -646,10 +648,25 @@
       return top + '<p>Pick your team</p>' + teamBtns('team', ui.team) + hk + '<button class="pbtn go" data-a="join"' + (ui.team < 0 ? ' disabled' : '') + '>I am in</button>';
     }
     function modeHtml() {
-      var h = '<h3>Teams tonight</h3><div class="half">';
-      h += '<button class="pbtn plain c' + (S.solo ? ' sel' : '') + '" data-a="c_solo" data-v="1">No teams: every player for themselves</button>';
+      var h = '<h3 class="big3">Teams tonight</h3><div class="half modes">';
+      h += '<button class="pbtn plain c wide' + (S.solo ? ' sel' : '') + '" data-a="c_solo" data-v="1">No teams</button>';
       for (var n = 2; n <= 5; n++) { h += '<button class="pbtn plain c' + (!S.solo && NT() === n ? ' sel' : '') + '" data-a="c_nteams" data-v="' + n + '">' + n + ' teams</button>'; }
-      return h + (S.solo ? '' : '<button class="pbtn plain c" data-a="c_shuffle">Shuffle everyone into even teams</button>') + '</div>';
+      return h + (S.solo ? '' : '<button class="pbtn plain c wide" data-a="c_shuffle">Shuffle everyone into even teams</button>') + '</div>';
+    }
+    function teamSetupHtml() { // the host decides: no teams, or 2 to 5 teams with names, and who goes where
+      var h = modeHtml(), t;
+      if (S.solo) { return h + '<p class="small">Everyone plays for themselves. Tap a number of teams to split the room up; you can do it after everybody has joined.</p>'; }
+      h += '<h3>Team names</h3>';
+      for (t = 0; t < NT(); t++) { h += '<div class="trow"><span class="tdot tb' + t + ' on">' + (t + 1) + '</span><input class="field sm" data-hold="1" id="ln' + t + '" maxlength="14" value="' + esc(tname(t)) + '"></div>'; }
+      h += '<div class="half"><button class="pbtn plain c" data-a="c_lnames">Save team names</button>' + (NT() === 2 ? '<button class="pbtn plain c" data-a="c_preset">Kids vs Adults</button>' : '') + '</div>';
+      h += '<h3>Who is on which team</h3><p class="small">Tap a team next to a name to move that person. People can also tap their own team on their phone before the first game.</p>';
+      S.order.forEach(function (id) {
+        var p = S.players[id]; if (!p) { return; }
+        h += '<div class="prow"><div class="pn"><b>' + esc(p.n) + '</b></div><div class="pt">';
+        for (t = 0; t < NT(); t++) { h += '<button class="tdot tb' + t + (p.t === t ? ' on' : '') + '" data-a="c_move" data-v="' + esc(id) + ',' + t + '">' + esc(tname(t).substring(0, 8)) + '</button>'; }
+        h += '</div></div>';
+      });
+      return h;
     }
     function myRank() { var rk = rankList(); for (var i = 0; i < rk.length; i++) { if (rk[i].p === pid) { return i + 1; } } return 0; }
     function standing() { // one line of score, for whichever way the show is being played
@@ -659,10 +676,10 @@
       return h + '</p>';
     }
     function pickerHtml() {
-      var h = '<div class="half">';
-      for (var i = 0; i < C.order.length; i++) { var k = C.order[i], n = S.played[k] || 0; h += '<button class="pbtn game c' + (n ? ' done' : '') + '" data-a="c_play" data-v="' + k + '">' + esc(gameTitle(k)) + (n ? '<small>played</small>' : '') + '</button>'; }
+      var h = '<h3 class="big3">Tap a game to start it</h3><div class="glist">';
+      for (var i = 0; i < C.order.length; i++) { var k = C.order[i], n = S.played[k] || 0; h += '<button class="pbtn gbig' + (n ? ' done' : '') + '" data-a="c_play" data-v="' + k + '"><span>' + esc(gameTitle(k)) + '</span>' + (n ? '<small>played</small>' : '') + '</button>'; }
       h += '</div><button class="pbtn plain c' + (S.short ? ' sel' : '') + '" data-a="c_short">Short games: ' + (S.short ? 'on' : 'off') + '</button>';
-      h += modeHtml();
+      h = S.phase === 'lobby' ? teamSetupHtml() + h : h + teamSetupHtml();   // before the first game, teams come first
       if (S.round > 0) { h += '<button class="pbtn plain c" data-a="c_end">Finish the night and show the winner</button>'; }
       return h + '<p class="small">More controls are under the Host button at the bottom: move or remove players, team names, restart.</p>';
     }
@@ -683,7 +700,7 @@
         for (t = 0; t < NT(); t++) { h += '<b class="t' + t + 'c">' + esc(tname(t)) + '</b>' + (lists[t] || '<span class="small">nobody yet</span>'); }
         h += '</div><p class="small">Want a different team? Tap it.</p>' + teamBtns('switch', m.t);
       }
-      if (isBoss) { h += '<h2>You are the host</h2><p>When everyone is in, tap a game to start it. After each game you come back to this list and pick the next one.</p>' + pickerHtml(); }
+      if (isBoss) { h += '<h2>You are the host</h2><p>When everyone is in, set up teams if you want them, then tap a game. After each game you come back to this list.</p>' + pickerHtml(); }
       return h;
     }
     function bodyHtml() {
@@ -841,7 +858,7 @@
       var wr = S && S.phase === 'scr_q' && S.wr ? (S.wr[pid] || 0) : 0;
       put('pnote', S && ui.failK && ui.failK === S.k ? '<div class="pnote bad">That did not reach the TV. Tap again.</div>' : (wr && !(S.acted && S.acted[pid]) ? '<div class="pnote bad">Not it. Try again. (' + wr + (wr === 1 ? ' try' : ' tries') + ')</div>' : ''));
       var ae = document.activeElement, html = bodyHtml();
-      if (ae && ae.tagName === 'INPUT' && cache.pbody && cache.pbody.replace(/value="[^"]*"/g, '') === html.replace(/value="[^"]*"/g, '')) { /* keep */ }
+      if (ae && ae.tagName === 'INPUT' && cache.pbody && (ae.getAttribute('data-hold') || cache.pbody.replace(/value="[^"]*"/g, '') === html.replace(/value="[^"]*"/g, ''))) { /* keep: someone is typing */ }
       else if (ae && ae.tagName === 'INPUT' && (ae.id === 'nm' || ae.id === 'hk') && !ui.joined && cache.pbody) { /* typing a name: wait */ }
       else if (ae && ae.tagName === 'INPUT' && (ae.id === 'wordin' || ae.id === 'numin' || ae.id === 'crin') && S && cache.pbodyK === S.k && !(S.acted && S.acted[pid]) && !sentHere()) { /* typing an answer: wait */ }
       else { var oldK = cache.pbodyK; if (put('pbody', html)) { cache.pbodyK = S ? S.k : ''; if (cache.pbodyK !== oldK) { cache.pbodyAt = Date.now(); } } }
@@ -932,7 +949,7 @@
         if (sentHere()) { return; }
         try { if (navigator.vibrate) { navigator.vibrate(60); } } catch (e) { }
         if (S.phase === 'phrase_turn') { doAct({ t: 'buzz' }, 'Buzzed'); }
-        else { var bdt = hnow() - (S.openAt || 0); if (bdt < 0) { doAct({ t: 'buzz', early: 1 }, 'early'); } else { doAct({ t: 'buzz', dt: Math.round(bdt) }, 'Buzzed'); } }   // a tap before GO is sent too: it costs points
+        else { var bdt = hnow() - (S.openAt || 0); if (bdt < 0) { if (ui.earlyUntil && Date.now() < ui.earlyUntil) { return; } ui.earlyUntil = Date.now() + 2500; send({ t: 'buzz', early: 1, k: S.k, n: 0 }); render(); setTimeout(render, 2600); } else { doAct({ t: 'buzz', dt: Math.round(bdt) }, 'Buzzed'); } }   // a tap before GO is sent too: it costs points
       }
       else if (a === 'ans') { doAct({ t: 'ans', a: +v }, S.phase === 'board_q' && S.q && S.q.o ? S.q.o[+v] : 'Answer sent'); }
       else if (a === 'letter') { doAct({ t: 'letter', l: v }, v); }
@@ -945,6 +962,7 @@
       else if (a === 'c_again') { ctl('again'); ui.menu = false; }
       else if (a === 'c_adj') { var ad = v.split(','); ctl('adj', { team: +ad[0], d: +ad[1] }); }
       else if (a === 'c_names') { var nms = []; for (var ti = 0; ti < NT(); ti++) { var te = document.getElementById('tn' + ti); if (te) { te.blur(); nms.push(te.value); } else { nms.push(tname(ti)); } } ctl('teams', { names: nms }); }
+      else if (a === 'c_lnames') { var lnm = []; for (var li2 = 0; li2 < NT(); li2++) { var le = document.getElementById('ln' + li2); if (le) { le.blur(); lnm.push(le.value); } else { lnm.push(tname(li2)); } } ctl('teams', { names: lnm }); }
       else if (a === 'c_preset') { ctl('teams', { names: ['Kids', 'Adults'] }); }
       render();
     }

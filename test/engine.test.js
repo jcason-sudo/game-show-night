@@ -126,7 +126,7 @@ assert.ok(C.board.length >= 5 && C.zoom.length >= 5 && C.phrases.length >= 4 && 
     no: [['French Guiana', 'French Guiana is part of France, not a country.'], ['Mexico', 'Mexico is in North America.']] }];
   function play(ans, rulings) {
     var E = RC.createEngine(C2, { rand: lcg(5) }), now = 5000000, names = Object.keys(ans);
-    E.init('CRIL', now);
+    E.init('CRIL', now); E.cmd('solo', { on: false }, now);
     names.forEach(function (n, i) { E.handle({ p: n, t: 'hello', name: n.toUpperCase(), team: i % 2, ep: 1, h: i === 0 ? E.hostKey() : '' }, now); });
     E.handle({ p: names[0], t: 'ctl', c: 'play', a: { key: 'crillion' } }, now); now += 2000;
     E.handle({ p: names[0], t: 'ctl', c: 'next' }, now); now += 2000;
@@ -174,7 +174,7 @@ assert.ok(C.board.length >= 5 && C.zoom.length >= 5 && C.phrases.length >= 4 && 
 // The Board: everyone answers, a late or doubled Next cannot skip the question
 (function () {
   var E = RC.createEngine(RC.content, { rand: lcg(9) }), now = 7000000, names = ['a', 'b', 'c', 'd'];
-  E.init('BORD', now);
+  E.init('BORD', now); E.cmd('solo', { on: false }, now);
   names.forEach(function (n, i) { E.handle({ p: n, t: 'hello', name: n.toUpperCase(), team: i % 2, ep: 1, h: i === 0 ? E.hostKey() : '' }, now); });
   E.handle({ p: 'a', t: 'ctl', c: 'play', a: { key: 'board' } }, now); now += 2000;
   var kIntro = E.state().k;
@@ -207,7 +207,7 @@ assert.ok(C.board.length >= 5 && C.zoom.length >= 5 && C.phrases.length >= 4 && 
 // The host, teams and the buzzer
 (function () {
   var E = RC.createEngine(RC.content, { rand: lcg(11) }), now = 9000000, S;
-  E.init('HOST', now);
+  E.init('HOST', now); E.cmd('solo', { on: false }, now);
   function hi(p, team, extra) { var m = { p: p, t: 'hello', name: p.toUpperCase(), team: team, ep: E.state().epoch }; for (var k in (extra || {})) { m[k] = extra[k]; } E.handle(m, now); }
   hi('kid', 0); hi('mom', 1);
   assert.strictEqual(E.state().boss, null, 'the first one in is NOT the host');
@@ -238,9 +238,11 @@ assert.ok(C.board.length >= 5 && C.zoom.length >= 5 && C.phrases.length >= 4 && 
   S = E.state(); assert.strictEqual(S.phase, 'zoom_q'); assert.ok(S.openAt > now + 4000, 'GO comes after a wait nobody can guess');
   var k = S.k;
   E.handle({ p: 'kid', t: 'buzz', k: k, early: 1 }, now + 1000);
-  S = E.state(); assert.ok(S.early.kid); assert.strictEqual(S.players.kid.pts, -50, 'an early buzz costs 50'); assert.strictEqual(S.phase, 'zoom_q');
+  S = E.state(); assert.ok(!S.early.kid, 'an early buzz does not knock the player out'); assert.strictEqual(S.players.kid.pts, -50, 'an early buzz costs 50'); assert.strictEqual(S.phase, 'zoom_q');
+  E.handle({ p: 'kid', t: 'buzz', k: k, early: 1 }, now + 1400); assert.strictEqual(E.state().players.kid.pts, -50, 'a double tap is one penalty');
+  E.handle({ p: 'kid', t: 'buzz', k: k, early: 1 }, now + 3200); assert.strictEqual(E.state().players.kid.pts, -100, 'another early tap costs another 50');
   var go = S.openAt + 100;
-  E.handle({ p: 'kid', t: 'buzz', k: k, dt: 5 }, go); assert.strictEqual(E.state().phase, 'zoom_q', 'out means out');
+  E.handle({ p: 'kid', t: 'buzz', k: k, dt: 700 }, go); assert.ok(E._private().bzq && E._private().bzq.got.kid, 'after GO the same player can still buzz');
   E.handle({ p: 'mom', t: 'buzz', k: k, dt: 480 }, go + 100);       // arrives first, but reacted slower
   E.handle({ p: 'dad', t: 'buzz', k: k, dt: 310 }, go + 350);       // slower connection, faster finger
   assert.strictEqual(E.state().phase, 'zoom_q'); E.tick(go + 450); assert.strictEqual(E.state().phase, 'zoom_q', 'the half-second window is still open');
@@ -288,7 +290,7 @@ console.log('OK: 300 simulated games finished (team and solo play; 5-game, 4-gam
 (function () {
   var E = RC.createEngine(C, { seed: 77 }), now = 1000, k;
   function st() { return E.state(); }
-  E.init('FAMX', now);
+  E.init('FAMX', now); E.cmd('solo', { on: false }, now);
   ['a', 'b', 'c', 'd'].forEach(function (id, i) { E.handle({ p: id, t: 'hello', name: ['Ana', 'Ben', 'Cy', 'Dee'][i], team: i % 2, h: id === 'a' ? E.hostKey() : '', ep: st().epoch }, now); });
   assert.strictEqual(st().boss, 'a');
   E.handle({ p: 'a', t: 'ctl', c: 'next', a: { k: st().k } }, now += 2000);
@@ -353,4 +355,35 @@ console.log('OK: 300 simulated games finished (team and solo play; 5-game, 4-gam
   assert.strictEqual(E3._famTidy('I WAS ON TV WHEN I WAS SIX'), 'I was on tv when I was six.');
   assert.ok(E3._famFakes('I am afraid of balloons.', 0).indexOf('I am afraid of balloons.') < 0, 'a made-up fact is never the same as the truth');
   console.log('OK: Know Your Family rules, scoring and made-up facts');
+})();
+
+(function () {
+  var E = RC.createEngine(C, { seed: 9 }), now = 1000;
+  E.init('NOTM', now);
+  assert.strictEqual(E.state().solo, true, 'a new night starts with no teams');
+  E.handle({ p: 'h', t: 'hello', name: 'James', ep: 1, h: E.hostKey() }, now);
+  ['a', 'b', 'c', 'd', 'e'].forEach(function (id) { E.handle({ p: id, t: 'hello', name: id.toUpperCase(), ep: 1 }, now); });
+  assert.strictEqual(E.state().order.length, 6, 'people join with only a name');
+  E.handle({ p: 'h', t: 'ctl', c: 'nteams', a: { n: 3 } }, now);
+  var S = E.state(), n = [0, 0, 0];
+  assert.strictEqual(S.solo, false); assert.strictEqual(S.teams.length, 3);
+  S.order.forEach(function (id) { assert.ok(S.players[id].t >= 0 && S.players[id].t < 3); n[S.players[id].t]++; });
+  assert.deepStrictEqual(n, [2, 2, 2], 'the first split is even');
+  E.handle({ p: 'h', t: 'ctl', c: 'shuffle' }, now); n = [0, 0, 0];
+  E.state().order.forEach(function (id) { n[E.state().players[id].t]++; });
+  assert.deepStrictEqual(n, [2, 2, 2], 'shuffle makes even teams');
+  E.handle({ p: 'h', t: 'ctl', c: 'teams', a: { names: ['Family Casey', 'Family Bruno', 'Family William'] } }, now);
+  assert.strictEqual(E.state().teams[1].name, 'Family Bruno', 'the host names the teams');
+  E.handle({ p: 'h', t: 'ctl', c: 'move', a: { p: 'a', t: 2 } }, now);
+  assert.strictEqual(E.state().players.a.t, 2, 'the host moves a player');
+  // Crillion: a wrong answer on a complete list never reaches a judge and never scores
+  var eu = C.crillion.filter(function (x) { return x.q === 'Name a country in Europe.'; })[0];
+  ['Afghanistan', 'Brazil', 'Texas', 'Narnia', 'Kenya', 'Japan'].forEach(function (w) { assert.strictEqual(E._crMatch(eu, w).st, 'no', w + ' is not in Europe'); });
+  ['Belgium', 'belgum', 'Lichtenstein', 'San Marino', 'Georgia'].forEach(function (w) { assert.strictEqual(E._crMatch(eu, w).st, 'ok', w + ' is in Europe'); });
+  assert.ok(E._crMatch(eu, 'San Marino').said < E._crMatch(eu, 'Belgium').said, 'San Marino is more obscure than Belgium');
+  var fr = C.crillion.filter(function (x) { return x.q === 'Name a fruit.'; })[0];
+  assert.strictEqual(E._crMatch(fr, 'Afghanistan').st, 'no', 'a country is not a fruit');
+  assert.strictEqual(E._crMatch(fr, 'Zzyzx berry').st, 'ask', 'an unknown fruit still goes to the host');
+  C.crillion.forEach(function (x) { if (x.closed) { x.no.forEach(function (w) { assert.strictEqual(E._crMatch(x, w[0]).st, 'no'); }); } });
+  console.log('OK: no teams by default, host sets up teams; Crillion refuses wrong answers on complete lists');
 })();

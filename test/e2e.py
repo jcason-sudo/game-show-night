@@ -43,7 +43,8 @@ async def main():
             if i == 0: await p.screenshot(path='test/shots/' + TAG + '02_phone_join.png')
             if i == 2: await p.screenshot(path='test/shots/' + TAG + '02b_phone_join_teams.png')
             await p.fill('#nm', name)
-            if not (SOLO and i > HOST): await p.click('[data-a=team][data-v="%d"]' % (team if i > HOST else i % 2))
+            tb = await p.query_selector('[data-a=team][data-v="%d"]' % team)     # team buttons only show once the host has set teams up
+            if tb: await tb.click()
             await p.click('[data-a=join]')
             phones.append(p)
             await asyncio.sleep(0.5)
@@ -54,9 +55,9 @@ async def main():
                 await asyncio.sleep(0.6)
                 boss = await tv.evaluate("window.RCS && window.RCS.boss")
                 assert boss == 'bot%d' % HOST, 'the phone with the host code must be the host, got %r' % boss
-                if SOLO:
-                    await p.click('[data-a=c_solo][data-v="1"]')
-                elif NT != 2:
+                st0 = await tv.evaluate("window.RCS.solo")
+                assert st0 is True, 'a new night starts with no teams'
+                if not SOLO:
                     await p.click('[data-a=c_nteams][data-v="%d"]' % NT)
                 await asyncio.sleep(0.8)
         await asyncio.sleep(2)

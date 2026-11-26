@@ -469,6 +469,18 @@ html, body { background: #0F3B4C; color: #EEF3F1; font-weight: 600; }
 .field.fact { border-radius: 16px; font-size: 20px; text-align: left; font-weight: 700; padding: 14px 16px; }
 .pbtn.fact { font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 19px; line-height: 1.2; text-align: left; padding: 14px 16px; }
 .pbtn small { font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 15px; }
+
+/* host phone: big game list */
+.big3 { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 26px; color: #F9D648; margin: 18px 0 8px; }
+.glist .pbtn.gbig { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: space-between; justify-content: space-between; width: 100%; min-height: 68px; margin: 0 0 10px; padding: 12px 18px; background: #EEF3F1; color: #0A2C39; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 32px; line-height: 1.05; text-align: left; border-radius: 14px; }
+.glist .pbtn.gbig.done { background: #0A2C39; color: #EEF3F1; box-shadow: inset 0 0 0 2px #5BC0EB; }
+.glist .pbtn.gbig small { font-family: 'Barlow', sans-serif; font-size: 15px; font-weight: 700; color: #F9D648; margin-left: 10px; }
+.trow span.tdot { -webkit-flex: none; flex: none; min-width: 36px; text-align: center; }
+
+.half.modes .pbtn { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 24px; min-height: 60px; }
+.half.modes .pbtn.wide { width: 100%; }
+.pbody h3 { font-size: 20px; }
+.prow .pn b { font-size: 19px; } .tdot { font-size: 16px; padding: 9px 11px; }
 </style>
 </head>
 <body>
@@ -3411,25 +3423,25 @@ RC.content = {
      Each answer: [name, how many people out of 100 would say it, other spellings].
      The counts are the show's own estimates, not a real survey. "no" lists common wrong answers and why. */
   crillion: [
-    { q: 'Name a country in Europe.',
-      a: [['France', 78], ['Italy', 72], ['Spain', 70], ['Germany', 68], ['United Kingdom', 55, ['uk', 'britain', 'great britain', 'england', 'scotland', 'wales']], ['Greece', 44], ['Portugal', 42], ['Ireland', 40], ['Netherlands', 36, ['holland']], ['Switzerland', 35], ['Sweden', 33], ['Poland', 30], ['Norway', 28], ['Belgium', 26], ['Austria', 25], ['Russia', 24], ['Denmark', 22], ['Ukraine', 21], ['Finland', 18], ['Iceland', 16], ['Croatia', 14], ['Czech Republic', 13, ['czechia']], ['Hungary', 12], ['Turkey', 12, ['turkiye']], ['Romania', 11], ['Bulgaria', 8], ['Serbia', 7], ['Slovakia', 6], ['Luxembourg', 6], ['Monaco', 6], ['Slovenia', 5], ['Lithuania', 5], ['Latvia', 5], ['Estonia', 5], ['Malta', 5], ['Albania', 4], ['Bosnia and Herzegovina', 4, ['bosnia']], ['Belarus', 4], ['Cyprus', 4], ['Vatican City', 4, ['vatican']], ['Montenegro', 3], ['North Macedonia', 3, ['macedonia']], ['Liechtenstein', 3], ['Kosovo', 3], ['Moldova', 2], ['Andorra', 2], ['San Marino', 2]],
+    { q: 'Name a country in Europe.', closed: 1,
+      a: [['France', 78], ['Italy', 72], ['Spain', 70], ['Germany', 68], ['United Kingdom', 55, ['uk', 'britain', 'great britain', 'england', 'scotland', 'wales']], ['Greece', 44], ['Portugal', 42], ['Ireland', 40], ['Netherlands', 36, ['holland']], ['Switzerland', 35], ['Sweden', 33], ['Poland', 30], ['Norway', 28], ['Belgium', 26], ['Austria', 25], ['Russia', 24], ['Denmark', 22], ['Ukraine', 21], ['Finland', 18], ['Iceland', 16], ['Croatia', 14], ['Czech Republic', 13, ['czechia']], ['Hungary', 12], ['Turkey', 12, ['turkiye']], ['Romania', 11], ['Bulgaria', 8], ['Serbia', 7], ['Slovakia', 6], ['Luxembourg', 6], ['Monaco', 6], ['Slovenia', 5], ['Lithuania', 5], ['Latvia', 5], ['Estonia', 5], ['Malta', 5], ['Albania', 4], ['Bosnia and Herzegovina', 4, ['bosnia']], ['Belarus', 4], ['Cyprus', 4], ['Vatican City', 4, ['vatican']], ['Montenegro', 3], ['North Macedonia', 3, ['macedonia']], ['Liechtenstein', 3], ['Kosovo', 3], ['Moldova', 2], ['Andorra', 2], ['San Marino', 2], ['Georgia', 2], ['Armenia', 2], ['Azerbaijan', 2], ['Kazakhstan', 1]],
       no: [['Australia', 'Australia is its own continent. You may be thinking of Austria.'], ['Egypt', 'Egypt is in Africa.'], ['Israel', 'Israel is in Asia.'], ['Morocco', 'Morocco is in Africa.'], ['Canada', 'Canada is in North America.'], ['Greenland', 'Greenland belongs to Denmark, but it is not a country in Europe.'], ['Europe', 'Europe is the continent. Name a country in it.'], ['Paris', 'Paris is a city.'], ['London', 'London is a city.']] },
-    { q: 'Name a country in Africa.',
+    { q: 'Name a country in Africa.', closed: 1,
       a: [['Egypt', 70], ['South Africa', 66], ['Kenya', 52], ['Nigeria', 50], ['Morocco', 40], ['Ethiopia', 36], ['Ghana', 30], ['Madagascar', 28], ['Uganda', 22], ['Tanzania', 22], ['Zimbabwe', 20], ['Congo', 20, ['democratic republic of the congo', 'dr congo', 'drc', 'republic of the congo', 'zaire']], ['Algeria', 16], ['Libya', 16], ['Sudan', 15], ['Somalia', 15], ['Rwanda', 14], ['Senegal', 13], ['Tunisia', 13], ['Cameroon', 12], ['Angola', 11], ['Zambia', 10], ['Mali', 10], ['Ivory Coast', 9, ['cote divoire']], ['Mozambique', 9], ['Botswana', 9], ['Namibia', 9], ['Chad', 8], ['Niger', 8], ['Liberia', 7], ['Sierra Leone', 6], ['South Sudan', 5], ['Malawi', 5], ['Togo', 4], ['Gabon', 4], ['Gambia', 4], ['Guinea', 4], ['Burkina Faso', 4], ['Benin', 3], ['Mauritania', 3], ['Burundi', 3], ['Eritrea', 3], ['Djibouti', 3], ['Lesotho', 3], ['Seychelles', 3], ['Mauritius', 3], ['Eswatini', 2, ['swaziland']], ['Cape Verde', 2, ['cabo verde']], ['Comoros', 2], ['Equatorial Guinea', 2], ['Guinea-Bissau', 2, ['guinea bissau']], ['Central African Republic', 2], ['Sao Tome and Principe', 2, ['sao tome']]],
       no: [['Africa', 'Africa is the continent. Name a country in it.'], ['India', 'India is in Asia.'], ['Brazil', 'Brazil is in South America.'], ['Jamaica', 'Jamaica is in the Caribbean.'], ['Haiti', 'Haiti is in the Caribbean.'], ['Saudi Arabia', 'Saudi Arabia is in Asia.'], ['Israel', 'Israel is in Asia.'], ['Zanzibar', 'Zanzibar is part of Tanzania.'], ['Yemen', 'Yemen is in Asia.'], ['Guyana', 'Guyana is in South America.']] },
-    { q: 'Name a country in Asia.',
+    { q: 'Name a country in Asia.', closed: 1,
       a: [['China', 75], ['Japan', 72], ['India', 65], ['South Korea', 40, ['korea']], ['Thailand', 38], ['Vietnam', 36], ['Philippines', 30], ['Indonesia', 24], ['Singapore', 22], ['North Korea', 22], ['Russia', 20], ['Pakistan', 20], ['Iran', 18], ['Iraq', 18], ['Saudi Arabia', 16], ['Israel', 16], ['Afghanistan', 15], ['Turkey', 12, ['turkiye']], ['Malaysia', 12], ['Nepal', 12], ['Mongolia', 11], ['Taiwan', 11], ['Bangladesh', 9], ['Sri Lanka', 8], ['Cambodia', 8], ['United Arab Emirates', 8, ['uae', 'emirates']], ['Qatar', 6], ['Kazakhstan', 6], ['Syria', 6], ['Myanmar', 5, ['burma']], ['Laos', 5], ['Jordan', 5], ['Lebanon', 5], ['Kuwait', 4], ['Yemen', 4], ['Oman', 3], ['Bhutan', 3], ['Uzbekistan', 3], ['Maldives', 3], ['Georgia', 3], ['Armenia', 3], ['Azerbaijan', 3], ['Palestine', 3], ['Bahrain', 2], ['Brunei', 2], ['Kyrgyzstan', 2], ['Tajikistan', 2], ['Turkmenistan', 2], ['East Timor', 2, ['timor leste']], ['Cyprus', 2]],
       no: [['Asia', 'Asia is the continent. Name a country in it.'], ['Australia', 'Australia is its own continent.'], ['Egypt', 'Egypt is in Africa.'], ['Hong Kong', 'Hong Kong is a region of China, not a country.'], ['Dubai', 'Dubai is a city in the United Arab Emirates.'], ['Tokyo', 'Tokyo is a city.'], ['Bali', 'Bali is an island in Indonesia.'], ['Hawaii', 'Hawaii is a U.S. state.'], ['Tibet', 'Tibet is a region of China, not a country.']] },
-    { q: 'Name one of the 50 U.S. states.',
+    { q: 'Name one of the 50 U.S. states.', closed: 1,
       a: [['California', 62], ['Florida', 60], ['Texas', 58], ['New York', 55], ['Hawaii', 35], ['Alaska', 33], ['Georgia', 22], ['Ohio', 20], ['Arizona', 20], ['Colorado', 20], ['Nevada', 18], ['Washington', 18], ['Illinois', 17], ['Pennsylvania', 17], ['Michigan', 16], ['New Jersey', 16], ['Virginia', 15], ['North Carolina', 15], ['Massachusetts', 15], ['Tennessee', 14], ['Oregon', 13], ['Louisiana', 13], ['Utah', 12], ['Montana', 11], ['Maine', 11], ['Kentucky', 11], ['Alabama', 11], ['Minnesota', 10], ['Wisconsin', 10], ['Missouri', 10], ['South Carolina', 10], ['Indiana', 9], ['Maryland', 9], ['Oklahoma', 9], ['Kansas', 9], ['Mississippi', 9], ['Iowa', 8], ['Idaho', 8], ['New Mexico', 8], ['Connecticut', 8], ['Arkansas', 7], ['Wyoming', 7], ['Vermont', 7], ['Nebraska', 6], ['West Virginia', 6], ['New Hampshire', 6], ['Rhode Island', 6], ['Delaware', 6], ['North Dakota', 5], ['South Dakota', 5]],
       no: [['Puerto Rico', 'Puerto Rico is a U.S. territory, not a state.'], ['Washington DC', 'Washington, D.C. is a district, not a state.'], ['DC', 'Washington, D.C. is a district, not a state.'], ['Guam', 'Guam is a U.S. territory, not a state.'], ['Mexico', 'New Mexico is a state. Mexico is a country.'], ['Canada', 'Canada is a country.'], ['Miami', 'Miami is a city.'], ['Chicago', 'Chicago is a city.'], ['Dakota', 'Say North Dakota or South Dakota.'], ['Carolina', 'Say North Carolina or South Carolina.']] },
-    { q: 'Name a U.S. state capital city.',
+    { q: 'Name a U.S. state capital city.', closed: 1,
       a: [['Boston', 40], ['Atlanta', 38], ['Denver', 36], ['Austin', 34], ['Phoenix', 34], ['Sacramento', 30], ['Nashville', 30], ['Honolulu', 28], ['Albany', 26], ['Salt Lake City', 22], ['Tallahassee', 20], ['Indianapolis', 18], ['Oklahoma City', 16], ['Columbus', 16], ['Raleigh', 14], ['Richmond', 14], ['Baton Rouge', 12], ['Juneau', 12], ['Little Rock', 11], ['Santa Fe', 11], ['Boise', 11], ['Des Moines', 9], ['Madison', 9], ['Saint Paul', 9], ['Springfield', 9], ['Montgomery', 8], ['Lansing', 7], ['Jackson', 7], ['Columbia', 7], ['Charleston', 7], ['Annapolis', 7], ['Hartford', 7], ['Providence', 7], ['Trenton', 6], ['Harrisburg', 6], ['Dover', 6], ['Topeka', 6], ['Lincoln', 6], ['Cheyenne', 6], ['Helena', 5], ['Bismarck', 5], ['Olympia', 5], ['Salem', 5], ['Carson City', 5], ['Pierre', 4], ['Jefferson City', 4], ['Concord', 4], ['Augusta', 4], ['Frankfort', 3], ['Montpelier', 3]],
       no: [['Miami', 'Florida\'s capital is Tallahassee.'], ['Orlando', 'Florida\'s capital is Tallahassee.'], ['Los Angeles', 'California\'s capital is Sacramento.'], ['San Francisco', 'California\'s capital is Sacramento.'], ['New York', 'New York\'s capital is Albany.'], ['New York City', 'New York\'s capital is Albany.'], ['Chicago', 'The capital of Illinois is Springfield.'], ['Houston', 'The capital of Texas is Austin.'], ['Dallas', 'The capital of Texas is Austin.'], ['Las Vegas', 'Nevada\'s capital is Carson City.'], ['Seattle', 'Washington\'s capital is Olympia.'], ['Philadelphia', 'Pennsylvania\'s capital is Harrisburg.'], ['Detroit', 'Michigan\'s capital is Lansing.'], ['New Orleans', 'Louisiana\'s capital is Baton Rouge.'], ['Washington DC', 'That is the national capital, not a state capital.'], ['Portland', 'Oregon\'s capital is Salem and Maine\'s is Augusta.'], ['Anchorage', 'Alaska\'s capital is Juneau.']] },
-    { q: 'Name a U.S. president, past or present.',
+    { q: 'Name a U.S. president, past or present.', closed: 1,
       a: [['Washington', 70, ['george washington']], ['Lincoln', 68, ['abraham lincoln', 'abe lincoln']], ['Trump', 60, ['donald trump']], ['Obama', 58, ['barack obama']], ['Biden', 50, ['joe biden']], ['Kennedy', 45, ['john f kennedy', 'john kennedy', 'jfk']], ['Bush', 40, ['george bush', 'george w bush', 'george h w bush']], ['Clinton', 38, ['bill clinton']], ['Reagan', 36, ['ronald reagan']], ['Jefferson', 30, ['thomas jefferson']], ['Roosevelt', 28, ['franklin roosevelt', 'franklin d roosevelt', 'fdr', 'teddy roosevelt', 'theodore roosevelt']], ['Nixon', 26, ['richard nixon']], ['Carter', 22, ['jimmy carter']], ['Adams', 14, ['john adams', 'john quincy adams']], ['Eisenhower', 14, ['dwight eisenhower', 'ike']], ['Truman', 12, ['harry truman']], ['Grant', 12, ['ulysses grant', 'ulysses s grant']], ['Jackson', 11, ['andrew jackson']], ['Ford', 10, ['gerald ford']], ['Johnson', 10, ['lyndon johnson', 'lyndon b johnson', 'lbj', 'andrew johnson']], ['Madison', 9, ['james madison']], ['Monroe', 8, ['james monroe']], ['Wilson', 8, ['woodrow wilson']], ['Hoover', 6, ['herbert hoover']], ['Taft', 5, ['william taft', 'william howard taft']], ['Coolidge', 4, ['calvin coolidge']], ['McKinley', 4, ['william mckinley']], ['Garfield', 4, ['james garfield']], ['Cleveland', 4, ['grover cleveland']], ['Harding', 3, ['warren harding']], ['Polk', 3, ['james polk']], ['Van Buren', 3, ['martin van buren']], ['Harrison', 3, ['william henry harrison', 'benjamin harrison']], ['Fillmore', 3, ['millard fillmore']], ['Tyler', 2, ['john tyler']], ['Taylor', 2, ['zachary taylor']], ['Pierce', 2, ['franklin pierce']], ['Buchanan', 2, ['james buchanan']], ['Hayes', 2, ['rutherford hayes', 'rutherford b hayes']], ['Arthur', 2, ['chester arthur', 'chester a arthur']]],
       no: [['Franklin', 'Benjamin Franklin was never president.'], ['Benjamin Franklin', 'Benjamin Franklin was never president.'], ['Hamilton', 'Alexander Hamilton was never president.'], ['Alexander Hamilton', 'Alexander Hamilton was never president.'], ['Martin Luther King', 'Martin Luther King Jr. was never president.'], ['Churchill', 'Winston Churchill was a British prime minister.'], ['Hillary Clinton', 'Hillary Clinton ran but was never president.'], ['Kamala Harris', 'Kamala Harris was vice president.'], ['Al Gore', 'Al Gore was vice president.'], ['Columbus', 'Columbus was an explorer.']] },
-    { q: 'Name a team in the NFL.',
+    { q: 'Name a team in the NFL.', closed: 1,
       a: [['Cowboys', 55, ['dallas cowboys', 'dallas']], ['Patriots', 45, ['new england patriots', 'new england']], ['Chiefs', 45, ['kansas city chiefs', 'kansas city']], ['Packers', 40, ['green bay packers', 'green bay']], ['Dolphins', 40, ['miami dolphins', 'miami']], ['Eagles', 36, ['philadelphia eagles', 'philadelphia']], ['49ers', 32, ['san francisco 49ers', 'niners', 'forty niners', 'san francisco']], ['Steelers', 32, ['pittsburgh steelers', 'pittsburgh']], ['Giants', 28, ['new york giants']], ['Bears', 26, ['chicago bears', 'chicago']], ['Raiders', 24, ['las vegas raiders', 'oakland raiders', 'las vegas']], ['Broncos', 22, ['denver broncos', 'denver']], ['Buccaneers', 22, ['bucs', 'tampa bay buccaneers', 'tampa bay', 'tampa']], ['Jets', 20, ['new york jets']], ['Bills', 20, ['buffalo bills', 'buffalo']], ['Seahawks', 18, ['seattle seahawks', 'seattle']], ['Rams', 18, ['los angeles rams', 'la rams']], ['Ravens', 18, ['baltimore ravens', 'baltimore']], ['Lions', 17, ['detroit lions', 'detroit']], ['Vikings', 17, ['minnesota vikings', 'minnesota']], ['Saints', 16, ['new orleans saints', 'new orleans']], ['Jaguars', 16, ['jags', 'jacksonville jaguars', 'jacksonville']], ['Falcons', 15, ['atlanta falcons', 'atlanta']], ['Bengals', 14, ['cincinnati bengals', 'cincinnati']], ['Browns', 14, ['cleveland browns', 'cleveland']], ['Chargers', 13, ['los angeles chargers', 'la chargers', 'san diego chargers']], ['Commanders', 12, ['washington commanders', 'washington']], ['Panthers', 12, ['carolina panthers', 'carolina']], ['Colts', 11, ['indianapolis colts', 'indianapolis']], ['Cardinals', 11, ['arizona cardinals', 'arizona']], ['Titans', 10, ['tennessee titans', 'tennessee']], ['Texans', 9, ['houston texans', 'houston']]],
       no: [['Yankees', 'The Yankees play baseball.'], ['Lakers', 'The Lakers play basketball.'], ['Heat', 'The Heat play basketball.'], ['Marlins', 'The Marlins play baseball.'], ['Red Sox', 'The Red Sox play baseball.'], ['Gators', 'The Gators are a college team.'], ['Hurricanes', 'The Hurricanes are a college team.'], ['Oilers', 'The Oilers became the Titans in 1999.'], ['Inter Miami', 'Inter Miami plays soccer.'], ['Bulls', 'The Bulls play basketball.'], ['Dodgers', 'The Dodgers play baseball.']] },
     { q: 'Name a musical instrument.',
@@ -3447,13 +3459,13 @@ RC.content = {
     { q: 'Name a car brand.',
       a: [['Toyota', 60], ['Ford', 60], ['Honda', 50], ['Tesla', 45], ['BMW', 40], ['Chevrolet', 38, ['chevy']], ['Mercedes', 36, ['mercedes benz', 'benz']], ['Ferrari', 30], ['Nissan', 25], ['Jeep', 24], ['Audi', 22], ['Volkswagen', 20, ['vw']], ['Porsche', 20], ['Lamborghini', 18], ['Hyundai', 16], ['Kia', 15], ['Subaru', 14], ['Lexus', 12], ['Dodge', 12], ['Mazda', 10], ['Cadillac', 9], ['Volvo', 9], ['GMC', 8], ['Buick', 6], ['Jaguar', 6], ['Land Rover', 5, ['range rover']], ['Mini', 5, ['mini cooper']], ['Chrysler', 5], ['Ram', 5], ['Lincoln', 4], ['Acura', 4], ['Infiniti', 4], ['Bentley', 4], ['Rolls Royce', 4], ['Fiat', 4], ['Mitsubishi', 3], ['Maserati', 3], ['Aston Martin', 3], ['Bugatti', 3], ['McLaren', 3], ['Alfa Romeo', 2], ['Peugeot', 2], ['Renault', 2], ['Suzuki', 2], ['Genesis', 2], ['Rivian', 2], ['Lucid', 2], ['Polestar', 2], ['Pontiac', 2], ['Saturn', 2], ['Oldsmobile', 2], ['Hummer', 2], ['Saab', 2], ['Lotus', 2], ['Citroen', 2], ['Skoda', 2], ['Mercury', 2], ['Plymouth', 2], ['Studebaker', 2], ['DeLorean', 2], ['BYD', 2], ['Smart', 2], ['Scion', 2], ['Isuzu', 2], ['Opel', 2], ['Vauxhall', 2], ['Koenigsegg', 2], ['Pagani', 2], ['Datsun', 2], ['Packard', 2]],
       no: [['Mustang', 'The Mustang is a Ford model, not a brand.'], ['Corvette', 'The Corvette is a Chevrolet model.'], ['Camry', 'The Camry is a Toyota model.'], ['Civic', 'The Civic is a Honda model.'], ['Prius', 'The Prius is a Toyota model.'], ['Harley', 'Harley-Davidson makes motorcycles.'], ['Uber', 'Uber is a ride service.'], ['Beetle', 'The Beetle is a Volkswagen model.'], ['Tacoma', 'The Tacoma is a Toyota model.'], ['Car', 'Name a brand!']] },
-    { q: 'Name a country in the Americas: North, Central or South America, or the Caribbean.',
+    { q: 'Name a country in the Americas: North, Central or South America, or the Caribbean.', closed: 1,
       a: [['United States', 70, ['usa', 'us', 'america', 'united states of america']], ['Canada', 68], ['Mexico', 66], ['Brazil', 60], ['Argentina', 45], ['Colombia', 35], ['Peru', 32], ['Chile', 30], ['Cuba', 30], ['Jamaica', 26], ['Costa Rica', 24], ['Venezuela', 22], ['Panama', 20], ['Ecuador', 14], ['Dominican Republic', 14], ['Bahamas', 13], ['Haiti', 13], ['Guatemala', 12], ['Honduras', 10], ['Bolivia', 10], ['Uruguay', 9], ['Paraguay', 8], ['Nicaragua', 8], ['El Salvador', 8], ['Belize', 6], ['Barbados', 5], ['Trinidad and Tobago', 5, ['trinidad']], ['Guyana', 3], ['Grenada', 3], ['Saint Lucia', 3], ['Suriname', 2], ['Antigua and Barbuda', 2, ['antigua']], ['Dominica', 2], ['Saint Kitts and Nevis', 2, ['saint kitts']], ['Saint Vincent and the Grenadines', 2, ['saint vincent']]],
       no: [['Puerto Rico', 'Puerto Rico is a U.S. territory, not a country.'], ['French Guiana', 'French Guiana is part of France, not a country.'], ['Greenland', 'Greenland is a territory of Denmark, not a country.'], ['Bermuda', 'Bermuda is a British territory.'], ['Aruba', 'Aruba is part of the Kingdom of the Netherlands.'], ['Cayman Islands', 'The Cayman Islands are a British territory.'], ['Hawaii', 'Hawaii is a U.S. state.'], ['Spain', 'Spain is in Europe.'], ['Portugal', 'Portugal is in Europe.'], ['Florida', 'Florida is a U.S. state.']] },
-    { q: 'Name a capital city in Europe.',
+    { q: 'Name a capital city in Europe.', closed: 1,
       a: [['Paris', 75], ['London', 72], ['Rome', 62], ['Madrid', 50], ['Berlin', 48], ['Athens', 36], ['Dublin', 32], ['Amsterdam', 30], ['Lisbon', 26], ['Vienna', 24], ['Moscow', 22], ['Brussels', 18], ['Stockholm', 16], ['Prague', 16], ['Copenhagen', 14], ['Oslo', 14], ['Budapest', 12], ['Warsaw', 12], ['Helsinki', 10], ['Kyiv', 10, ['kiev']], ['Reykjavik', 7], ['Edinburgh', 6], ['Bern', 6, ['berne']], ['Zagreb', 4], ['Bucharest', 4], ['Belgrade', 4], ['Sofia', 4], ['Monaco', 4], ['Vatican City', 4, ['vatican']], ['Luxembourg', 3, ['luxembourg city']], ['Ankara', 3], ['Riga', 3], ['Tallinn', 3], ['Minsk', 3], ['Sarajevo', 3], ['Cardiff', 2], ['Vilnius', 2], ['Bratislava', 2], ['Ljubljana', 2], ['Valletta', 2], ['Tirana', 2], ['Skopje', 2], ['Podgorica', 2], ['Chisinau', 2], ['Nicosia', 2], ['Andorra la Vella', 2], ['San Marino', 2], ['Vaduz', 2], ['Pristina', 2]],
       no: [['Istanbul', 'Turkey\'s capital is Ankara.'], ['Barcelona', 'Spain\'s capital is Madrid.'], ['Milan', 'Italy\'s capital is Rome.'], ['Venice', 'Italy\'s capital is Rome.'], ['Florence', 'Italy\'s capital is Rome.'], ['Munich', 'Germany\'s capital is Berlin.'], ['Frankfurt', 'Germany\'s capital is Berlin.'], ['Zurich', 'Switzerland\'s capital is Bern.'], ['Geneva', 'Switzerland\'s capital is Bern.'], ['Saint Petersburg', 'Russia\'s capital is Moscow.'], ['Glasgow', 'Scotland\'s capital is Edinburgh.'], ['New York', 'New York is not in Europe.'], ['Sydney', 'Sydney is in Australia.']] },
-    { q: 'Name a team in the NBA.',
+    { q: 'Name a team in the NBA.', closed: 1,
       a: [['Lakers', 60, ['los angeles lakers', 'la lakers']], ['Celtics', 50, ['boston celtics', 'boston']], ['Bulls', 48, ['chicago bulls', 'chicago']], ['Warriors', 45, ['golden state warriors', 'golden state']], ['Heat', 42, ['miami heat', 'miami']], ['Knicks', 36, ['new york knicks']], ['Spurs', 20, ['san antonio spurs', 'san antonio']], ['Mavericks', 18, ['mavs', 'dallas mavericks', 'dallas']], ['Nets', 16, ['brooklyn nets', 'brooklyn']], ['Rockets', 14, ['houston rockets', 'houston']], ['Suns', 14, ['phoenix suns', 'phoenix']], ['Bucks', 14, ['milwaukee bucks', 'milwaukee']], ['76ers', 14, ['sixers', 'philadelphia 76ers', 'philadelphia']], ['Nuggets', 12, ['denver nuggets', 'denver']], ['Cavaliers', 12, ['cavs', 'cleveland cavaliers', 'cleveland']], ['Thunder', 12, ['oklahoma city thunder', 'oklahoma city', 'okc']], ['Magic', 12, ['orlando magic', 'orlando']], ['Clippers', 10, ['los angeles clippers', 'la clippers']], ['Raptors', 9, ['toronto raptors', 'toronto']], ['Jazz', 8, ['utah jazz', 'utah']], ['Hawks', 8, ['atlanta hawks', 'atlanta']], ['Pistons', 8, ['detroit pistons', 'detroit']], ['Trail Blazers', 7, ['blazers', 'portland trail blazers', 'portland']], ['Pacers', 7, ['indiana pacers', 'indiana']], ['Timberwolves', 7, ['wolves', 'minnesota timberwolves', 'minnesota']], ['Kings', 6, ['sacramento kings', 'sacramento']], ['Grizzlies', 6, ['memphis grizzlies', 'memphis']], ['Pelicans', 5, ['new orleans pelicans', 'new orleans']], ['Hornets', 5, ['charlotte hornets', 'charlotte']], ['Wizards', 5, ['washington wizards', 'washington']]],
       no: [['Dolphins', 'The Dolphins play football.'], ['Yankees', 'The Yankees play baseball.'], ['Cowboys', 'The Cowboys play football.'], ['SuperSonics', 'The SuperSonics moved and became the Thunder in 2008.'], ['Marlins', 'The Marlins play baseball.'], ['Patriots', 'The Patriots play football.'], ['Panthers', 'The Panthers play football and hockey.'], ['Globetrotters', 'The Harlem Globetrotters are not an NBA team.'], ['Hurricanes', 'The Hurricanes are a college team.']] },
     { q: 'Name a kind of bird.',
@@ -3462,7 +3474,7 @@ RC.content = {
     { q: 'Name a herb or spice from the kitchen.',
       a: [['Pepper', 70, ['black pepper']], ['Cinnamon', 50], ['Garlic', 40, ['garlic powder']], ['Basil', 38], ['Oregano', 34], ['Paprika', 28], ['Parsley', 26], ['Cumin', 22], ['Ginger', 22], ['Rosemary', 20], ['Thyme', 18], ['Nutmeg', 16], ['Chili powder', 16, ['chili', 'chilli']], ['Cilantro', 14, ['coriander']], ['Mint', 14], ['Vanilla', 12], ['Turmeric', 10], ['Sage', 9], ['Dill', 9], ['Bay leaf', 8, ['bay leaves']], ['Cloves', 8, ['clove']], ['Curry', 8, ['curry powder']], ['Cayenne', 7, ['cayenne pepper']], ['Mustard', 6, ['mustard seed']], ['Saffron', 6], ['Chives', 6], ['Cardamom', 5], ['Onion powder', 5], ['Allspice', 4], ['Tarragon', 4], ['Red pepper flakes', 4, ['crushed red pepper']], ['Fennel', 3, ['fennel seed']], ['Marjoram', 3], ['Star anise', 3, ['anise']], ['Sesame', 3, ['sesame seeds']], ['Italian seasoning', 3], ['Old Bay', 3], ['Lemongrass', 2], ['Sumac', 2], ['Caraway', 2], ['Lavender', 2], ['Horseradish', 2], ['Wasabi', 2], ['Poppy seeds', 2, ['poppy seed']], ['Juniper', 2, ['juniper berries']], ['Celery seed', 2], ['Fenugreek', 2], ['Mace', 2], ['Chervil', 2]],
       no: [['Salt', 'Salt is a mineral, not a herb or spice.'], ['Sugar', 'Sugar is a sweetener.'], ['Ketchup', 'Ketchup is a sauce.'], ['Olive oil', 'Olive oil is an oil.'], ['Flour', 'Flour is not a herb or spice.'], ['Butter', 'Butter is not a herb or spice.'], ['Vinegar', 'Vinegar is not a herb or spice.']] },
-    { q: 'Name a chemical element from the periodic table.',
+    { q: 'Name a chemical element from the periodic table.', closed: 1,
       a: [['Oxygen', 70], ['Hydrogen', 60], ['Gold', 55], ['Carbon', 45], ['Iron', 40], ['Helium', 40], ['Silver', 38], ['Nitrogen', 30], ['Copper', 26], ['Sodium', 20], ['Calcium', 20], ['Neon', 18], ['Aluminum', 16, ['aluminium']], ['Zinc', 14], ['Uranium', 14], ['Mercury', 14], ['Lead', 14], ['Potassium', 12], ['Chlorine', 12], ['Magnesium', 10], ['Titanium', 10], ['Platinum', 10], ['Nickel', 9], ['Sulfur', 8, ['sulphur']], ['Lithium', 8], ['Tin', 7], ['Plutonium', 7], ['Silicon', 7], ['Fluorine', 6], ['Iodine', 6], ['Krypton', 6], ['Phosphorus', 5], ['Argon', 5], ['Radium', 4], ['Cobalt', 4], ['Arsenic', 4], ['Xenon', 3], ['Radon', 3], ['Tungsten', 3], ['Boron', 3], ['Chromium', 3], ['Cesium', 2, ['caesium']], ['Manganese', 2], ['Barium', 2], ['Bismuth', 2], ['Bromine', 2], ['Francium', 2], ['Gallium', 2], ['Germanium', 2], ['Selenium', 2], ['Strontium', 2], ['Zirconium', 2], ['Palladium', 2], ['Beryllium', 2], ['Polonium', 2], ['Einsteinium', 2], ['Americium', 2], ['Californium', 2], ['Vanadium', 2], ['Scandium', 2], ['Rubidium', 2], ['Yttrium', 2], ['Niobium', 2], ['Molybdenum', 2], ['Technetium', 2], ['Ruthenium', 2], ['Rhodium', 2], ['Cadmium', 2], ['Indium', 2], ['Antimony', 2], ['Tellurium', 2], ['Lanthanum', 2], ['Cerium', 2], ['Praseodymium', 2], ['Neodymium', 2], ['Promethium', 2], ['Samarium', 2], ['Europium', 2], ['Gadolinium', 2], ['Terbium', 2], ['Dysprosium', 2], ['Holmium', 2], ['Erbium', 2], ['Thulium', 2], ['Ytterbium', 2], ['Lutetium', 2], ['Hafnium', 2], ['Tantalum', 2], ['Rhenium', 2], ['Osmium', 2], ['Iridium', 2], ['Thallium', 2], ['Astatine', 2], ['Actinium', 2], ['Thorium', 2], ['Protactinium', 2], ['Neptunium', 2], ['Curium', 2], ['Berkelium', 2], ['Fermium', 2], ['Mendelevium', 2], ['Nobelium', 2], ['Lawrencium', 2], ['Rutherfordium', 2], ['Dubnium', 2], ['Seaborgium', 2], ['Bohrium', 2], ['Hassium', 2], ['Meitnerium', 2], ['Darmstadtium', 2], ['Roentgenium', 2], ['Copernicium', 2], ['Nihonium', 2], ['Flerovium', 2], ['Moscovium', 2], ['Livermorium', 2], ['Tennessine', 2], ['Oganesson', 2]],
       no: [['Water', 'Water is hydrogen and oxygen joined together.'], ['Air', 'Air is a mix of gases.'], ['Fire', 'Fire is not an element on the table.'], ['Earth', 'Earth is not an element on the table.'], ['Steel', 'Steel is a mix of iron and carbon.'], ['Bronze', 'Bronze is a mix of copper and tin.'], ['Brass', 'Brass is a mix of copper and zinc.'], ['Salt', 'Salt is sodium and chlorine joined together.'], ['Diamond', 'Diamond is a form of carbon.'], ['Kryptonite', 'That one is only in Superman.'], ['Wood', 'Wood is not an element.']] }
   ],
@@ -3764,13 +3776,13 @@ RC.content = {
     { key: 'fam', title: 'Know Your Family', how: ['Everyone types one true thing about themselves that most people here do not know.', 'The game hides it among three made-up ones. Everybody votes for the true one.', 'Pick the truth: 100 points. You also score for every person your own fact fools.'] },
     { key: 'board', title: 'The Board', how: ['One player picks a category and a point value. The TV says whose turn it is.', 'Then everyone answers on their own phone. You have 20 seconds.', 'Every right answer scores. The fastest right answer earns a bonus and picks next.'] },
     { key: 'tf', title: 'True or False Blitz', how: ['A statement appears. True or false?', 'Everyone answers. You have 12 seconds.', 'Your team scores the share of teammates who get it right.'] },
-    { key: 'zoom', title: 'Zoom In', how: ['A famous place slowly comes into view. Wait for GO, then buzz when you know it.', 'Buzz before GO and you are out for that picture and lose 50 points.', 'After GO the fastest finger answers. A wrong answer costs 50 points.'] },
+    { key: 'zoom', title: 'Zoom In', how: ['A famous place starts close up and pulls back. Wait for GO, then buzz when you know it.', 'Buzz before GO and you lose 50 points, so wait for it.', 'After GO the fastest finger answers. A wrong answer costs 50 points.'] },
     { key: 'num', title: 'Closest Call', how: ['Every answer is a number.', 'Everyone types a guess.', 'The closest guess wins 150 points for the team.'] },
     { key: 'phrase', title: 'Phrase Fever', how: ['Take turns picking letters.', 'Anyone can hit SOLVE and type the phrase.', 'Five misses and the puzzle is lost.'] },
     { key: 'decade', title: 'Name That Decade', how: ['Something happened. In which decade?', 'Everyone answers on their own phone.', 'Grandparents, this one is yours.'] },
     { key: 'scramble', title: 'Word Scramble', how: ['The letters are mixed up. Type the word.', 'First to solve wins 150. Everyone else can still score 40.', 'Wrong tries cost nothing. Close spelling counts.'] },
     { key: 'crillion', title: 'Crillion', how: ['Everyone types one answer to the same question. Spelling does not matter.', 'The more obscure your answer, the more it scores. The most obscure answer in the room wins 50 extra.', 'If someone else types the same thing, you split the points. A wrong answer scores zero.'] },
-    { key: 'feud', title: 'Survey Says', how: ['We asked 1,000 imaginary people. Find their top 5 answers.', 'Wait for GO, then buzz. Buzz early and you are out and lose 50 points.', 'Three strikes and the next team can steal. The last survey is worth double.'] }
+    { key: 'feud', title: 'Survey Says', how: ['We asked 1,000 imaginary people. Find their top 5 answers.', 'Wait for GO, then buzz. Buzz early and you lose 50 points.', 'Three strikes and the next team can steal. The last survey is worth double.'] }
   ],
   order: ['vote', 'likely', 'fam', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'crillion', 'feud'],
   /* Set this to a private judge address to let an AI model rule on Crillion answers that are not on the sheet. */
@@ -4063,7 +4075,7 @@ RC.createEngine = function (C, opts) {
       players: {}, order: [], boss: null, round: 0, rot: [], epoch: 1, out: {}, early: {}, locked: {},
       say: { id: 0, text: '' }, fx: { id: 0, name: '' }, gain: null,
       acted: {}, deadline: 0, turn: null,
-      short: false, solo: false, played: {}, cur: ''
+      short: false, solo: true, played: {}, cur: ''
     };
     P = {};
     H = { key: newKey(), used: opts.used || {} };
@@ -4248,11 +4260,12 @@ RC.createEngine = function (C, opts) {
   /* ---------- crillion: the most obscure correct answer wins ---------- */
   function crNorm(t) { return String(t || '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9 ]/g, '').replace(/\b(the|a|an|lake|mount|mt|saint|st)\b/g, ' ').replace(/\s+/g, ' ').replace(/^ | $/g, ''); }
   var crWords = null;
+  var crClosedWords = {};
   function crKnown() { // every answer on every Crillion sheet, right or wrong, as typed-exactly keys
     if (crWords) { return crWords; }
-    crWords = {};
+    crWords = {}; crClosedWords = {};
     (C.crillion || []).forEach(function (it) {
-      it.a.forEach(function (x) { crWords[crNorm(x[0]).replace(/ /g, '')] = 1; (x[2] || []).forEach(function (al) { crWords[crNorm(al).replace(/ /g, '')] = 1; }); });
+      it.a.forEach(function (x) { if (it.closed) { crClosedWords[crNorm(x[0]).replace(/ /g, '')] = 1; } crWords[crNorm(x[0]).replace(/ /g, '')] = 1; (x[2] || []).forEach(function (al) { crWords[crNorm(al).replace(/ /g, '')] = 1; }); });
       (it.no || []).forEach(function (x) { crWords[crNorm(x[0]).replace(/ /g, '')] = 1; });
     });
     return crWords;
@@ -4278,10 +4291,14 @@ RC.createEngine = function (C, opts) {
     if (best && bd < nd) {
       // close to a right answer. One guard: a correctly spelled, different answer from another sheet
       // ("Australia" when the sheet says "Austria") is not a typo, so a person decides.
-      if (crKnown()[a]) { return { st: 'ask' }; }
+      if (crKnown()[a]) { return item.closed ? { st: 'no', why: 'Not a right answer to this question.' } : { st: 'ask' }; }
       return { st: 'ok', name: best[0], said: best[1] };
     }
     if (bad && nd < bd) { return { st: 'no', why: bad[1] }; }
+    // The sheet lists every right answer (countries, states, presidents, teams, elements): anything else is wrong.
+    if (item.closed) { return { st: 'no', why: 'Not a right answer to this question.' }; }
+    // An open question (fruits, birds...): a right answer to some other question is still wrong here; only the unknown goes to the host.
+    if (crKnown()[a] && crClosedWords[a]) { return { st: 'no', why: 'Not a right answer to this question.' }; }
     return { st: 'ask' };
   }
   function nextCr(now) {
@@ -4410,12 +4427,12 @@ RC.createEngine = function (C, opts) {
     if (S.zi >= P.zs.length) { return roundEnd(now); }
     var z = P.zs[S.zi];
     P.cur = mc({ q: '', o: z.o });
-    var zd = C.zoomMs || 60000;
+    var zd = C.zoomMs || 40000;
     S.z = { n: S.zi + 1, of: P.zs.length, img: z.id, fx: z.fx, fy: z.fy, w: z.w, h: z.h, by: z.by || '', lic: z.lic || '' };
     S.zt0 = now + 3000; S.zdur = zd; S.zfrozen = null; S.openAt = S.zt0 + 1500 + Math.floor(rnd() * 2500);
     S.locked = {}; S.early = {}; S.bzr = []; S.wrong = []; S.rv = null; S.turn = null;
     setPhase('zoom_q', now, 3000 + zd + 6000);
-    say('Picture ' + S.z.n + '. It starts close up and out of focus, then slowly pulls back. Wait for go, then buzz when you know the place.');
+    say('Picture ' + S.z.n + '. Wait for go, then buzz when you know the place.');
   }
   function zoomReveal(pid, now) {
     S.rv = { text: P.cur.o[P.cur.a], who: pid ? nm(pid) : '', team: pid ? pl(pid).t : -1, val: pid ? S.zval : 0 };
@@ -4747,12 +4764,13 @@ RC.createEngine = function (C, opts) {
     else if (c === 'teams') { if (a.names) { for (var ti = 0; ti < NT() && ti < a.names.length; ti++) { S.teams[ti].name = clean(a.names[ti], 14) || TEAM_NAMES[ti]; } } }
     else if (c === 'nteams') { // how many teams, 2 to 5. Between games only.
       if (S.phase === 'lobby' || S.phase === 'menu') {
-        var nn = Math.max(2, Math.min(5, parseInt(a.n, 10) || 2));
+        var nn = Math.max(2, Math.min(5, parseInt(a.n, 10) || 2)), wasSolo = S.solo;
         S.solo = false;
         while (S.teams.length < nn) { S.teams.push({ name: TEAM_NAMES[S.teams.length], score: 0 }); }
         while (S.teams.length > nn) { S.teams.pop(); }
         S.rot = [];
         for (var ni = 0; ni < S.order.length; ni++) { var np = pl(S.order[ni]); if (np && !(np.t >= 0 && np.t < nn)) { np.t = 0; np.t = smallestTeam(); } }
+        if (wasSolo) { for (var nj = 0; nj < S.order.length; nj++) { if (pl(S.order[nj])) { pl(S.order[nj]).t = nj % nn; } } }   // first split: deal people out evenly, the host moves them after
       }
     }
     else if (c === 'shuffle') { // deal everyone into even teams at random
@@ -4884,9 +4902,11 @@ RC.createEngine = function (C, opts) {
     else if (m.t === 'buzz') {
       if (ph === 'zoom_q' || ph === 'feud_face') {
         if (S.early[pid] || (ph === 'zoom_q' && S.locked[side(pid)]) || (P.bzq && P.bzq.got[pid])) { return; }
-        if (m.early || now < S.openAt - 600) {   // tapped before GO: out for this one, and it costs points
-          S.early[pid] = 1; S.acted[pid] = true; penalize(pid, EARLY_COST);
-          S.fs = { id: (S.fs ? S.fs.id : 0) + 1, n: p.n }; fx('wrong'); say(p.n + ' jumped the gun! Out for this one, and minus 50.');
+        if (m.early || now < S.openAt - 600) {   // tapped before GO: it costs points, but the player stays in
+          P.earlyAt = P.earlyAt || {};
+          if (P.earlyAt[pid] && now - P.earlyAt[pid] < 1500) { return; }
+          P.earlyAt[pid] = now; penalize(pid, EARLY_COST);
+          S.fs = { id: (S.fs ? S.fs.id : 0) + 1, n: p.n }; fx('wrong'); say(p.n + ' jumped the gun! Minus 50.');
           return;
         }
         // Each phone reports how long after its own GO the tap came. Everyone who buzzes within half a second
@@ -5094,7 +5114,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
     }
     var FW = fr.clientWidth, FH = fr.clientHeight;
     if (!FW || !FH) { return; }
-    var a = z.w / z.h, F = FW / FH, Z = 9 * Math.max(F / a, a / F);
+    var a = z.w / z.h, F = FW / FH, Z = 3 * Math.max(F / a, a / F);
     var sc = Math.pow(Z, 1 - f), g = (sc - 1) / (Z - 1);
     var tx = (FW / 2 - (el.offsetLeft + el.offsetWidth * z.fx / 100)) * g, ty = (FH / 2 - (el.offsetTop + el.offsetHeight * z.fy / 100)) * g;
     var tr = 'translate3d(' + tx.toFixed(2) + 'px,' + ty.toFixed(2) + 'px,0) scale(' + sc.toFixed(4) + ')';
@@ -5102,9 +5122,10 @@ if (typeof module !== 'undefined') { module.exports = RC; }
     el.style.webkitTransform = el.style.transform = tr;
     var sh = document.getElementById('zsharp');
     if (sh) {
-      var o = Math.max(0, Math.min(1, (f - 0.2) / 0.6)); o = o * o * (3 - 2 * o);
+      var o = Math.max(0, Math.min(1, 0.25 + f / 0.3)); o = o * o * (3 - 2 * o);
       if (!(sh.complete && sh.naturalWidth > 0)) { o = 0; }
       sh.style.opacity = o.toFixed(3);
+      var zc = document.getElementById('zcredit'); if (zc) { zc.style.visibility = S.phase === 'zoom_reveal' ? 'visible' : 'hidden'; }
       var ld = document.getElementById('zload');
       if (ld) { ld.style.display = (sh.complete && sh.naturalWidth === 0) ? '' : 'none'; }
     }
@@ -5362,7 +5383,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       if (S.phase === 'zoom_reveal') { side = '<div class="answer">' + esc(S.rv.text) + '</div><div class="status">' + (S.rv.who ? '<span class="t' + S.rv.team + 'c">' + esc(S.rv.who) + '</span> +' + S.rv.val : 'No points') + '</div>'; }
       else if (S.phase === 'zoom_ans') { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status">' + who(S.turn) + ' is answering' + (S.bzr && S.bzr.length ? '<br><small>fastest finger: ' + secs(S.bzr[0].dt) + '</small>' : '') + '</div>'; }
       else if (S.bzw) { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status go">BUZZ!</div>'; }
-      else { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="GO! Buzz when you know it" data-off="WAIT for GO...">WAIT for GO...</div><div class="pickwhy">Early buzz: out, and lose 50</div>'; }
+      else { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="GO! Buzz when you know it" data-off="WAIT for GO...">WAIT for GO...</div><div class="pickwhy">Early buzz: lose 50</div>'; }
       return '<div class="tag">Picture ' + z.n + ' of ' + z.of + '</div><br>' + side;
     }
     function zoomPic() {
@@ -5372,7 +5393,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       return '<div class="zf"><div class="zbg" style="background-image:url(' + base + '_s.jpg)"></div>' +
         '<div class="zi" id="zimg" style="' + box + '"><img class="zphoto" src="' + base + '_s.jpg" alt=""><img class="zphoto zsharp" id="zsharp" src="' + base + '.jpg" alt="" style="opacity:0"></div>' +
         '<div class="zload" id="zload" style="display:none">The picture did not load. Host: tap Skip.</div></div>' +
-        '<div class="zcredit">Photo: ' + esc(z.by) + (z.lic ? ', ' + esc(z.lic) : '') + ', via Wikimedia Commons</div>';
+        '<div class="zcredit" id="zcredit" style="visibility:hidden">Photo: ' + esc(z.by) + (z.lic ? ', ' + esc(z.lic) : '') + ', via Wikimedia Commons</div>';
     }
     // the shell stays the same for the whole picture, so the photo is never rebuilt while it zooms
     function zoomHtml() { return '<div class="zwrap" data-img="' + S.z.img + S.z.n + '"><div class="zcol" id="zpic"></div><div class="zside" id="zsidebox"></div></div>'; }
@@ -5408,7 +5429,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       h += '</div><div class="fside"><div class="strikes">';
       for (var k = 0; k < 3; k++) { h += '<b class="' + (k < f.strikes ? 'x' : '') + '">X</b>'; }
       h += '</div><div class="tag yel">Pot</div><div class="pot">' + f.pot + '</div>';
-      if (S.phase === 'feud_face') { h += S.bzw ? '<div class="status go">BUZZ!</div>' : '<div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="GO! BUZZ NOW!" data-off="WAIT for GO...">WAIT for GO...</div><div class="pickwhy">Early buzz: out, and lose 50</div>'; }
+      if (S.phase === 'feud_face') { h += S.bzw ? '<div class="status go">BUZZ!</div>' : '<div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="GO! BUZZ NOW!" data-off="WAIT for GO...">WAIT for GO...</div><div class="pickwhy">Early buzz: lose 50</div>'; }
       else if (S.phase === 'feud_pick') { h += '<div class="status">' + (f.mode === 'steal' ? 'STEAL: ' : '') + who(S.turn) + ' is choosing' + (f.mode === 'face' && S.bzr && S.bzr.length ? '<br><small>fastest finger: ' + secs(S.bzr[0].dt) + '</small>' : '') + '</div>'; }
       else { h += '<div class="status">' + (S.rv.solo ? 'Board finished' : (S.rv.team >= 0 ? '<span class="t' + S.rv.team + 'c">' + esc(tname(S.rv.team)) + '</span> +' + S.rv.pot : 'No points')) + '</div>'; }
       return h + '</div></div>' + (S.phase === 'feud_pick' ? timerHtml(f.mode === 'steal' ? 25000 : (f.mode === 'face' ? 14000 : 18000)) : '');
@@ -5500,7 +5521,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
         put('zpic', zoomPic()); put('zsidebox', zoomSide());
       }
       put('bubble', esc(S.phase === 'lobby' || !S.say.text ? (S.boss ? 'Scan the code with your phone camera to join. ' + pname(S.boss) + ' is the host.' : 'Host, scan the code with your phone camera to take control.') : S.say.text));
-      if (S.fs && S.fs.id !== lastFs) { lastFs = S.fs.id; cache.toast = null; put('toast', '<div class="toast">' + esc(S.fs.n) + ' buzzed before GO. Out, and minus 50.</div>'); }
+      if (S.fs && S.fs.id !== lastFs) { lastFs = S.fs.id; cache.toast = null; put('toast', '<div class="toast">' + esc(S.fs.n) + ' buzzed before GO. Minus 50.</div>'); }
       put('joinbox', 'Join at ' + esc(SHORT) + '<br>Room <b>' + ROOM + '</b><br>Relay ' + dotsHtml() + (net.up ? '' : ' connecting...'));
       put('pausel', S.paused ? '<div class="paused">PAUSED</div>' : '');
       put('menu', menuOpen ? '<div class="menu">' +
@@ -5609,10 +5630,11 @@ if (typeof module !== 'undefined') { module.exports = RC; }
     function sentHere() { return ui.sent && S && ui.sent.k === S.k ? ui.sent : null; }
     function buzzBtn() {
       var s = sentHere();
-      if (s) { return '<button class="buzz sent" disabled>' + (s.label === 'early' ? 'TOO EARLY' : 'BUZZED') + '</button>'; }
-      return '<button class="buzz wait" data-a="buzz" data-open="' + (S.openAt || 0) + '" data-on="GO!" data-off="WAIT">WAIT</button><p class="small">Tap only after it turns green and says GO. Tap early and you are out for this one and lose 50 points.</p>';
+      if (s) { return '<button class="buzz sent" disabled>BUZZED</button>'; }
+      if (ui.earlyUntil && Date.now() < ui.earlyUntil) { return '<button class="buzz sent" disabled>TOO EARLY<br>-50</button><p class="small">Wait for GO. You can buzz again in a moment.</p>'; }
+      return '<button class="buzz wait" data-a="buzz" data-open="' + (S.openAt || 0) + '" data-on="GO!" data-off="WAIT">WAIT</button><p class="small">Tap only after it turns green and says GO. Every early tap costs 50 points.</p>';
     }
-    function earlyHtml() { return '<h2>Too early!</h2><p>You tapped before GO. You sit this one out and lose 50 points.</p>' + watch(); }
+    function earlyHtml() { return '<h2>Too early!</h2><p>You tapped before GO and lose 50 points.</p>' + watch(); }
     function teamBtns(action, cur) {
       var h = '';
       for (var t = 0; t < NT(); t++) { h += '<button class="pbtn c tb' + t + (cur === t ? ' sel' : '') + '" data-a="' + action + '" data-v="' + t + '">' + esc(tname(t)) + '</button>'; }
@@ -5629,10 +5651,25 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       return top + '<p>Pick your team</p>' + teamBtns('team', ui.team) + hk + '<button class="pbtn go" data-a="join"' + (ui.team < 0 ? ' disabled' : '') + '>I am in</button>';
     }
     function modeHtml() {
-      var h = '<h3>Teams tonight</h3><div class="half">';
-      h += '<button class="pbtn plain c' + (S.solo ? ' sel' : '') + '" data-a="c_solo" data-v="1">No teams: every player for themselves</button>';
+      var h = '<h3 class="big3">Teams tonight</h3><div class="half modes">';
+      h += '<button class="pbtn plain c wide' + (S.solo ? ' sel' : '') + '" data-a="c_solo" data-v="1">No teams</button>';
       for (var n = 2; n <= 5; n++) { h += '<button class="pbtn plain c' + (!S.solo && NT() === n ? ' sel' : '') + '" data-a="c_nteams" data-v="' + n + '">' + n + ' teams</button>'; }
-      return h + (S.solo ? '' : '<button class="pbtn plain c" data-a="c_shuffle">Shuffle everyone into even teams</button>') + '</div>';
+      return h + (S.solo ? '' : '<button class="pbtn plain c wide" data-a="c_shuffle">Shuffle everyone into even teams</button>') + '</div>';
+    }
+    function teamSetupHtml() { // the host decides: no teams, or 2 to 5 teams with names, and who goes where
+      var h = modeHtml(), t;
+      if (S.solo) { return h + '<p class="small">Everyone plays for themselves. Tap a number of teams to split the room up; you can do it after everybody has joined.</p>'; }
+      h += '<h3>Team names</h3>';
+      for (t = 0; t < NT(); t++) { h += '<div class="trow"><span class="tdot tb' + t + ' on">' + (t + 1) + '</span><input class="field sm" data-hold="1" id="ln' + t + '" maxlength="14" value="' + esc(tname(t)) + '"></div>'; }
+      h += '<div class="half"><button class="pbtn plain c" data-a="c_lnames">Save team names</button>' + (NT() === 2 ? '<button class="pbtn plain c" data-a="c_preset">Kids vs Adults</button>' : '') + '</div>';
+      h += '<h3>Who is on which team</h3><p class="small">Tap a team next to a name to move that person. People can also tap their own team on their phone before the first game.</p>';
+      S.order.forEach(function (id) {
+        var p = S.players[id]; if (!p) { return; }
+        h += '<div class="prow"><div class="pn"><b>' + esc(p.n) + '</b></div><div class="pt">';
+        for (t = 0; t < NT(); t++) { h += '<button class="tdot tb' + t + (p.t === t ? ' on' : '') + '" data-a="c_move" data-v="' + esc(id) + ',' + t + '">' + esc(tname(t).substring(0, 8)) + '</button>'; }
+        h += '</div></div>';
+      });
+      return h;
     }
     function myRank() { var rk = rankList(); for (var i = 0; i < rk.length; i++) { if (rk[i].p === pid) { return i + 1; } } return 0; }
     function standing() { // one line of score, for whichever way the show is being played
@@ -5642,10 +5679,10 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       return h + '</p>';
     }
     function pickerHtml() {
-      var h = '<div class="half">';
-      for (var i = 0; i < C.order.length; i++) { var k = C.order[i], n = S.played[k] || 0; h += '<button class="pbtn game c' + (n ? ' done' : '') + '" data-a="c_play" data-v="' + k + '">' + esc(gameTitle(k)) + (n ? '<small>played</small>' : '') + '</button>'; }
+      var h = '<h3 class="big3">Tap a game to start it</h3><div class="glist">';
+      for (var i = 0; i < C.order.length; i++) { var k = C.order[i], n = S.played[k] || 0; h += '<button class="pbtn gbig' + (n ? ' done' : '') + '" data-a="c_play" data-v="' + k + '"><span>' + esc(gameTitle(k)) + '</span>' + (n ? '<small>played</small>' : '') + '</button>'; }
       h += '</div><button class="pbtn plain c' + (S.short ? ' sel' : '') + '" data-a="c_short">Short games: ' + (S.short ? 'on' : 'off') + '</button>';
-      h += modeHtml();
+      h = S.phase === 'lobby' ? teamSetupHtml() + h : h + teamSetupHtml();   // before the first game, teams come first
       if (S.round > 0) { h += '<button class="pbtn plain c" data-a="c_end">Finish the night and show the winner</button>'; }
       return h + '<p class="small">More controls are under the Host button at the bottom: move or remove players, team names, restart.</p>';
     }
@@ -5666,7 +5703,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
         for (t = 0; t < NT(); t++) { h += '<b class="t' + t + 'c">' + esc(tname(t)) + '</b>' + (lists[t] || '<span class="small">nobody yet</span>'); }
         h += '</div><p class="small">Want a different team? Tap it.</p>' + teamBtns('switch', m.t);
       }
-      if (isBoss) { h += '<h2>You are the host</h2><p>When everyone is in, tap a game to start it. After each game you come back to this list and pick the next one.</p>' + pickerHtml(); }
+      if (isBoss) { h += '<h2>You are the host</h2><p>When everyone is in, set up teams if you want them, then tap a game. After each game you come back to this list.</p>' + pickerHtml(); }
       return h;
     }
     function bodyHtml() {
@@ -5824,7 +5861,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       var wr = S && S.phase === 'scr_q' && S.wr ? (S.wr[pid] || 0) : 0;
       put('pnote', S && ui.failK && ui.failK === S.k ? '<div class="pnote bad">That did not reach the TV. Tap again.</div>' : (wr && !(S.acted && S.acted[pid]) ? '<div class="pnote bad">Not it. Try again. (' + wr + (wr === 1 ? ' try' : ' tries') + ')</div>' : ''));
       var ae = document.activeElement, html = bodyHtml();
-      if (ae && ae.tagName === 'INPUT' && cache.pbody && cache.pbody.replace(/value="[^"]*"/g, '') === html.replace(/value="[^"]*"/g, '')) { /* keep */ }
+      if (ae && ae.tagName === 'INPUT' && cache.pbody && (ae.getAttribute('data-hold') || cache.pbody.replace(/value="[^"]*"/g, '') === html.replace(/value="[^"]*"/g, ''))) { /* keep: someone is typing */ }
       else if (ae && ae.tagName === 'INPUT' && (ae.id === 'nm' || ae.id === 'hk') && !ui.joined && cache.pbody) { /* typing a name: wait */ }
       else if (ae && ae.tagName === 'INPUT' && (ae.id === 'wordin' || ae.id === 'numin' || ae.id === 'crin') && S && cache.pbodyK === S.k && !(S.acted && S.acted[pid]) && !sentHere()) { /* typing an answer: wait */ }
       else { var oldK = cache.pbodyK; if (put('pbody', html)) { cache.pbodyK = S ? S.k : ''; if (cache.pbodyK !== oldK) { cache.pbodyAt = Date.now(); } } }
@@ -5915,7 +5952,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
         if (sentHere()) { return; }
         try { if (navigator.vibrate) { navigator.vibrate(60); } } catch (e) { }
         if (S.phase === 'phrase_turn') { doAct({ t: 'buzz' }, 'Buzzed'); }
-        else { var bdt = hnow() - (S.openAt || 0); if (bdt < 0) { doAct({ t: 'buzz', early: 1 }, 'early'); } else { doAct({ t: 'buzz', dt: Math.round(bdt) }, 'Buzzed'); } }   // a tap before GO is sent too: it costs points
+        else { var bdt = hnow() - (S.openAt || 0); if (bdt < 0) { if (ui.earlyUntil && Date.now() < ui.earlyUntil) { return; } ui.earlyUntil = Date.now() + 2500; send({ t: 'buzz', early: 1, k: S.k, n: 0 }); render(); setTimeout(render, 2600); } else { doAct({ t: 'buzz', dt: Math.round(bdt) }, 'Buzzed'); } }   // a tap before GO is sent too: it costs points
       }
       else if (a === 'ans') { doAct({ t: 'ans', a: +v }, S.phase === 'board_q' && S.q && S.q.o ? S.q.o[+v] : 'Answer sent'); }
       else if (a === 'letter') { doAct({ t: 'letter', l: v }, v); }
@@ -5928,6 +5965,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       else if (a === 'c_again') { ctl('again'); ui.menu = false; }
       else if (a === 'c_adj') { var ad = v.split(','); ctl('adj', { team: +ad[0], d: +ad[1] }); }
       else if (a === 'c_names') { var nms = []; for (var ti = 0; ti < NT(); ti++) { var te = document.getElementById('tn' + ti); if (te) { te.blur(); nms.push(te.value); } else { nms.push(tname(ti)); } } ctl('teams', { names: nms }); }
+      else if (a === 'c_lnames') { var lnm = []; for (var li2 = 0; li2 < NT(); li2++) { var le = document.getElementById('ln' + li2); if (le) { le.blur(); lnm.push(le.value); } else { lnm.push(tname(li2)); } } ctl('teams', { names: lnm }); }
       else if (a === 'c_preset') { ctl('teams', { names: ['Kids', 'Adults'] }); }
       render();
     }

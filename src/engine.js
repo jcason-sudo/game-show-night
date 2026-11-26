@@ -127,7 +127,7 @@ RC.createEngine = function (C, opts) {
       players: {}, order: [], boss: null, round: 0, rot: [], epoch: 1, out: {}, early: {}, locked: {},
       say: { id: 0, text: '' }, fx: { id: 0, name: '' }, gain: null,
       acted: {}, deadline: 0, turn: null,
-      short: false, solo: false, played: {}, cur: ''
+      short: false, solo: true, played: {}, cur: ''
     };
     P = {};
     H = { key: newKey(), used: opts.used || {} };
@@ -312,11 +312,12 @@ RC.createEngine = function (C, opts) {
   /* ---------- crillion: the most obscure correct answer wins ---------- */
   function crNorm(t) { return String(t || '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9 ]/g, '').replace(/\b(the|a|an|lake|mount|mt|saint|st)\b/g, ' ').replace(/\s+/g, ' ').replace(/^ | $/g, ''); }
   var crWords = null;
+  var crClosedWords = {};
   function crKnown() { // every answer on every Crillion sheet, right or wrong, as typed-exactly keys
     if (crWords) { return crWords; }
-    crWords = {};
+    crWords = {}; crClosedWords = {};
     (C.crillion || []).forEach(function (it) {
-      it.a.forEach(function (x) { crWords[crNorm(x[0]).replace(/ /g, '')] = 1; (x[2] || []).forEach(function (al) { crWords[crNorm(al).replace(/ /g, '')] = 1; }); });
+      it.a.forEach(function (x) { if (it.closed) { crClosedWords[crNorm(x[0]).replace(/ /g, '')] = 1; } crWords[crNorm(x[0]).replace(/ /g, '')] = 1; (x[2] || []).forEach(function (al) { crWords[crNorm(al).replace(/ /g, '')] = 1; }); });
       (it.no || []).forEach(function (x) { crWords[crNorm(x[0]).replace(/ /g, '')] = 1; });
     });
     return crWords;
@@ -342,10 +343,14 @@ RC.createEngine = function (C, opts) {
     if (best && bd < nd) {
       // close to a right answer. One guard: a correctly spelled, different answer from another sheet
       // ("Australia" when the sheet says "Austria") is not a typo, so a person decides.
-      if (crKnown()[a]) { return { st: 'ask' }; }
+      if (crKnown()[a]) { return item.closed ? { st: 'no', why: 'Not a right answer to this question.' } : { st: 'ask' }; }
       return { st: 'ok', name: best[0], said: best[1] };
     }
     if (bad && nd < bd) { return { st: 'no', why: bad[1] }; }
+    // The sheet lists every right answer (countries, states, presidents, teams, elements): anything else is wrong.
+    if (item.closed) { return { st: 'no', why: 'Not a right answer to this question.' }; }
+    // An open question (fruits, birds...): a right answer to some other question is still wrong here; only the unknown goes to the host.
+    if (crKnown()[a] && crClosedWords[a]) { return { st: 'no', why: 'Not a right answer to this question.' }; }
     return { st: 'ask' };
   }
   function nextCr(now) {
@@ -474,12 +479,12 @@ RC.createEngine = function (C, opts) {
     if (S.zi >= P.zs.length) { return roundEnd(now); }
     var z = P.zs[S.zi];
     P.cur = mc({ q: '', o: z.o });
-    var zd = C.zoomMs || 60000;
+    var zd = C.zoomMs || 40000;
     S.z = { n: S.zi + 1, of: P.zs.length, img: z.id, fx: z.fx, fy: z.fy, w: z.w, h: z.h, by: z.by || '', lic: z.lic || '' };
     S.zt0 = now + 3000; S.zdur = zd; S.zfrozen = null; S.openAt = S.zt0 + 1500 + Math.floor(rnd() * 2500);
     S.locked = {}; S.early = {}; S.bzr = []; S.wrong = []; S.rv = null; S.turn = null;
     setPhase('zoom_q', now, 3000 + zd + 6000);
-    say('Picture ' + S.z.n + '. It starts close up and out of focus, then slowly pulls back. Wait for go, then buzz when you know the place.');
+    say('Picture ' + S.z.n + '. Wait for go, then buzz when you know the place.');
   }
   function zoomReveal(pid, now) {
     S.rv = { text: P.cur.o[P.cur.a], who: pid ? nm(pid) : '', team: pid ? pl(pid).t : -1, val: pid ? S.zval : 0 };
@@ -811,12 +816,13 @@ RC.createEngine = function (C, opts) {
     else if (c === 'teams') { if (a.names) { for (var ti = 0; ti < NT() && ti < a.names.length; ti++) { S.teams[ti].name = clean(a.names[ti], 14) || TEAM_NAMES[ti]; } } }
     else if (c === 'nteams') { // how many teams, 2 to 5. Between games only.
       if (S.phase === 'lobby' || S.phase === 'menu') {
-        var nn = Math.max(2, Math.min(5, parseInt(a.n, 10) || 2));
+        var nn = Math.max(2, Math.min(5, parseInt(a.n, 10) || 2)), wasSolo = S.solo;
         S.solo = false;
         while (S.teams.length < nn) { S.teams.push({ name: TEAM_NAMES[S.teams.length], score: 0 }); }
         while (S.teams.length > nn) { S.teams.pop(); }
         S.rot = [];
         for (var ni = 0; ni < S.order.length; ni++) { var np = pl(S.order[ni]); if (np && !(np.t >= 0 && np.t < nn)) { np.t = 0; np.t = smallestTeam(); } }
+        if (wasSolo) { for (var nj = 0; nj < S.order.length; nj++) { if (pl(S.order[nj])) { pl(S.order[nj]).t = nj % nn; } } }   // first split: deal people out evenly, the host moves them after
       }
     }
     else if (c === 'shuffle') { // deal everyone into even teams at random
@@ -948,9 +954,11 @@ RC.createEngine = function (C, opts) {
     else if (m.t === 'buzz') {
       if (ph === 'zoom_q' || ph === 'feud_face') {
         if (S.early[pid] || (ph === 'zoom_q' && S.locked[side(pid)]) || (P.bzq && P.bzq.got[pid])) { return; }
-        if (m.early || now < S.openAt - 600) {   // tapped before GO: out for this one, and it costs points
-          S.early[pid] = 1; S.acted[pid] = true; penalize(pid, EARLY_COST);
-          S.fs = { id: (S.fs ? S.fs.id : 0) + 1, n: p.n }; fx('wrong'); say(p.n + ' jumped the gun! Out for this one, and minus 50.');
+        if (m.early || now < S.openAt - 600) {   // tapped before GO: it costs points, but the player stays in
+          P.earlyAt = P.earlyAt || {};
+          if (P.earlyAt[pid] && now - P.earlyAt[pid] < 1500) { return; }
+          P.earlyAt[pid] = now; penalize(pid, EARLY_COST);
+          S.fs = { id: (S.fs ? S.fs.id : 0) + 1, n: p.n }; fx('wrong'); say(p.n + ' jumped the gun! Minus 50.');
           return;
         }
         // Each phone reports how long after its own GO the tap came. Everyone who buzzes within half a second

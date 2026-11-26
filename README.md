@@ -8,8 +8,9 @@ Game shows for the whole family. The TV is the stage, every phone is a controlle
 
 1. Open the link on the screen everyone can see and choose **This is the TV screen**. Press OK once to turn on sound.
 2. **Host first.** The TV shows a host code. The person running the night scans it (or opens the link, types the room code, and types the host code on the join screen). Only that phone controls the night.
-3. The TV then shows the code for everyone else. Each player scans it, types a name and picks a team.
-4. The host taps a game. When it ends, the game list comes back: pick the next one, or finish the night to crown a winner.
+3. The TV then shows the code for everyone else. Each player scans it and types a name. A night starts with no teams.
+4. Teams are the host's call. On the host's phone, tap 2, 3, 4 or 5 teams: everyone is dealt out evenly. Type the team names (Family Casey, Kids, Adults...), tap a team next to a name to move that person, or let people tap their own team on their phone.
+5. The host taps a game. When it ends, the game list comes back: pick the next one, or finish the night to crown a winner.
 
 Whoever joins first is not the host. Only the phone that scanned the host code is. To hand the night to someone else, use **Menu > Change the host** on the TV; it shows a fresh host code and the old one stops working.
 
@@ -38,7 +39,7 @@ The TV has a Menu too (also Space or Enter for Next, P for Pause, M for Menu on 
 
 Zoom In and the Survey Says face-off use a buzzer. The button says **WAIT** and is grey. After a pause nobody can predict, it turns green and says **GO**.
 
-- Tap before GO: you are out for that picture or face-off and lose 50 points (so does your team).
+- Tap before GO: you lose 50 points (so does your team). You are not knocked out; you can buzz again after GO. Every early tap costs another 50.
 - After GO, each phone measures how long its owner took to tap. Everyone who buzzes within half a second of the first buzz to arrive is compared on that reaction time, so a slow connection does not lose the race.
 - In Zoom In a wrong answer after buzzing costs 50 points.
 
@@ -51,7 +52,7 @@ Zoom In and the Survey Says face-off use a buzzer. The button says **WAIT** and 
 | The Board | The TV names whose turn it is to pick a category and value. Then everyone answers on their own phone, 20 seconds. Every right answer scores; the fastest right answer earns a bonus and picks next. |
 | True or False Blitz | A statement, 12 seconds. |
 | Know Your Family | Everyone types one true thing about themselves that most people do not know. The game hides it among three made-up facts on the same topic. Everybody else votes for the true one: 100 points for picking it, and the person scores for everyone they fool. |
-| Zoom In | A real photograph of a famous place starts close up and out of focus, then pulls back over a full minute. Wait for GO, then buzz. The earlier you get it, the more it is worth (500 down to 100). |
+| Zoom In | A real photograph of a famous place starts close up and slightly soft, then pulls back over 40 seconds. It is sharp within the first ten seconds. Wait for GO, then buzz. The earlier you get it, the more it is worth (500 down to 100). |
 | Closest Call | Every answer is a number. Closest guess wins. |
 | Phrase Fever | Take turns picking letters. Anyone can try to solve. Close spelling counts. |
 | Name That Decade | Something happened. In which decade? |
@@ -67,7 +68,7 @@ Questions do not repeat until a game's whole pool has been used. The TV remember
 - Close and sound-alike spelling is accepted in Crillion, Phrase Fever and Word Scramble. Words of three letters or fewer must be exact.
 - Crillion is judged by a built-in answer sheet for each question (`crillion` in `src/content.js`; the "how many people would say it" numbers are estimates written by hand, not a poll). An answer that is not on the sheet goes to the host's phone as Correct or Wrong. `judgeUrl` in `src/content.js` is a hook for a private AI judge; it is empty by default, so no AI is called.
 - The host character (Ace) talks using the TV browser's built-in voice. Some TV browsers have no voice; the words still show in the speech bubble.
-- Zoom In has 50 photographs (in `img/zoom/`). A game shows five, so it takes ten games before one repeats. The photographers and licences are in [CREDITS.md](CREDITS.md), and each credit shows under the picture on the TV.
+- Zoom In has 50 photographs (in `img/zoom/`). A game shows five, so it takes ten games before one repeats. The photographers and licences are in [CREDITS.md](CREDITS.md), and each credit shows under the picture once the answer is revealed (not before, so it cannot give the place away).
 - The page is plain ES5 with flexbox so it also runs on older TV browsers.
 
 ## Files
@@ -79,6 +80,8 @@ Questions do not repeat until a game's whole pool has been used. The TV remember
 
 - In Know Your Family the made-up facts come from a bank of 270 written in advance (`fam` in `src/content.js`), matched to the topic of what the player typed and to whether they said they are a kid or a grown-up. They are not written live by an AI model; that needs a private server with a model key.
 
+- Crillion questions with a complete list of right answers (countries, U.S. states and capitals, presidents, NFL and NBA teams, elements) are marked `closed` in `src/content.js`. On those, an answer that is not on the list is wrong and scores nothing; it never goes to the host to judge. Open questions (fruits, birds, dog breeds...) still send an unknown answer to the host.
+
 ## Tests
 
 - `node test/engine.test.js` plays 300 simulated nights (2 to 5 teams and no teams) and checks the host, team, buzzer, Crillion and no-repeat rules.
@@ -87,3 +90,4 @@ Questions do not repeat until a game's whole pool has been used. The TV remember
 - `python3 test/host_tour.py` plays the host: it taps every host control once and checks the result.
 - `python3 test/zoom_shots.py` plays two Zoom In pictures at TV size and saves screenshots through the minute-long pull-back.
 - `python3 test/fam_shots.py` plays Know Your Family with four phones and saves screenshots.
+- `python3 test/teams_shots.py` checks that people join with only a name and that the host can make, name and fill teams.
