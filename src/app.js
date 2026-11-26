@@ -140,6 +140,7 @@
   function tickUI() {
     if (!S) { return; }
     window.RCS = S;
+    try { if (RC.avatar) { RC.avatar.tick(S); } } catch (e) { }
     var now = hnow(), i, el, els;
     els = document.querySelectorAll('[data-dl]');
     for (i = 0; i < els.length; i++) { el = els[i]; var dl = +el.getAttribute('data-dl'), len = +el.getAttribute('data-len') || 1; el.style.width = Math.max(0, Math.min(100, 100 * (dl - now) / len)) + '%'; }
@@ -197,6 +198,7 @@
     app.innerHTML = '<div class="scr">' + rays + '<div class="top" id="top"></div><div class="stagewrap"><div class="frame">' + bulbs + '<div class="stage" id="stage"></div>' + bulbs + '</div></div>' +
       '<div class="stripes"><i class="s0"></i><i class="s1"></i><i class="s2"></i></div>' +
       '<div class="foot"><div class="host" id="host">' + RC.art.host + '</div><div class="bubble" id="bubble"></div><div class="joinbox" id="joinbox"></div></div>' +
+      '<div class="avbox off" id="avbox"><video id="avvideo" autoplay playsinline muted></video><audio id="avaudio" autoplay></audio><div class="avdemo">' + RC.art.host + '</div><div class="avtag" id="avtag"></div></div>' +
       '<button class="menubtn" data-a="s_menu">Menu</button><div id="menu"></div><div id="pausel"></div><div id="xl"></div><div id="toast"></div>' +
       '<div class="overlay" id="ov"><h1>Game Show Night</h1><p>Pick a game. Grab your phone. Play.</p><button data-a="s_unlock" id="ovb">Press OK to start</button></div></div>';
     try { document.getElementById('ovb').focus(); } catch (e) { }
@@ -297,6 +299,8 @@
       if (host) { host.className = 'host talk'; }
       if (talkTimer) { clearTimeout(talkTimer); }
       talkTimer = setTimeout(function () { if (host) { host.className = 'host'; } }, Math.min(9000, 900 + text.length * 60));
+      // with a live avatar the avatar says the line; otherwise the browser's own voice does
+      if (unlocked && soundOn && RC.avatar && RC.avatar.speak(text)) { try { if (window.speechSynthesis) { window.speechSynthesis.cancel(); } } catch (e0) { } return; }
       if (!unlocked || !soundOn || !window.speechSynthesis || !window.SpeechSynthesisUtterance) { return; }
       try {
         var syn = window.speechSynthesis;
@@ -557,6 +561,7 @@
         try { if (window.speechSynthesis) { pickVoice(); window.speechSynthesis.onvoiceschanged = pickVoice; } } catch (e) { }
         var ov = document.getElementById('ov'); if (ov) { ov.className = 'overlay hide'; }
         sfx('fanfare');
+        try { if (RC.avatar) { RC.avatar.start(); } } catch (e4) { }
         setTimeout(function () { speak('Sound check. I am Ace, your host. If you can hear me, we are good to go.'); }, 900);
       }
       else if (a === 's_menu') { menuOpen = !menuOpen; }

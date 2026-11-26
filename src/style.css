@@ -472,3 +472,18 @@ html, body { background: #0F3B4C; color: #EEF3F1; font-weight: 600; }
 .pbody h3 { font-size: 20px; }
 .prow .pn b { font-size: 19px; } .tdot { font-size: 16px; padding: 9px 11px; }
 .sline { font-weight: 700; color: #2E7D4F; } .sline.bad { color: #C0392B; }
+
+/* Avatar host (prototype): a tall video panel at the left; the stage makes room for it */
+.avbox { position: absolute; left: 1.4vw; bottom: 17.2vh; width: 25vh; height: 37.5vh; border-radius: 2vh; overflow: hidden; background: #0A2C39; box-shadow: 0 0 0 0.6vh #F9D648, 0 1.2vh 3vh rgba(0, 0, 0, 0.45); z-index: 6; }
+.avbox.off, .avbox.down { display: none; }
+.avbox video { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+.avbox.live video { display: block; }
+.avbox .avdemo { position: absolute; left: 6%; right: 6%; top: 10%; bottom: 14%; }
+.avbox.live .avdemo { display: none; }
+.avbox.talk .hostmouth { -webkit-animation: talk 0.28s infinite; animation: talk 0.28s infinite; -webkit-transform-origin: 117px 110px; transform-origin: 117px 110px; }
+.avtag { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.7vh 0.6vh; background: rgba(10, 44, 57, 0.85); color: #F9D648; font-size: 1.7vh; font-weight: 700; text-align: center; }
+.avtag:empty { display: none; }
+.scr.avmode .stagewrap { padding-left: 29.5vh; }
+.scr.avmode .foot .host { visibility: hidden; width: 21vh; }
+.scr.avmode .zf { width: 84vh; height: 52.5vh; }
+.scr.avmode .zside { width: 24vw; padding-left: 1.8vw; }

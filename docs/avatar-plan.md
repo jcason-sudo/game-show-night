@@ -1,6 +1,6 @@
-# Talking avatar host: plan and what is missing
+# Talking avatar host: prototype and what is missing
 
-Status on 2026-11-26: not built. The game has a built-in host (Ace) who speaks with the TV browser's own voice. A realistic Azure avatar needs two things this page cannot provide on its own.
+Status on 2026-11-26 (evening): prototype built, not yet run against Azure. See "Prototype" at the end. Earlier status: not built. The game has a built-in host (Ace) who speaks with the TV browser's own voice. A realistic Azure avatar needs two things this page cannot provide on its own.
 
 ## Why it cannot be switched on from the page alone
 
@@ -34,3 +34,32 @@ Microsoft's price page shows no numbers without signing in, so the per-minute pr
 ## Source
 
 - How to use text to speech avatar with real-time synthesis: https://learn.microsoft.com/en-us/azure/ai-services/speech-service/text-to-speech-avatar/real-time-synthesis-avatar
+
+## Prototype (built 2026-11-26)
+
+What exists now:
+
+- `src/avatar.js`: the page side. It is off unless the TV page is opened with `?avatar=...`.
+  - `?avatar=demo` shows the layout and the flow with a stand-in host and the browser's voice. No Azure needed.
+  - `?avatar=https://YOUR-SERVER/avatar-token&ak=PASSWORD` connects to Azure through the token address. The address is remembered on that TV browser; `?avatar=off` forgets it.
+- `tools/avatar_token_server.py`: the token address for the Azure server. It reads `SPEECH_KEY` (or `FOUNDRY_API_KEY`), `SPEECH_REGION` and `AVATAR_PASS` from `~/.foundry.env`, allows only the game's site, needs the password, and stops after 60 tokens a day.
+- `test/avatar_shots.py`: demo screenshots, plus the real connection code run against a stand-in for Azure.
+
+How a night runs with it:
+
+1. OK is pressed on the TV. The page asks the token address for a 10-minute token and the relay details.
+2. The page opens the video connection to Azure Speech and shows the avatar in a panel at the left. The stage moves over to make room.
+3. Every host line (rules, whose turn, results, standings) is sent to the avatar instead of the browser voice. A new line cuts off the old one.
+4. If the avatar is not connected, the built-in voice speaks the line, so the show never waits.
+5. To limit cost the page hangs up when the show is paused or after 3 quiet minutes, and reconnects on the next line. It also renews the session before Azure's 30-minute limit.
+
+Checked with a stand-in for Azure: the order of calls, lines going to the avatar, cut-off, hang-up on pause, and the fallback when the token address refuses.
+
+Not checked, needs the real service: that the token and relay replies have the field names the server expects, that a token from a Foundry resource is accepted by the avatar service, picture quality, delay, and the price.
+
+To switch it on (on the Azure server, where the Foundry sign-in works):
+
+1. Confirm the Speech or Foundry resource is Standard S0 and in a region that offers avatars.
+2. Add `SPEECH_REGION=...` and `AVATAR_PASS=...` to `~/.foundry.env`.
+3. Run `python3 tools/avatar_token_server.py` and put it behind HTTPS in Caddy.
+4. Open the TV link once with `?avatar=https://.../avatar-token&ak=...` in Chrome or Edge on a laptop.

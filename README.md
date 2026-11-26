@@ -85,6 +85,8 @@ Questions do not repeat until a game's whole pool has been used. The TV remember
 - Know Your Family fixes the spelling of each typed fact before it goes on the TV, so a typo does not give the true one away. It runs in the page with no server: `src/spell.js` holds 22,000 common English words to correct towards and a bit filter of 50,000 rarer English, Spanish and Portuguese words that are left alone. Names with a capital, players' names and words with accents are never changed. Rebuild the data with `node tools/make_spell.js`.
 - Sound: when OK is pressed on the TV the host says a sound-check line, and the corner of the TV shows `Voice on`, `No voice in this browser` or `Voice is not working here`. Menu > Test the sound repeats the check. The voice is the browser's own; Chrome or Edge on a laptop has one, many TV browsers do not.
 
+- Avatar host (prototype, off by default): add `?avatar=demo` to the link to see where a talking avatar would stand and how the show flows. The real Azure connection needs a token address on a private server; see `docs/avatar-plan.md`.
+
 ## Tests
 
 - `node test/engine.test.js` plays 300 simulated nights (2 to 5 teams and no teams) and checks the host, team, buzzer, Crillion and no-repeat rules.
@@ -94,3 +96,4 @@ Questions do not repeat until a game's whole pool has been used. The TV remember
 - `python3 test/zoom_shots.py` plays two Zoom In pictures at TV size and saves screenshots through the minute-long pull-back.
 - `python3 test/fam_shots.py` plays Know Your Family with four phones and saves screenshots.
 - `python3 test/teams_shots.py` checks that people join with only a name and that the host can make, name and fill teams.
+- `python3 test/avatar_shots.py` shows the avatar demo and runs the connection code against a stand-in for Azure.

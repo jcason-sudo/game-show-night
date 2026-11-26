@@ -482,6 +482,21 @@ html, body { background: #0F3B4C; color: #EEF3F1; font-weight: 600; }
 .pbody h3 { font-size: 20px; }
 .prow .pn b { font-size: 19px; } .tdot { font-size: 16px; padding: 9px 11px; }
 .sline { font-weight: 700; color: #2E7D4F; } .sline.bad { color: #C0392B; }
+
+/* Avatar host (prototype): a tall video panel at the left; the stage makes room for it */
+.avbox { position: absolute; left: 1.4vw; bottom: 17.2vh; width: 25vh; height: 37.5vh; border-radius: 2vh; overflow: hidden; background: #0A2C39; box-shadow: 0 0 0 0.6vh #F9D648, 0 1.2vh 3vh rgba(0, 0, 0, 0.45); z-index: 6; }
+.avbox.off, .avbox.down { display: none; }
+.avbox video { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+.avbox.live video { display: block; }
+.avbox .avdemo { position: absolute; left: 6%; right: 6%; top: 10%; bottom: 14%; }
+.avbox.live .avdemo { display: none; }
+.avbox.talk .hostmouth { -webkit-animation: talk 0.28s infinite; animation: talk 0.28s infinite; -webkit-transform-origin: 117px 110px; transform-origin: 117px 110px; }
+.avtag { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.7vh 0.6vh; background: rgba(10, 44, 57, 0.85); color: #F9D648; font-size: 1.7vh; font-weight: 700; text-align: center; }
+.avtag:empty { display: none; }
+.scr.avmode .stagewrap { padding-left: 29.5vh; }
+.scr.avmode .foot .host { visibility: hidden; width: 21vh; }
+.scr.avmode .zf { width: 84vh; height: 52.5vh; }
+.scr.avmode .zside { width: 24vw; padding-left: 1.8vw; }
 </style>
 </head>
 <body>
@@ -3958,6 +3973,129 @@ var RC = (typeof RC !== 'undefined') ? RC : {};
 })();
 if (typeof module !== 'undefined') { module.exports = RC; }
 
+/* Talking avatar host (prototype). Off unless the TV page is opened with ?avatar=...
+     ?avatar=demo                      shows where the avatar stands and how the show flows; uses the browser's voice
+     ?avatar=https://your-server/avatar-token&ak=PASSWORD
+                                       connects to Azure Speech "text to speech avatar" through your own token address
+     ?avatar=off                       forgets a saved address
+   The page never holds an Azure key: the token address (tools/avatar_token_server.py) hands out a short-lived
+   token and the relay details. Follows Microsoft's real-time avatar guide (WebRTC + Speech SDK for JavaScript).
+   NOT yet tested against Azure; the demo mode and the call order are tested with a stand-in. */
+var RC = (typeof RC !== 'undefined') ? RC : {};
+RC.avatar = (function () {
+  var SDK_URL = 'https://aka.ms/csspeech/jsbrowserpackageraw';
+  var MAX_SESSION_MS = 25 * 60 * 1000;   // Azure ends a session at 30 minutes: renew at a quiet moment before that
+  var IDLE_CLOSE_MS = 3 * 60 * 1000;     // nothing said for 3 minutes: hang up so the meter stops; reconnect on the next line
+  var cfg = null, state = 'off', pc = null, syn = null, startedAt = 0, lastSaid = 0, speaking = false, pendingText = '', note = '', tries = 0, lastTry = 0;
+
+  function param(name) { var m = new RegExp('[?&]' + name + '=([^&]*)').exec(location.search); return m ? decodeURIComponent(m[1]) : ''; }
+  function readCfg() { // the address bar is read as soon as the page loads, because choosing "TV screen" reloads the page without it
+    var a = param('avatar'), saved = null, demo = false;
+    try { saved = JSON.parse(localStorage.getItem('gn_avatar') || 'null'); demo = sessionStorage.getItem('gn_avatar_demo') === '1'; } catch (e) { }
+    if (a === 'off') { try { localStorage.removeItem('gn_avatar'); sessionStorage.removeItem('gn_avatar_demo'); } catch (e2) { } return null; }
+    if (a === 'demo') { try { sessionStorage.setItem('gn_avatar_demo', '1'); } catch (e4) { } return { demo: true }; }
+    if (/^https:\/\//.test(a)) { saved = { url: a, pass: param('ak') }; try { localStorage.setItem('gn_avatar', JSON.stringify(saved)); sessionStorage.removeItem('gn_avatar_demo'); } catch (e3) { } return saved; }
+    if (demo) { return { demo: true }; }
+    return saved && saved.url ? saved : null;
+  }
+  try { readCfg(); } catch (e0) { }
+  function el(id) { return document.getElementById(id); }
+  function show() {
+    var box = el('avbox'), scr = document.querySelector('.scr'), on = state === 'demo' || state === 'live' || state === 'loading';
+    if (!box) { return; }
+    box.className = 'avbox ' + state + (speaking ? ' talk' : '');
+    if (scr) { scr.className = 'scr' + (on ? ' avmode' : ''); }
+    var tag = el('avtag');
+    if (tag) { tag.innerHTML = state === 'demo' ? 'Demo: the avatar video plays here' : (state === 'loading' ? 'Avatar connecting...' : (state === 'down' ? note : '')); }
+  }
+  function loadSdk(done) {
+    if (window.SpeechSDK) { return done(true); }
+    var s = document.createElement('script'); s.src = (cfg && cfg.sdk) || SDK_URL;
+    s.onload = function () { done(!!window.SpeechSDK); }; s.onerror = function () { done(false); };
+    document.head.appendChild(s);
+  }
+  function getToken(done) {
+    var x = new XMLHttpRequest();
+    x.open('GET', cfg.url + (cfg.url.indexOf('?') < 0 ? '?' : '&') + 'key=' + encodeURIComponent(cfg.pass || ''), true);
+    x.timeout = 12000;
+    x.onload = function () { var j = null; try { j = JSON.parse(x.responseText); } catch (e) { } done(x.status === 200 && j && j.token ? j : null, j && j.error ? j.error : 'token address answered ' + x.status); };
+    x.onerror = x.ontimeout = function () { done(null, 'token address not reachable'); };
+    x.send();
+  }
+  function hangUp(why) {
+    try { if (syn) { syn.close(); } } catch (e) { }
+    try { if (pc) { pc.close(); } } catch (e2) { }
+    syn = null; pc = null; speaking = false;
+    if (state !== 'off' && state !== 'demo') { state = 'down'; note = why || ''; }
+    show();
+  }
+  function connect() {
+    if (!cfg || cfg.demo || state === 'loading' || state === 'live') { return; }
+    if (Date.now() - lastTry < 15000 || tries >= 6) { return; }     // do not hammer the token address
+    lastTry = Date.now(); tries++; state = 'loading'; show();
+    loadSdk(function (ok) {
+      if (!ok) { return hangUp('Speech SDK did not load'); }
+      getToken(function (j, err) {
+        if (!j) { return hangUp('Avatar off: ' + err); }
+        try {
+          var SDK = window.SpeechSDK;
+          pc = new RTCPeerConnection({ iceServers: [{ urls: [j.ice.urls], username: j.ice.username, credential: j.ice.credential }] });
+          pc.ontrack = function (ev) {
+            var m = el(ev.track.kind === 'video' ? 'avvideo' : 'avaudio');
+            if (m) { m.srcObject = ev.streams[0]; try { var p = m.play(); if (p && p.catch) { p.catch(function () { }); } } catch (e) { } }
+          };
+          pc.oniceconnectionstatechange = function () { if (pc && /disconnected|failed|closed/.test(pc.iceConnectionState) && state === 'live') { hangUp(''); } };
+          pc.addTransceiver('video', { direction: 'sendrecv' });
+          pc.addTransceiver('audio', { direction: 'sendrecv' });
+          var sc = SDK.SpeechConfig.fromAuthorizationToken(j.token, j.region);
+          if (j.voice) { sc.speechSynthesisVoiceName = j.voice; }
+          var vf = new SDK.AvatarVideoFormat();
+          vf.setCropRange(new SDK.Coordinate(600, 0), new SDK.Coordinate(1320, 1080));   // a tall slice of the 1920 x 1080 picture
+          var ac = new SDK.AvatarConfig(j.character || 'lisa', j.style || 'casual-sitting', vf);
+          ac.backgroundColor = '#0A2C39FF';
+          syn = new SDK.AvatarSynthesizer(sc, ac);
+          syn.startAvatarAsync(pc).then(function () {
+            state = 'live'; startedAt = lastSaid = Date.now(); tries = 0; show();
+            if (pendingText) { var t = pendingText; pendingText = ''; say(t); }
+          }).catch(function (e) { hangUp('Avatar did not start: ' + (e && e.message ? e.message : e)); });
+        } catch (e) { hangUp('Avatar error: ' + (e && e.message ? e.message : e)); }
+      });
+    });
+  }
+  function say(text) {
+    if (!syn) { return; }
+    lastSaid = Date.now();
+    function go() {
+      speaking = true; show();
+      syn.speakTextAsync(text).then(function () { speaking = false; lastSaid = Date.now(); show(); }).catch(function () { speaking = false; hangUp(''); });
+    }
+    // a new line replaces the one being spoken, the same way the built-in voice works
+    if (speaking && syn.stopSpeakingAsync) { syn.stopSpeakingAsync().then(go).catch(go); } else { go(); }
+  }
+  return {
+    /* called once, when OK is pressed on the TV (browsers only allow sound after a key press) */
+    start: function () { cfg = readCfg(); if (!cfg) { state = 'off'; return; } if (cfg.demo) { state = 'demo'; show(); return; } state = 'down'; connect(); },
+    /* returns true when the avatar is speaking this line, false when the built-in voice should */
+    speak: function (text) {
+      if (state === 'live') { say(text); return true; }
+      if (state === 'demo') { speaking = true; show(); setTimeout(function () { speaking = false; show(); }, Math.min(9000, 900 + text.length * 60)); return false; }
+      if (state === 'down' && cfg) { pendingText = ''; connect(); }
+      return false;
+    },
+    /* called a few times a second with the game state */
+    tick: function (S) {
+      if (state !== 'live') { return; }
+      var now = Date.now();
+      if (S && S.paused) { return hangUp(''); }
+      if (!speaking && now - lastSaid > IDLE_CLOSE_MS) { return hangUp(''); }
+      if (!speaking && now - startedAt > MAX_SESSION_MS && now - lastSaid > 4000) { hangUp(''); tries = 0; lastTry = 0; connect(); }
+    },
+    stop: function () { hangUp(''); },
+    state: function () { return state; }
+  };
+})();
+if (typeof module !== 'undefined') { module.exports = RC; }
+
 /* Game Show Night engine. Pure state machine: no DOM, no network.
    The TV screen runs one engine; phones only send small messages. */
 var RC = (typeof RC !== 'undefined') ? RC : {};
@@ -5218,6 +5356,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
   function tickUI() {
     if (!S) { return; }
     window.RCS = S;
+    try { if (RC.avatar) { RC.avatar.tick(S); } } catch (e) { }
     var now = hnow(), i, el, els;
     els = document.querySelectorAll('[data-dl]');
     for (i = 0; i < els.length; i++) { el = els[i]; var dl = +el.getAttribute('data-dl'), len = +el.getAttribute('data-len') || 1; el.style.width = Math.max(0, Math.min(100, 100 * (dl - now) / len)) + '%'; }
@@ -5275,6 +5414,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
     app.innerHTML = '<div class="scr">' + rays + '<div class="top" id="top"></div><div class="stagewrap"><div class="frame">' + bulbs + '<div class="stage" id="stage"></div>' + bulbs + '</div></div>' +
       '<div class="stripes"><i class="s0"></i><i class="s1"></i><i class="s2"></i></div>' +
       '<div class="foot"><div class="host" id="host">' + RC.art.host + '</div><div class="bubble" id="bubble"></div><div class="joinbox" id="joinbox"></div></div>' +
+      '<div class="avbox off" id="avbox"><video id="avvideo" autoplay playsinline muted></video><audio id="avaudio" autoplay></audio><div class="avdemo">' + RC.art.host + '</div><div class="avtag" id="avtag"></div></div>' +
       '<button class="menubtn" data-a="s_menu">Menu</button><div id="menu"></div><div id="pausel"></div><div id="xl"></div><div id="toast"></div>' +
       '<div class="overlay" id="ov"><h1>Game Show Night</h1><p>Pick a game. Grab your phone. Play.</p><button data-a="s_unlock" id="ovb">Press OK to start</button></div></div>';
     try { document.getElementById('ovb').focus(); } catch (e) { }
@@ -5375,6 +5515,8 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       if (host) { host.className = 'host talk'; }
       if (talkTimer) { clearTimeout(talkTimer); }
       talkTimer = setTimeout(function () { if (host) { host.className = 'host'; } }, Math.min(9000, 900 + text.length * 60));
+      // with a live avatar the avatar says the line; otherwise the browser's own voice does
+      if (unlocked && soundOn && RC.avatar && RC.avatar.speak(text)) { try { if (window.speechSynthesis) { window.speechSynthesis.cancel(); } } catch (e0) { } return; }
       if (!unlocked || !soundOn || !window.speechSynthesis || !window.SpeechSynthesisUtterance) { return; }
       try {
         var syn = window.speechSynthesis;
@@ -5635,6 +5777,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
         try { if (window.speechSynthesis) { pickVoice(); window.speechSynthesis.onvoiceschanged = pickVoice; } } catch (e) { }
         var ov = document.getElementById('ov'); if (ov) { ov.className = 'overlay hide'; }
         sfx('fanfare');
+        try { if (RC.avatar) { RC.avatar.start(); } } catch (e4) { }
         setTimeout(function () { speak('Sound check. I am Ace, your host. If you can hear me, we are good to go.'); }, 900);
       }
       else if (a === 's_menu') { menuOpen = !menuOpen; }
