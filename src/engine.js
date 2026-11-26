@@ -88,7 +88,7 @@ RC.createEngine = function (C, opts) {
     return ' ' + S.teams[ld].name + (gap <= 100 ? ' lead by just ' + gap + '. This is close.' : ' are ' + gap + ' in front. Somebody catch them!');
   }
   /* Part way through a screen, the host calls out whoever everyone is waiting on. Once per screen. */
-  var WAITING = { vote_q: 1, ml_q: 1, num_q: 1, cr_q: 1, board_q: 1 }, TURNS = { board_pick: 'pick a category', phrase_turn: 'pick a letter', feud_pick: 'pick an answer', zoom_ans: 'pick your answer' };
+  var WAITING = { vote_q: 1, ml_q: 1, num_q: 1, cr_q: 1, board_q: 1, fam_in: 1, fam_q: 1 }, TURNS = { board_pick: 'pick a category', phrase_turn: 'pick a letter', feud_pick: 'pick an answer', zoom_ans: 'pick your answer' };
   function nagTick(now) {
     if (S.nag || !S.deadline || !S.t0) { return false; }
     var ph = S.phase, part = (now - S.t0) / (S.deadline - S.t0);
@@ -169,6 +169,7 @@ RC.createEngine = function (C, opts) {
     else if (key === 'phrase') { P.ps = draw('phrases', C.phrases, cnt(4, 2)); S.pi = -1; S.pteam = trailing(); nextPhrase(now); }
     else if (key === 'feud') { setupFeud(); S.fi = -1; nextFeud(now); }
     else if (key === 'crillion') { P.cq = draw('crillion', C.crillion, cnt(5, 3)); S.ci = -1; nextCr(now); }
+    else if (key === 'fam') { famStart(now); }
   }
   function roundEnd(now) {
     S.turn = null;
@@ -657,6 +658,82 @@ RC.createEngine = function (C, opts) {
   }
 
   /* ---------- advance: called on deadline or when the showrunner taps Next ---------- */
+  /* ---------- know your family ---------- */
+  var FAM_STOP = { that: 1, this: 1, with: 1, have: 1, once: 1, when: 1, from: 1, been: 1, were: 1, never: 1, about: 1, there: 1, every: 1, whole: 1, time: 1, year: 1, years: 1, first: 1, same: 1, than: 1, more: 1, them: 1, they: 1, into: 1, still: 1, only: 1, just: 1, over: 1, used: 1 };
+  function famWords(t) { var w = String(t).toLowerCase().replace(/[^a-z ]/g, ' ').split(' '), out = {}; for (var i = 0; i < w.length; i++) { if (w[i].length >= 4 && !FAM_STOP[w[i]]) { out[w[i].substr(0, 6)] = 1; } } return out; }
+  function famTidy(t) { // light clean-up, so the true fact does not stand out from the made-up ones by its typing
+    t = clean(t, 110).replace(/[\s.!]+$/, '');
+    t = t.replace(/\bi\b/g, 'I').replace(/\b[Ii]m\b/g, "I'm").replace(/\b[Ii]ve\b/g, "I've").replace(/\b[Ii] m\b/g, "I'm");
+    if (!t) { return ''; }
+    t = t.charAt(0).toUpperCase() + t.substr(1);
+    if (t === t.toUpperCase() && t.length > 8) { t = t.charAt(0) + t.substr(1).toLowerCase().replace(/\bi\b/g, 'I'); }
+    return t + (/[?]$/.test(t) ? '' : '.');
+  }
+  function famFakes(text, kid) { // three made-up facts on the same topic and of about the same length
+    var low = text.toLowerCase(), cats = {}, tw = famWords(text), same = [], rest = [], i, k, b;
+    for (i = 0; i < C.fam.cats.length; i++) { if (new RegExp(C.fam.cats[i][1]).test(low)) { cats[C.fam.cats[i][0]] = 1; } }
+    for (i = 0; i < C.fam.bank.length; i++) {
+      b = C.fam.bank[i];
+      if (P.famUsed[i] || (kid && b[2] === 'a')) { continue; }
+      var bw = famWords(b[0]), share = 0; for (k in bw) { if (tw[k]) { share++; } }
+      if (share >= 2 || b[0].toLowerCase() === low) { continue; }       // too close to the truth to be fair
+      (cats[b[1]] ? same : rest).push(i);
+    }
+    function closest(list, n) { var c = shuffle(list).slice(0, 9); c.sort(function (x, y) { return Math.abs(C.fam.bank[x][0].length - text.length) - Math.abs(C.fam.bank[y][0].length - text.length); }); return c.slice(0, n); }
+    var take = closest(same, 3);
+    if (take.length < 3) { take = take.concat(closest(rest, 3 - take.length)); }
+    var out = [];
+    for (i = 0; i < take.length; i++) { P.famUsed[take[i]] = 1; out.push(C.fam.bank[take[i]][0]); }
+    return out;
+  }
+  function famStart(now) {
+    P.fam = {}; P.famUsed = {}; P.famOrder = []; S.fmi = -1;
+    S.fam = { done: [] }; S.fq = null; S.nv = 0; S.rv = null;
+    setPhase('fam_in', now, 150000);
+    say('Everybody, look at your phone. Type one true thing about yourself that most people in this room do not know. Start it with the word I. Keep it short, and keep it secret.');
+  }
+  function famBegin(now) {
+    var ids = [];
+    for (var i = 0; i < S.order.length; i++) { if (P.fam[S.order[i]] && pl(S.order[i])) { ids.push(S.order[i]); } }
+    if (!ids.length) { say('Nobody sent a fact, so we skip this one.'); return roundEnd(now); }
+    P.famOrder = shuffle(ids).slice(0, cnt(20, 6));
+    S.fmi = -1;
+    famNext(now);
+  }
+  function famNext(now) {
+    S.fmi++;
+    while (S.fmi < P.famOrder.length && !pl(P.famOrder[S.fmi])) { S.fmi++; }
+    if (S.fmi >= P.famOrder.length) { return roundEnd(now); }
+    var pid = P.famOrder[S.fmi], f = P.fam[pid];
+    var fakes = famFakes(f.text, f.kid);
+    P.cur = mc({ q: '', o: [f.text].concat(fakes) });
+    P.votes = {};
+    S.fq = { n: S.fmi + 1, of: P.famOrder.length, who: pid, name: nm(pid), t: pl(pid).t, o: P.cur.o };
+    S.nv = 0; S.rv = null;
+    setPhase('fam_q', now, 14000 + 30000);
+    S.acted[pid] = true;                                               // nobody waits on the person the facts are about
+    var spoken = ''; for (var i = 0; i < P.cur.o.length; i++) { spoken += ' ' + 'ABCD'.charAt(i) + '. ' + P.cur.o[i]; }
+    say('Four things about ' + nm(pid) + '. Only one is true. ' + nm(pid) + ', keep a straight face.' + spoken);
+  }
+  function famEnd(now) {
+    var counts = [], ok = zeros(), den = zeros(), nok = 0, voters = 0, okp = {}, who = S.fq.who, sub = pl(who), i, pid, v, p;
+    for (i = 0; i < P.cur.o.length; i++) { counts.push(0); }
+    for (i = 0; i < S.order.length; i++) {
+      pid = S.order[i]; v = P.votes[pid]; p = pl(pid);
+      if (!p || pid === who) { continue; }
+      if (v || present(pid, now)) { den[p.t]++; }
+      if (v) { voters++; counts[v.a]++; if (v.a === P.cur.a) { ok[p.t]++; nok++; okp[pid] = 1; p.pts += 100; } }
+    }
+    var gains = zeros(), fooled = voters - nok, bonus = voters ? Math.round(100 * fooled / voters / 10) * 10 : 0;
+    for (var t = 0; t < NT(); t++) { gains[t] = den[t] ? Math.round(100 * ok[t] / den[t]) : 0; }
+    if (sub && bonus) { sub.pts += bonus; if (gains[sub.t] != null) { gains[sub.t] += bonus; } }
+    addGains(gains);
+    S.rv = { a: P.cur.a, counts: counts, gains: gains, nok: nok, okp: okp, fooled: fooled, bonus: bonus, voters: voters };
+    setPhase('fam_rv', now, 11000);
+    say('The true one is ' + 'ABCD'.charAt(P.cur.a) + '. ' + P.cur.o[P.cur.a] + ' ' + (voters ? (nok === 0 ? S.fq.name + ' fooled every one of you!' : (fooled === 0 ? 'Everybody knew it. ' + S.fq.name + ', you have no secrets.' : nok + (nok === 1 ? ' person' : ' people') + ' knew it. ' + S.fq.name + ' fooled ' + fooled + '.')) : 'Nobody voted.') + standingLine());
+    fx(nok > 0 ? 'right' : 'wrong');
+  }
+
   function advance(now, timedOut) {
     var ph = S.phase;
     if (ph === 'lobby') { if (!timedOut) { goMenu(now); } }
@@ -684,6 +761,9 @@ RC.createEngine = function (C, opts) {
     else if (ph === 'cr_q') { crJudge(now); }
     else if (ph === 'cr_judge') { for (var ri = 0; ri < S.cr.rows.length; ri++) { if (S.cr.rows[ri].st === 'ask') { S.cr.rows[ri].st = 'no'; S.cr.rows[ri].why = 'Not accepted.'; } } crReveal(now); }
     else if (ph === 'cr_reveal') { nextCr(now); }
+    else if (ph === 'fam_in') { famBegin(now); }
+    else if (ph === 'fam_q') { famEnd(now); }
+    else if (ph === 'fam_rv') { famNext(now); }
     else if (ph === 'round_end') { goMenu(now); }
   }
   /* ---------- showrunner commands ---------- */
@@ -841,6 +921,18 @@ RC.createEngine = function (C, opts) {
         if (allActed(now)) { endWord(now); }
       } else { S.wr[pid] = (S.wr[pid] || 0) + 1; }
     }
+    else if (m.t === 'fam' && ph === 'fam_in') {
+      var ft = famTidy(m.text);
+      if (P.fam[pid] || ft.replace(/[^A-Za-z0-9]/g, '').length < 6) { return; }
+      P.fam[pid] = { text: ft, kid: m.kid ? 1 : 0 }; S.acted[pid] = true; S.nv++; S.fam.done.push(p.n);
+      if (allActed(now)) { famBegin(now); }
+    }
+    else if (m.t === 'famv' && ph === 'fam_q') {
+      a = parseInt(m.a, 10);
+      if (pid === S.fq.who || P.votes[pid] || !(a >= 0 && a < P.cur.o.length)) { return; }
+      P.votes[pid] = { a: a, at: now }; S.acted[pid] = true; S.nv++;
+      if (allActed(now)) { famEnd(now); }
+    }
     else if (m.t === 'cr' && ph === 'cr_q') {
       var ct = clean(m.text, 40);
       if (P.crA[pid] || !ct) { return; }
@@ -948,7 +1040,7 @@ RC.createEngine = function (C, opts) {
     hostKey: function () { return H.key; },
     used: function () { return H.used; },
     _private: function () { return P; },
-    _near: near, _soundKey: soundKey, _crMatch: crMatch
+    _near: near, _soundKey: soundKey, _crMatch: crMatch, _famTidy: famTidy, _famFakes: function (t, kid) { P.famUsed = P.famUsed || {}; return famFakes(t, kid); }
   };
 };
 if (typeof module !== 'undefined') { module.exports = RC; }

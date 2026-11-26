@@ -449,6 +449,20 @@
         return '<div class="h2">' + esc(S.ml.text) + '</div><div class="answer">' + (S.rv.win.length ? esc(S.rv.win.join(' and ')) : 'No votes') + '</div><div class="tally">' + tl + '</div>' +
           '<div class="status">' + gainsHtml(S.rv) + '</div>';
       }
+      if (ph === 'fam_in') {
+        var fd = S.fam && S.fam.done ? S.fam.done : [], fdh = '';
+        for (var fi = 0; fi < fd.length; fi++) { fdh += '<span class="famin">' + esc(fd[fi]) + '</span>'; }
+        return '<div class="tag">Know Your Family</div><div class="h2">Type one true thing about yourself<br>that most people here do not know</div><div class="famlist">' + (fdh || '<span class="famwait">Nobody yet</span>') + '</div><div class="status">' + waitHtml().replace('answered', 'sent in') + '</div>' + timerHtml(150000);
+      }
+      if ((ph === 'fam_q' || ph === 'fam_rv') && S.fq) {
+        var fq = S.fq, frv = ph === 'fam_rv' ? S.rv : null;
+        var fh = '<div class="tag">Person ' + fq.n + ' of ' + fq.of + '</div><div class="h2">Which one is true about <span class="t' + (S.solo ? 1 : fq.t) + 'c">' + esc(fq.name) + '</span>?</div><div class="opts fam">';
+        for (var fo = 0; fo < fq.o.length; fo++) { fh += '<div class="opt o' + fo + (frv ? (frv.a === fo ? ' win' : ' dim') : '') + '"><span class="l">' + 'ABCD'.charAt(fo) + '</span><span class="ft">' + esc(fq.o[fo]) + '</span>' + (frv ? '<span class="n">' + frv.counts[fo] + '</span>' : '') + '</div>'; }
+        fh += '</div>';
+        if (frv) { fh += '<div class="status">' + (frv.voters ? frv.nok + ' of ' + frv.voters + ' knew it' + (frv.bonus ? ' &nbsp;&middot;&nbsp; ' + esc(fq.name) + ' fooled ' + frv.fooled + ': +' + frv.bonus : '') + (S.solo ? '' : '<br>' + gainsHtml(frv)) : 'Nobody voted') + '</div>'; }
+        else { fh += '<div class="status">' + esc(fq.name) + ' does not vote. ' + waitHtml() + '</div>' + timerHtml(44000); }
+        return fh;
+      }
       if (ph === 'num_q') { return '<div class="tag">Question ' + S.nm.n + ' of ' + S.nm.of + '</div><div class="h2">' + esc(S.nm.text) + '</div><div class="status">Type your best guess. ' + waitHtml() + '</div>' + timerHtml(30000); }
       if (ph === 'num_reveal') {
         var nl = ''; S.rv.list.forEach(function (x) { nl += (nl ? ', ' : '') + '<span class="t' + x.t + 'c">' + esc(x.n) + '</span> ' + esc(x.v); });
@@ -769,6 +783,21 @@
         return h;
       }
       if (ph === 'feud_reveal' || ph === 'round_end') { return '<h2>Scores</h2>' + standing() + (S.solo ? '' : '<p>You have ' + m.pts + ' points of your own, number ' + myRank() + ' of ' + S.order.length + '.</p>') + watch(); }
+      if (ph === 'fam_in') {
+        lk = locked('Got it. Your secret is safe'); if (lk) { return lk; }
+        return '<div class="q">One true thing about you that most people here do not know</div><p class="small">One short sentence that starts with "I". Example: I once lived on a boat. The game will hide it among three made-up ones, so do not tell anyone.</p><input class="field fact" id="famin" maxlength="100" autocomplete="off" placeholder="I ..."><div class="half"><button class="pbtn go" data-a="fam" data-v="1">Send<br><small>I am a kid</small></button><button class="pbtn go" data-a="fam" data-v="0">Send<br><small>I am a grown-up</small></button></div>';
+      }
+      if (ph === 'fam_q' && S.fq) {
+        if (S.fq.who === pid) { return '<h2>This one is about you</h2><p>Keep a straight face. You score for every person you fool.</p>' + watch(); }
+        lk = locked('Vote locked in'); if (lk) { return lk; }
+        h = '<div class="q">Which one is true about ' + esc(S.fq.name) + '?</div>';
+        for (var fo2 = 0; fo2 < S.fq.o.length; fo2++) { h += '<button class="pbtn o' + fo2 + ' fact" data-a="famv" data-v="' + fo2 + '">' + 'ABCD'.charAt(fo2) + '. ' + esc(S.fq.o[fo2]) + '</button>'; }
+        return h;
+      }
+      if (ph === 'fam_rv' && S.fq) {
+        if (S.fq.who === pid) { return '<h2>You fooled ' + S.rv.fooled + ' of ' + S.rv.voters + '</h2><p>' + (S.rv.bonus ? 'That is worth ' + S.rv.bonus + ' points.' : 'They know you too well.') + '</p>' + watch(); }
+        return '<h2>' + (S.rv.okp && S.rv.okp[pid] ? 'You knew it! +100' : 'Fooled you') + '</h2><p>True: ' + esc(S.fq.o[S.rv.a]) + '</p>' + watch();
+      }
       if (ph === 'cr_q') {
         lk = locked('Answer locked in'); if (lk) { return lk; }
         return '<div class="q">' + esc(S.cr.text) + '</div><p class="small">One answer. The most obscure right answer wins. Spelling does not matter. If someone else types the same thing, you split the points.</p><input class="field" id="crin" maxlength="40" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Your answer"><button class="pbtn go" data-a="cr">Lock it in</button>';
@@ -855,7 +884,7 @@
       put('psheet', sheet); }
       tickUI();
     }
-    var GUARD = { ans: 1, vote: 1, mlv: 1, fpick: 1, tile: 1, c_next: 1, c_crj: 1 };
+    var GUARD = { ans: 1, vote: 1, mlv: 1, fpick: 1, tile: 1, c_next: 1, c_crj: 1, famv: 1 };
     var CONFIRM = { c_restart: 1, c_again: 1, c_reset: 1, c_kick: 1 };
     function onAct(b) {
       var a = b.getAttribute('data-a'), v = b.getAttribute('data-v'), el;
@@ -894,6 +923,8 @@
       else if (a === 'c_reset') { ctl('reset'); ui.menu = false; }
       else if (a === 'c_skipq') { ctl('next', { k: S.k }); ui.menu = false; }
       else if (a === 'c_crj') { var cj = v.split(','); ctl('crj', { p: cj[0], ok: cj[1] === '1', said: 5, by: 'the host' }); }
+      else if (a === 'fam') { el = document.getElementById('famin'); if (!el || el.value.replace(/[^A-Za-z0-9]/g, '').length < 6) { if (el) { el.focus(); } return; } var ftxt = el.value; el.blur(); doAct({ t: 'fam', text: ftxt, kid: v === '1' ? 1 : 0 }, ''); }
+      else if (a === 'famv') { doAct({ t: 'famv', a: +v }, 'ABCD'.charAt(+v)); }
       else if (a === 'cr') { el = document.getElementById('crin'); if (!el || !el.value.replace(/\s/g, '')) { if (el) { el.focus(); } return; } var ctxt = el.value; el.blur(); doAct({ t: 'cr', text: ctxt }, ctxt); }
       else if (a === 'c_tomenu') { ctl('menu'); ui.menu = false; }
       else if (a === 'tile') { var cl = v.split(','); doAct({ t: 'pick', c: +cl[0], l: +cl[1] }, 'Picked'); }

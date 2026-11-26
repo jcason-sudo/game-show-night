@@ -65,7 +65,7 @@ async def main():
         await phones[0].screenshot(path='test/shots/' + TAG + '05c_phone_player_lobby.png')
         await phones[HOST].click('[data-a=c_short]')
         await asyncio.sleep(0.6)
-        todo = ['vote', 'likely', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'crillion', 'feud']
+        todo = ['vote', 'likely', 'fam', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'crillion', 'feud']
         await phones[HOST].click('[data-a=c_play][data-v=%s]' % todo.pop(0))
         shot = {}; pshot = {}
         steps = 0
@@ -95,7 +95,7 @@ async def main():
                     await phones[HOST].click('#pbody [data-a=c_end]')
                 await asyncio.sleep(0.8); continue
             # showrunner moves the show along on passive screens
-            if ph in ('intro', 'vote_reveal', 'board_reveal', 'zoom_reveal', 'phrase_reveal', 'feud_reveal', 'round_end', 'ml_reveal', 'num_reveal', 'scr_reveal', 'cr_reveal') and same >= 6:
+            if ph in ('intro', 'vote_reveal', 'board_reveal', 'zoom_reveal', 'phrase_reveal', 'feud_reveal', 'round_end', 'ml_reveal', 'num_reveal', 'scr_reveal', 'cr_reveal', 'fam_rv') and same >= 6:
                 b = await phones[HOST].query_selector('[data-a=c_next]')
                 if b: await b.click()
                 await asyncio.sleep(0.3); continue
@@ -106,7 +106,7 @@ async def main():
                 btns = await p.query_selector_all('#pbody [data-a]:not([disabled])')
                 acts = []
                 for b in btns: acts.append(await b.get_attribute('data-a'))
-                if key not in pshot and btns and any(a in ('vote','tile','buzz','ans','letter','solve','fpick','mlv','num','word','cr','c_crj') for a in acts):
+                if key not in pshot and btns and any(a in ('vote','tile','buzz','ans','letter','solve','fpick','mlv','num','word','cr','c_crj','fam','famv') for a in acts):
                     pshot[key] = 1
                     await p.screenshot(path='test/shots/' + TAG + ('ph_%02d_%s.png' % (len(pshot), key)))
                 if not btns: continue
@@ -114,6 +114,11 @@ async def main():
                 try:
                     if 'vote' in acts:
                         await random.choice([b for b, x in zip(btns, acts) if x == 'vote']).click()
+                    elif 'famv' in acts:
+                        await random.choice([b for b, x in zip(btns, acts) if x == 'famv']).click()
+                    elif 'fam' in acts:
+                        await p.fill('#famin', random.choice(['i lived in eight countries', 'I play football and im a famous soccer player', 'My dog once ate my passport', 'I can play the ukulele', 'i have never eaten a tomato', 'I am scared of clowns', 'I once met the pope', 'I worked as a clown for one summer']))
+                        await random.choice([b for b, x in zip(btns, acts) if x == 'fam']).click()
                     elif 'mlv' in acts:
                         await random.choice([b for b, x in zip(btns, acts) if x == 'mlv']).click()
                     elif 'cr' in acts:

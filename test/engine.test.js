@@ -1,5 +1,6 @@
 /* Plays many full games with random bot players and checks the engine never stalls or throws. */
 var path = require('path');
+var FACTS = ['i lived in eight countries', 'I play football and im a famous soccer player', 'My dog once ate my passport', 'I can play the ukulele', 'i have never eaten a tomato', 'I WAS ON TV WHEN I WAS SIX', 'I am scared of clowns', 'I broke my leg skiing', 'I worked as a clown for one summer', 'I once met the pope'];
 var fs = require('fs');
 var src = ['content.js', 'engine.js'].map(function (f) { return fs.readFileSync(path.join(__dirname, '../src', f), 'utf8'); }).join('\n');
 var RC = new Function('module', src + '\nreturn RC;')(undefined);
@@ -52,6 +53,8 @@ function play(seed, nPlayers, teamSplit, skill) {
     if (ph === 'vote_q') { E.handle({ p: pid, t: 'vote', k: k, a: good ? P.cur.a : Math.floor(rnd() * P.cur.o.length) }, now); }
     else if (ph === 'ml_q') { E.handle({ p: pid, t: 'mlv', k: k, v: S.ml.who[Math.floor(rnd() * S.ml.who.length)].p }, now); }
     else if (ph === 'num_q') { E.handle({ p: pid, t: 'num', k: k, v: good ? P.nq[S.ni].a : Math.round(P.nq[S.ni].a * (0.5 + rnd())) }, now); }
+    else if (ph === 'fam_in') { E.handle({ p: pid, t: 'fam', k: k, text: FACTS[Math.floor(rnd() * FACTS.length)], kid: rnd() < 0.3 ? 1 : 0 }, now); }
+    else if (ph === 'fam_q') { E.handle({ p: pid, t: 'famv', k: k, a: good ? P.cur.a : Math.floor(rnd() * 4) }, now); }
     else if (ph === 'cr_q') {
       var item = P.cq[S.ci], txt = good ? item.a[Math.floor(rnd() * item.a.length)][0].toLowerCase() : (rnd() < 0.5 ? item.no[0][0] : 'zz unknown ' + Math.floor(rnd() * 9));
       E.handle({ p: pid, t: 'cr', k: k, text: txt }, now);
@@ -95,7 +98,7 @@ for (var seed = 1; seed <= 300; seed++) {
   for (var k in r.seen) { phases[k] = 1; }
   if (seed <= 4) { out.push('seed ' + seed + ' players ' + n + ' scores ' + r.scores.join('-') + ' game minutes ' + r.minutes); }
 }
-var need = ['intro', 'vote_q', 'vote_reveal', 'board_pick', 'board_q', 'board_reveal', 'zoom_q', 'zoom_ans', 'zoom_reveal', 'phrase_turn', 'phrase_solve', 'phrase_reveal', 'feud_face', 'feud_pick', 'feud_reveal', 'round_end', 'ml_q', 'ml_reveal', 'num_q', 'num_reveal', 'scr_q', 'scr_reveal', 'menu', 'cr_q', 'cr_judge', 'cr_reveal'];
+var need = ['fam_in', 'fam_q', 'fam_rv', 'intro', 'vote_q', 'vote_reveal', 'board_pick', 'board_q', 'board_reveal', 'zoom_q', 'zoom_ans', 'zoom_reveal', 'phrase_turn', 'phrase_solve', 'phrase_reveal', 'feud_face', 'feud_pick', 'feud_reveal', 'round_end', 'ml_q', 'ml_reveal', 'num_q', 'num_reveal', 'scr_q', 'scr_reveal', 'menu', 'cr_q', 'cr_judge', 'cr_reveal'];
 need.forEach(function (p) { assert.ok(phases[p], 'phase never reached: ' + p); });
 
 // content sanity
@@ -108,7 +111,7 @@ C.zoom.forEach(function (z) {
   assert.ok(z.fx >= 5 && z.fx <= 95 && z.fy >= 5 && z.fy <= 95, 'zoom starting point inside the picture: ' + z.id);
   ['.jpg', '_s.jpg'].forEach(function (e) { assert.ok(require('fs').existsSync(require('path').join(__dirname, '../img/zoom/' + z.id + e)), 'photo file for ' + z.id + e); });
 });
-assert.ok(C.zoom.length >= 20, 'at least 20 photographs');
+assert.ok(C.zoom.length >= 40, 'at least 40 photographs');
 C.decades.forEach(function (q) { assert.strictEqual(new Set(q.o).size, 4, q.q); });
 C.words.forEach(function (w) { assert.ok(/^[A-Z]+$/.test(w.w), w.w); });
 C.numbers.forEach(function (n) { assert.ok(typeof n.a === 'number', n.q); });
@@ -280,3 +283,74 @@ assert.ok(C.board.length >= 5 && C.zoom.length >= 5 && C.phrases.length >= 4 && 
 
 console.log(out.join('\n'));
 console.log('OK: 300 simulated games finished (team and solo play; 5-game, 4-game and all-games sessions), all ' + need.length + ' phases reached, content checks passed');
+
+/* ---------- Know Your Family ---------- */
+(function () {
+  var E = RC.createEngine(C, { seed: 77 }), now = 1000, k;
+  function st() { return E.state(); }
+  E.init('FAMX', now);
+  ['a', 'b', 'c', 'd'].forEach(function (id, i) { E.handle({ p: id, t: 'hello', name: ['Ana', 'Ben', 'Cy', 'Dee'][i], team: i % 2, h: id === 'a' ? E.hostKey() : '', ep: st().epoch }, now); });
+  assert.strictEqual(st().boss, 'a');
+  E.handle({ p: 'a', t: 'ctl', c: 'next', a: { k: st().k } }, now += 2000);
+  E.handle({ p: 'a', t: 'ctl', c: 'play', a: { key: 'fam' } }, now += 2000);
+  assert.strictEqual(st().phase, 'intro');
+  E.handle({ p: 'a', t: 'ctl', c: 'next', a: { k: st().k } }, now += 2000);
+  assert.strictEqual(st().phase, 'fam_in');
+  k = st().k;
+  E.handle({ p: 'a', t: 'fam', k: k, text: 'i lived in eight countries', kid: 0 }, now += 500);
+  E.handle({ p: 'b', t: 'fam', k: k, text: 'abc', kid: 1 }, now += 500);                 // too short: refused
+  assert.ok(!st().acted.b, 'a three-letter fact is refused');
+  E.handle({ p: 'b', t: 'fam', k: k, text: 'I play football and im a famous soccer player', kid: 1 }, now += 500);
+  E.handle({ p: 'c', t: 'fam', k: k, text: 'My dog once ate my passport!!', kid: 0 }, now += 500);
+  assert.strictEqual(st().phase, 'fam_in', 'still waiting for Dee');
+  assert.deepStrictEqual(st().fam.done, ['Ana', 'Ben', 'Cy']);
+  assert.ok(JSON.stringify(st()).indexOf('eight countries') < 0, 'facts stay private while people are still typing');
+  E.handle({ p: 'a', t: 'ctl', c: 'next', a: { k: st().k } }, now += 2000);              // host moves on without Dee
+  assert.strictEqual(st().phase, 'fam_q');
+  assert.strictEqual(st().fq.of, 3, 'only people who sent a fact are played');
+  var seenWho = {};
+  for (var r = 0; r < 3; r++) {
+    var S = st(), P = E._private(), who = S.fq.who;
+    seenWho[who] = 1;
+    assert.strictEqual(S.fq.o.length, 4);
+    assert.strictEqual(new Set(S.fq.o).size, 4, 'four different facts');
+    assert.ok(/^[A-Z]/.test(S.fq.o[P.cur.a]) && /\.$/.test(S.fq.o[P.cur.a]), 'the true fact is tidied: ' + S.fq.o[P.cur.a]);
+    assert.ok(S.acted[who], 'nobody waits for the person the facts are about');
+    var before = {}; ['a', 'b', 'c', 'd'].forEach(function (id) { before[id] = S.players[id].pts; });
+    E.handle({ p: who, t: 'famv', k: S.k, a: P.cur.a }, now += 500);                      // the subject cannot vote
+    assert.ok(!P.votes[who], 'the subject cannot vote on their own facts');
+    var voters = ['a', 'b', 'c', 'd'].filter(function (id) { return id !== who; });
+    E.handle({ p: voters[0], t: 'famv', k: S.k, a: P.cur.a }, now += 500);
+    E.handle({ p: voters[1], t: 'famv', k: S.k, a: (P.cur.a + 1) % 4 }, now += 500);
+    assert.strictEqual(st().phase, 'fam_q');
+    E.handle({ p: voters[2], t: 'famv', k: S.k, a: (P.cur.a + 2) % 4 }, now += 500);
+    S = st();
+    assert.strictEqual(S.phase, 'fam_rv', 'reveal as soon as everyone else has voted');
+    assert.strictEqual(S.rv.nok, 1); assert.strictEqual(S.rv.fooled, 2); assert.strictEqual(S.rv.bonus, 70);
+    assert.strictEqual(S.players[voters[0]].pts - before[voters[0]], 100, 'picking the truth pays 100');
+    assert.strictEqual(S.players[voters[1]].pts - before[voters[1]], 0);
+    assert.strictEqual(S.players[who].pts - before[who], 70, 'the subject scores for the people they fooled');
+    E.handle({ p: 'a', t: 'ctl', c: 'next', a: { k: S.k } }, now += 2000);
+  }
+  assert.strictEqual(Object.keys(seenWho).length, 3);
+  assert.strictEqual(st().phase, 'round_end');
+  // made-up facts: on topic, right age, never a copy of the truth
+  var bank = C.fam.bank, cat = {}, adult = {};
+  bank.forEach(function (b) { cat[b[0]] = b[1]; adult[b[0]] = b[2] === 'a'; assert.ok(/^I /.test(b[0]) && /\.$/.test(b[0]) && b[0].length <= 80, b[0]); });
+  assert.strictEqual(Object.keys(cat).length, bank.length, 'no made-up fact appears twice');
+  assert.ok(bank.length >= 250);
+  [['I play football and I am a famous soccer player.', /sport|famous/], ['I lived in eight countries.', /travel/], ['I once ate a scorpion.', /food|animal/], ['I can play the ukulele in a band.', /art|skill/], ['I was bitten by a monkey at the zoo.', /animal|body/], ['I worked as a lawyer for a year.', /job/]].forEach(function (x) {
+    var E2 = RC.createEngine(C, { seed: 5 }); E2.init('F', 1);
+    var f = E2._famFakes(x[0], 0), on = f.filter(function (y) { return x[1].test(cat[y]); }).length;
+    assert.strictEqual(f.length, 3); assert.ok(on === 3, x[0] + ' -> ' + JSON.stringify(f));
+    var kf = []; for (var q = 0; q < 12; q++) { kf = kf.concat(E2._famFakes(x[0], 1)); }
+    assert.ok(kf.every(function (y) { return !adult[y]; }), 'a kid never gets a grown-up fact');
+    assert.strictEqual(new Set(kf).size, kf.length, 'no made-up fact is used twice in one game');
+  });
+  var E3 = RC.createEngine(C, { seed: 6 }); E3.init('F', 1);
+  assert.strictEqual(E3._famTidy('i lived in 8 countries'), 'I lived in 8 countries.');
+  assert.strictEqual(E3._famTidy('im afraid of spiders!!'), "I'm afraid of spiders.");
+  assert.strictEqual(E3._famTidy('I WAS ON TV WHEN I WAS SIX'), 'I was on tv when I was six.');
+  assert.ok(E3._famFakes('I am afraid of balloons.', 0).indexOf('I am afraid of balloons.') < 0, 'a made-up fact is never the same as the truth');
+  console.log('OK: Know Your Family rules, scoring and made-up facts');
+})();

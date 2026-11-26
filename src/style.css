@@ -448,3 +448,14 @@ html, body { background: #0F3B4C; color: #EEF3F1; font-weight: 600; }
 .zf img.zphoto { will-change: opacity; }
 .zload { background: #0A2C39; z-index: 3; text-align: center; }
 .zside { width: 28vw; padding-left: 2.6vw; }
+
+/* Know Your Family */
+.opts.fam { width: 92vw; }
+.opts.fam .opt { width: 43vw; min-height: 13.5vh; font-size: 3.5vh; line-height: 1.15; border-radius: 1.6vh; padding: 1.2vh 1.4vw 1.2vh 1.2vh; }
+.opts.fam .opt .ft { -webkit-flex: 1; flex: 1; }
+.famlist { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-justify-content: center; justify-content: center; width: 80vw; margin: 2vh 0; }
+.famin { background: #7BD389; color: #0A2C39; font-weight: 700; font-size: 3.2vh; border-radius: 1.2vh; padding: 0.8vh 1.6vw; margin: 0.6vh 0.5vw; }
+.famwait { color: #BFD3D0; font-size: 3vh; }
+.field.fact { border-radius: 16px; font-size: 20px; text-align: left; font-weight: 700; padding: 14px 16px; }
+.pbtn.fact { font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 19px; line-height: 1.2; text-align: left; padding: 14px 16px; }
+.pbtn small { font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 15px; }

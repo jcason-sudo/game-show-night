@@ -458,6 +458,17 @@ html, body { background: #0F3B4C; color: #EEF3F1; font-weight: 600; }
 .zf img.zphoto { will-change: opacity; }
 .zload { background: #0A2C39; z-index: 3; text-align: center; }
 .zside { width: 28vw; padding-left: 2.6vw; }
+
+/* Know Your Family */
+.opts.fam { width: 92vw; }
+.opts.fam .opt { width: 43vw; min-height: 13.5vh; font-size: 3.5vh; line-height: 1.15; border-radius: 1.6vh; padding: 1.2vh 1.4vw 1.2vh 1.2vh; }
+.opts.fam .opt .ft { -webkit-flex: 1; flex: 1; }
+.famlist { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-justify-content: center; justify-content: center; width: 80vw; margin: 2vh 0; }
+.famin { background: #7BD389; color: #0A2C39; font-weight: 700; font-size: 3.2vh; border-radius: 1.2vh; padding: 0.8vh 1.6vw; margin: 0.6vh 0.5vw; }
+.famwait { color: #BFD3D0; font-size: 3vh; }
+.field.fact { border-radius: 16px; font-size: 20px; text-align: left; font-weight: 700; padding: 14px 16px; }
+.pbtn.fact { font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 19px; line-height: 1.2; text-align: left; padding: 14px 16px; }
+.pbtn small { font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 15px; }
 </style>
 </head>
 <body>
@@ -3064,7 +3075,7 @@ RC.content = {
   ],
 
   zoom: [
-    { id: 'eiffel', o: ['Eiffel Tower', 'Tokyo Tower', 'Blackpool Tower', 'Petrin Tower, Prague'], fx: 50, fy: 40, w: 960, h: 1777, by: 'Benh LIEU SONG', lic: '' },
+    { id: 'eiffel', o: ['Eiffel Tower', 'Tokyo Tower', 'Blackpool Tower', 'Petrin Tower, Prague'], fx: 50, fy: 40, w: 960, h: 1777, by: 'Benh LIEU SONG', lic: 'CC BY-SA 3.0' },
     { id: 'pyramids', o: ['Pyramids of Giza', 'Pyramids of Meroe, Sudan', 'Teotihuacan', 'Saqqara'], fx: 58, fy: 45, w: 1280, h: 851, by: 'Ricardo Liberato', lic: 'CC BY-SA 2.0' },
     { id: 'goldengate', o: ['Golden Gate Bridge', '25 de Abril Bridge, Lisbon', 'Bay Bridge', 'Verrazzano-Narrows Bridge'], fx: 43, fy: 25, w: 1280, h: 720, by: 'Frank Schulenburg', lic: 'CC BY-SA 4.0' },
     { id: 'taj', o: ['Taj Mahal', 'Humayun\'s Tomb', 'Bibi Ka Maqbara', 'Sheikh Zayed Mosque'], fx: 50, fy: 45, w: 1280, h: 842, by: 'Yann; edited by King of Hearts', lic: 'CC BY-SA 4.0' },
@@ -3082,8 +3093,38 @@ RC.content = {
     { id: 'hollywood', o: ['Hollywood, Los Angeles', 'Beverly Hills', 'Malibu', 'Griffith Observatory'], fx: 45, fy: 68, w: 1280, h: 871, by: 'Thomas Wolf, www.foto-tw.de', lic: 'CC BY-SA 3.0' },
     { id: 'brandenburg', o: ['Brandenburg Gate', 'Arc de Triomphe', 'Siegestor, Munich', 'Propylaea, Athens'], fx: 50, fy: 28, w: 1280, h: 644, by: 'Thomas Wolf, www.foto-tw.de', lic: 'CC BY-SA 3.0' },
     { id: 'capitol', o: ['U.S. Capitol', 'St. Paul\'s Cathedral', 'Texas State Capitol', 'Les Invalides'], fx: 50, fy: 45, w: 1280, h: 662, by: 'Martin Falbisoner', lic: 'CC BY-SA 3.0' },
-    { id: 'michel', o: ['Mont-Saint-Michel', 'St Michael\'s Mount', 'Edinburgh Castle', 'Sacra di San Michele'], fx: 50, fy: 35, w: 1280, h: 908, by: 'Diliff', lic: '' },
-    { id: 'greatwall', o: ['Great Wall of China', 'Hadrian\'s Wall', 'Kumbhalgarh Fort', 'Walls of Ston'], fx: 92, fy: 48, w: 1280, h: 820, by: 'CEphoto, Uwe Aranas', lic: 'CC BY-SA 3.0' }
+    { id: 'michel', o: ['Mont-Saint-Michel', 'St Michael\'s Mount', 'Edinburgh Castle', 'Sacra di San Michele'], fx: 50, fy: 35, w: 1280, h: 908, by: 'Diliff', lic: 'CC BY-SA 3.0' },
+    { id: 'greatwall', o: ['Great Wall of China', 'Hadrian\'s Wall', 'Kumbhalgarh Fort', 'Walls of Ston'], fx: 92, fy: 48, w: 1280, h: 820, by: 'CEphoto, Uwe Aranas', lic: 'CC BY-SA 3.0' },
+    { id: 'alhambra', o: ['Alhambra, Granada', 'Alcazar of Seville', 'Mezquita of Cordoba', 'Bahia Palace, Marrakesh'], fx: 45, fy: 50, w: 960, h: 1342, by: 'Jebulon', lic: 'CC0' },
+    { id: 'arch', o: ['Gateway Arch, St. Louis', 'Sydney Harbour Bridge', 'Tyne Bridge, Newcastle', 'Wembley Stadium Arch'], fx: 38, fy: 22, w: 1280, h: 823, by: 'Daniel Schwen', lic: 'CC BY-SA 4.0' },
+    { id: 'bluemosque', o: ['Blue Mosque, Istanbul', 'Hagia Sophia', 'Suleymaniye Mosque', 'Sheikh Zayed Mosque'], fx: 50, fy: 60, w: 1280, h: 835, by: 'Moonik', lic: 'CC BY-SA 3.0' },
+    { id: 'charles', o: ['Charles Bridge, Prague', 'Chain Bridge, Budapest', 'Ponte Vecchio, Florence', 'Stari Most, Mostar'], fx: 35, fy: 68, w: 1280, h: 853, by: 'A.Savin', lic: 'FAL' },
+    { id: 'cntower', o: ['CN Tower, Toronto', 'Space Needle, Seattle', 'Sky Tower, Auckland', 'Fernsehturm, Berlin'], fx: 50, fy: 37, w: 960, h: 1512, by: 'Wladyslaw', lic: 'CC BY-SA 3.0' },
+    { id: 'cologne', o: ['Cologne Cathedral', 'Notre-Dame de Paris', 'St. Vitus Cathedral, Prague', 'Ulm Minster'], fx: 40, fy: 42, w: 1280, h: 1194, by: 'Thomas Wolf, www.foto-tw.de', lic: 'CC BY-SA 3.0 de' },
+    { id: 'duomo', o: ['Florence Cathedral', 'St. Peter\'s Basilica', 'Siena Cathedral', 'Les Invalides, Paris'], fx: 65, fy: 35, w: 1280, h: 960, by: 'Dllu', lic: 'CC BY-SA 4.0' },
+    { id: 'empire', o: ['Empire State Building', 'Chrysler Building', 'Willis Tower, Chicago', 'One World Trade Center'], fx: 49, fy: 25, w: 1280, h: 962, by: 'Dllu', lic: 'CC BY-SA 4.0' },
+    { id: 'forbidden', o: ['Forbidden City, Beijing', 'Gyeongbokgung, Seoul', 'Temple of Heaven', 'Summer Palace, Beijing'], fx: 55, fy: 30, w: 1280, h: 982, by: 'Reinhold Möller Ermell', lic: 'CC BY-SA 4.0' },
+    { id: 'hagia', o: ['Hagia Sophia', 'Blue Mosque, Istanbul', 'Suleymaniye Mosque', 'Selimiye Mosque, Edirne'], fx: 52, fy: 42, w: 1280, h: 854, by: 'Arild Vågen', lic: 'CC BY-SA 3.0' },
+    { id: 'halfdome', o: ['Half Dome, Yosemite', 'El Capitan, Yosemite', 'Sugarloaf Mountain, Rio', 'Stawamus Chief, Canada'], fx: 48, fy: 40, w: 1280, h: 805, by: 'Diliff', lic: 'CC BY-SA 3.0' },
+    { id: 'kinkaku', o: ['Kinkaku-ji, Kyoto', 'Ginkaku-ji, Kyoto', 'Byodo-in, Uji', 'Himeji Castle'], fx: 56, fy: 45, w: 1280, h: 720, by: 'Basile Morin', lic: 'CC BY-SA 4.0' },
+    { id: 'liberty', o: ['Statue of Liberty', 'Christ the Redeemer', 'Motherland Monument, Kyiv', 'Statue of Liberty replica, Paris'], fx: 51, fy: 30, w: 1280, h: 854, by: '銀河市長', lic: 'CC BY-SA 4.0' },
+    { id: 'lincoln', o: ['Lincoln Memorial', 'Jefferson Memorial', 'Martin Luther King Jr. Memorial', 'Grant Memorial'], fx: 55, fy: 25, w: 1280, h: 914, by: 'Frank Schulenburg', lic: 'CC BY-SA 4.0' },
+    { id: 'matterhorn', o: ['Matterhorn', 'Mont Blanc', 'Eiger', 'Ama Dablam'], fx: 47, fy: 50, w: 1280, h: 853, by: 'Liridon', lic: 'CC BY-SA 4.0' },
+    { id: 'moai', o: ['Easter Island', 'Olmec heads, Mexico', 'Mount Nemrut, Turkey', 'Tiwanaku, Bolivia'], fx: 65, fy: 38, w: 960, h: 1280, by: 'Aurbina', lic: 'Public domain' },
+    { id: 'monument', o: ['Monument Valley', 'Grand Canyon', 'Arches National Park', 'Wadi Rum, Jordan'], fx: 62, fy: 20, w: 1280, h: 800, by: 'King of Hearts', lic: 'CC BY-SA 4.0' },
+    { id: 'needle', o: ['Space Needle, Seattle', 'CN Tower, Toronto', 'Reunion Tower, Dallas', 'Tower of the Americas'], fx: 41, fy: 30, w: 1280, h: 872, by: 'Dietmar Rabich', lic: 'CC BY-SA 4.0' },
+    { id: 'notredame', o: ['Notre-Dame de Paris', 'Reims Cathedral', 'Westminster Abbey', 'Amiens Cathedral'], fx: 50, fy: 62, w: 960, h: 1275, by: 'Sanchezn', lic: 'CC BY-SA 3.0' },
+    { id: 'parthenon', o: ['Acropolis of Athens', 'Temple of Poseidon, Sounion', 'Valley of the Temples, Sicily', 'Ephesus, Turkey'], fx: 57, fy: 22, w: 1280, h: 800, by: 'A.Savin', lic: 'CC BY-SA 3.0' },
+    { id: 'petra', o: ['Petra, Jordan', 'Abu Simbel, Egypt', 'Lalibela, Ethiopia', 'Hegra, Saudi Arabia'], fx: 50, fy: 38, w: 960, h: 1362, by: 'Diego Delso', lic: 'CC BY-SA 3.0' },
+    { id: 'petronas', o: ['Petronas Towers', 'Burj Khalifa', 'Taipei 101', 'Shanghai Tower'], fx: 64, fy: 30, w: 1280, h: 1217, by: 'Marcin Konsek', lic: 'CC BY-SA 4.0' },
+    { id: 'redeemer', o: ['Christ the Redeemer, Rio', 'Cristo Rei, Lisbon', 'Cristo de la Concordia, Bolivia', 'Christ the King, Poland'], fx: 50, fy: 20, w: 960, h: 1439, by: 'Arne Müseler', lic: 'CC BY-SA 3.0 de' },
+    { id: 'rialto', o: ['Rialto Bridge, Venice', 'Ponte Vecchio, Florence', 'Bridge of Sighs, Venice', 'Pulteney Bridge, Bath'], fx: 58, fy: 45, w: 1280, h: 850, by: 'kallerna', lic: 'CC BY-SA 4.0' },
+    { id: 'rushmore', o: ['Mount Rushmore', 'Stone Mountain, Georgia', 'Crazy Horse Memorial', 'Mount Nemrut, Turkey'], fx: 34, fy: 35, w: 1280, h: 870, by: 'Thomas Wolf, www.foto-tw.de', lic: 'CC BY-SA 3.0' },
+    { id: 'sacre', o: ['Sacre-Coeur, Paris', 'St. Mark\'s Basilica, Venice', 'Pantheon, Paris', 'Basilica of Fourviere, Lyon'], fx: 50, fy: 32, w: 1280, h: 1039, by: 'Giò Terra (Terragio67)', lic: 'CC BY-SA 4.0' },
+    { id: 'sphinx', o: ['Great Sphinx of Giza', 'Abu Simbel', 'Colossi of Memnon', 'Avenue of Sphinxes, Luxor'], fx: 62, fy: 35, w: 1280, h: 853, by: 'Petar Milošević', lic: 'CC BY-SA 4.0' },
+    { id: 'stpeters', o: ['St. Peter\'s Basilica', 'St. Paul\'s Cathedral, London', 'Florence Cathedral', 'Pantheon, Rome'], fx: 50, fy: 28, w: 1280, h: 668, by: 'Alvesgaspar', lic: 'CC BY-SA 4.0' },
+    { id: 'trevi', o: ['Trevi Fountain', 'Fountain of the Four Rivers', 'Fountain of Neptune, Bologna', 'Latona Fountain, Versailles'], fx: 50, fy: 55, w: 1280, h: 777, by: 'Wilfredor', lic: 'CC0' },
+    { id: 'triomphe', o: ['Arc de Triomphe', 'Brandenburg Gate', 'Arch of Constantine', 'Wellington Arch, London'], fx: 40, fy: 62, w: 1280, h: 918, by: 'Wilfredor', lic: 'CC0' }
   ],
 
   phrases: [
@@ -3427,9 +3468,300 @@ RC.content = {
   ],
 
   /* the catalog of games, in the order a show plays them */
+  /* Know Your Family: made-up facts, matched to the topic of what the player typed. 'a' = only believable for a grown-up. */
+  fam: {
+    cats: [
+      ['sport', 'football|soccer|basket|baseball|tennis|golf|swim|swam|\\bran\\b|\\brun|marathon|\\brace|team|goal|medal|trophy|champion|karate|judo|\\bgym|surf|\\bski|skate|hockey|volley|badminton|bike|cycl|boxing|wrestl|track|yoga|athlet|coach|league|sport|played|player'],
+      ['travel', 'countr|lived|live in|moved|travel|trip|\\bcity|cities|abroad|flew|flight|plane|airport|passport|visited|been to|continent|island|cruise|born in|train|hotel|ocean|state'],
+      ['food', '\\beat|\\bate\\b|eaten|food|cook|bake|pizza|chocolate|cheese|spicy|vegetarian|drink|drank|coffee|\\btea\\b|candy|ice cream|sushi|recipe|taste|breakfast|dinner|lunch|fruit|vegetable'],
+      ['art', 'sing|sang|song|guitar|piano|violin|drum|\\bband|choir|music|instrument|concert|danc|ballet|paint|draw|\\bact|actor|actress|movie|film|stage|poem|wrote|\\bbook|novel|theater|theatre'],
+      ['animal', '\\bdog|\\bcat|\\bpet|horse|snake|spider|shark|bird|\\bfish|animal|\\bzoo|\\bbit\\b|bitten|farm|\\bcow|chicken|turtle|hamster|rabbit|monkey|bear|lizard|frog|insect|\\bbug'],
+      ['school', 'school|class|grade|teacher|college|university|degree|studied|study|exam|language|speak|spanish|french|portuguese|chinese|german|italian|math|science|spelling|\\bread|homework|principal'],
+      ['job', '\\bjob|work|boss|company|business|sold|waiter|waitress|lifeguard|intern|career|fired|hired|paid|salary|office|store|restaurant|customer|engineer|doctor|nurse|lawyer|army|navy|military'],
+      ['famous', 'famous|celebrit|\\bmet\\b|president|autograph|\\btv\\b|television|news|interview|youtube|viral|magazine|radio|star\\b|olympic|singer|commercial'],
+      ['body', 'broke|broken|stitches|hospital|scar|tooth|teeth|\\bbone|glasses|born with|twin|left-handed|\\btoe|finger|birthmark|ears|tongue|nose|\\barm|\\bleg|braces|thumb'],
+      ['quirk', 'afraid|scared|\\bfear|hate|never|can\'t|cannot|phobia|superstit|habit|secret|always|collect|sleepwalk|dream|lucky|sleep'],
+      ['skill', '\\bcan\\b|juggl|whistle|backflip|handstand|rubik|chess|magic|trick|record|fastest|\\bwon\\b|\\bwin|contest|competition|award|prize|knit|sew'],
+      ['adventure', 'stuck|\\bfell|\\btree|\\bcar\\b|drove|drive|motorcycle|boat|sail|pilot|skydiv|bungee|scuba|parachute|camp|hike|hiking|mountain|\\blost\\b|helicopter|license|crash|climb|roller|jump|cave|volcano'],
+      ['family', 'brother|sister|\\bmom|\\bdad|mother|father|grandma|grandpa|cousin|\\bbaby|\\bkid\\b|named|\\bname|nickname|birthday|sibling|uncle|aunt|toddler|childhood|little']
+    ],
+    bank: [
+      ['I once scored four goals in a single game.', 'sport'],
+      ['I played badminton for my school team.', 'sport'],
+      ['I can swim a full mile without stopping.', 'sport'],
+      ['I have a trophy for table tennis.', 'sport'],
+      ['I once broke a window with a baseball.', 'sport'],
+      ['I was the goalkeeper on a team that never won a game.', 'sport'],
+      ['I can do 30 push-ups in a row.', 'sport'],
+      ['I ran a 10K race and came in dead last.', 'sport', 'a'],
+      ['I took karate for three years and still have the belt.', 'sport'],
+      ['I once hit a hole in one at mini golf.', 'sport'],
+      ['I was on a bowling team with matching shirts.', 'sport', 'a'],
+      ['I have run a full marathon.', 'sport', 'a'],
+      ['I once caught a foul ball at a baseball game.', 'sport'],
+      ['I learned to ski before I learned to ride a bike.', 'sport'],
+      ['I quit the swim team after one day.', 'sport'],
+      ['I can throw a perfect spiral with my left hand.', 'sport'],
+      ['I won a medal in a judo tournament.', 'sport'],
+      ['I once played a whole soccer game wearing two left shoes.', 'sport'],
+      ['I was a cheerleader for one season.', 'sport'],
+      ['I was on the fencing team in college.', 'sport', 'a'],
+      ['I can juggle a soccer ball more than 50 times.', 'sport'],
+      ['I have a black eye in my team photo.', 'sport'],
+      ['I scored a basket for the other team by mistake.', 'sport'],
+      ['I came second in a school cross-country race.', 'sport'],
+      ['I have been to 14 countries.', 'travel'],
+      ['I have lived in five different cities.', 'travel'],
+      ['I once missed a flight because I fell asleep at the gate.', 'travel', 'a'],
+      ['I got lost in an airport for two hours.', 'travel'],
+      ['I have never been on a train.', 'travel'],
+      ['I spent a whole summer living on a boat.', 'travel'],
+      ['I have been to every state on the East Coast.', 'travel'],
+      ['I once slept in a car for three nights on a road trip.', 'travel', 'a'],
+      ['I threw up on my very first plane ride.', 'travel'],
+      ['I have swum in three different oceans.', 'travel'],
+      ['I was born in a different city than everyone thinks.', 'travel'],
+      ['I once left my passport in a taxi.', 'travel', 'a'],
+      ['I have crossed the equator on a ship.', 'travel'],
+      ['I have been to the top of the Eiffel Tower twice.', 'travel'],
+      ['I lived in a house with no TV for a year.', 'travel'],
+      ['I once took a bus ride that lasted 30 hours.', 'travel', 'a'],
+      ['I have stood in two countries at the same time.', 'travel'],
+      ['I have moved houses nine times.', 'travel'],
+      ['I got stuck in a hotel elevator for an hour.', 'travel'],
+      ['I have ridden a camel in the desert.', 'travel'],
+      ['I spent a night in an airport sleeping on my suitcase.', 'travel'],
+      ['I have been to four continents.', 'travel'],
+      ['I lived in three countries before I turned ten.', 'travel'],
+      ['I have never eaten a hamburger.', 'food'],
+      ['I once ate a whole pizza by myself in ten minutes.', 'food'],
+      ['I put ketchup on my scrambled eggs.', 'food'],
+      ['I cannot stand the taste of chocolate.', 'food'],
+      ['I ate a cricket on a dare.', 'food'],
+      ['I have never tried coffee.', 'food'],
+      ['I won a pie-eating contest.', 'food'],
+      ['I once cooked dinner for 40 people.', 'food', 'a'],
+      ['I eat pizza with a knife and fork.', 'food'],
+      ['I am secretly scared of mushrooms.', 'food'],
+      ['I have eaten alligator.', 'food'],
+      ['I once baked a cake with salt instead of sugar.', 'food'],
+      ['I can eat a whole lemon without making a face.', 'food'],
+      ['I worked in an ice cream shop for one summer.', 'food', 'a'],
+      ['I dip my french fries in a milkshake.', 'food'],
+      ['I have never eaten sushi.', 'food'],
+      ['I once ate 12 tacos in one sitting.', 'food'],
+      ['I drink a glass of milk every single night.', 'food'],
+      ['I hate the smell of bananas.', 'food'],
+      ['I once set off the smoke alarm making toast.', 'food'],
+      ['I eat the same breakfast every day of the year.', 'food'],
+      ['I can play the trumpet.', 'art'],
+      ['I once sang a solo in front of 500 people.', 'art'],
+      ['I played the drums in a band for a year.', 'art'],
+      ['I took ballet lessons for four years.', 'art'],
+      ['I know every word of a song in a language I do not speak.', 'art'],
+      ['I was an extra in a movie.', 'art'],
+      ['I once won a dance contest.', 'art'],
+      ['I can play one song on the piano, and only one.', 'art'],
+      ['I wrote a poem that was printed in a newspaper.', 'art'],
+      ['I was in a school play as a tree.', 'art'],
+      ['I have a painting hanging in someone else\'s house.', 'art'],
+      ['I can play the harmonica.', 'art'],
+      ['I once forgot all my lines on stage.', 'art'],
+      ['I took accordion lessons as a kid.', 'art', 'a'],
+      ['I have watched the same movie more than 30 times.', 'art'],
+      ['I sang in a choir for two years.', 'art'],
+      ['I wrote a song about someone in this room.', 'art'],
+      ['I once auditioned for a TV talent show.', 'art'],
+      ['I can whistle a whole song backwards.', 'art'],
+      ['I learned the violin and quit after a month.', 'art'],
+      ['I have read the same book eleven times.', 'art'],
+      ['I was bitten by a horse.', 'animal'],
+      ['I once had a pet snake.', 'animal'],
+      ['I am afraid of butterflies.', 'animal'],
+      ['I have held a baby alligator.', 'animal'],
+      ['I had a goldfish that lived for nine years.', 'animal'],
+      ['I was chased by a goose and still think about it.', 'animal'],
+      ['I once brought a frog home in my pocket.', 'animal'],
+      ['I have milked a cow.', 'animal'],
+      ['I had a pet turtle named after a relative.', 'animal'],
+      ['I once rode an elephant.', 'animal'],
+      ['I rescued a bird and kept it in a shoebox.', 'animal'],
+      ['I have been stung by a jellyfish.', 'animal'],
+      ['I had three hamsters at the same time.', 'animal'],
+      ['I once swam with dolphins.', 'animal'],
+      ['I taught a parrot to say my name.', 'animal'],
+      ['I have fed a giraffe by hand.', 'animal'],
+      ['I found a scorpion in my shoe.', 'animal'],
+      ['I once lost a pet lizard inside the house for a week.', 'animal'],
+      ['I was scared of dogs until I was ten.', 'animal'],
+      ['I have ridden a horse on a beach.', 'animal'],
+      ['I once fell off a pony at a birthday party.', 'animal'],
+      ['I won a spelling bee in fourth grade.', 'school'],
+      ['I failed my first driving test.', 'school', 'a'],
+      ['I was sent to the principal\'s office for laughing too much.', 'school'],
+      ['I can count to twenty in four languages.', 'school'],
+      ['I once got a perfect score on a math test I did not study for.', 'school'],
+      ['I studied Latin for two years.', 'school', 'a'],
+      ['I taught myself to read before I started school.', 'school'],
+      ['I had the same teacher three years in a row.', 'school'],
+      ['I once fell asleep during an exam.', 'school'],
+      ['I can say the alphabet backwards.', 'school'],
+      ['I won a science fair with a volcano.', 'school'],
+      ['I took sign language classes.', 'school'],
+      ['I was class president for one week.', 'school'],
+      ['I can name every U.S. state in alphabetical order.', 'school'],
+      ['I memorized 50 digits of pi.', 'school'],
+      ['I changed schools five times.', 'school'],
+      ['I learned to write with both hands.', 'school'],
+      ['I once did a month of homework in the wrong book.', 'school'],
+      ['I took a year of Japanese.', 'school', 'a'],
+      ['I got in trouble for reading under my desk.', 'school'],
+      ['I once worked as a lifeguard.', 'job', 'a'],
+      ['I sold newspapers door to door.', 'job', 'a'],
+      ['I was fired from my first job after two days.', 'job', 'a'],
+      ['I worked one summer on a farm.', 'job', 'a'],
+      ['I delivered pizza for a year.', 'job', 'a'],
+      ['I once worked dressed as a mascot.', 'job', 'a'],
+      ['I was a waiter and dropped a full tray on a customer.', 'job', 'a'],
+      ['I worked in a toy store at Christmas.', 'job', 'a'],
+      ['I had three jobs at the same time.', 'job', 'a'],
+      ['I once applied for a job at a circus.', 'job', 'a'],
+      ['I taught swimming lessons.', 'job', 'a'],
+      ['I worked the night shift at a bakery.', 'job', 'a'],
+      ['I was a tour guide for a summer.', 'job', 'a'],
+      ['I sold my first thing for money when I was nine.', 'job'],
+      ['I got a raise on my first day at a job.', 'job', 'a'],
+      ['I worked in a movie theater and saw the same film 40 times.', 'job', 'a'],
+      ['I was a camp counselor.', 'job', 'a'],
+      ['I drove a delivery truck.', 'job', 'a'],
+      ['I washed cars to pay for my first bike.', 'job'],
+      ['I painted houses one summer.', 'job', 'a'],
+      ['I once shook hands with a president.', 'famous'],
+      ['I was on the local TV news.', 'famous'],
+      ['I have an autograph from a famous soccer player.', 'famous'],
+      ['I sat next to a movie star on a plane.', 'famous'],
+      ['I was in a newspaper photo by accident.', 'famous'],
+      ['I once sang on the radio.', 'famous'],
+      ['I was in a TV commercial.', 'famous'],
+      ['I met an astronaut.', 'famous'],
+      ['I got a letter back from a famous author.', 'famous'],
+      ['I am in the background of a music video.', 'famous'],
+      ['I once rode in an elevator with a famous singer.', 'famous'],
+      ['I was interviewed on the street by a TV reporter.', 'famous'],
+      ['I have a video online with more than 10,000 views.', 'famous'],
+      ['I was the baby in a magazine ad.', 'famous'],
+      ['I won a radio contest.', 'famous'],
+      ['I once gave directions to a famous actor.', 'famous'],
+      ['I sat in the audience of a TV game show.', 'famous'],
+      ['I have been on the big screen at a stadium.', 'famous'],
+      ['I met an Olympic medalist in a grocery store.', 'famous'],
+      ['I got a high five from a professional athlete.', 'famous'],
+      ['I have broken the same arm twice.', 'body'],
+      ['I have never had a cavity.', 'body'],
+      ['I got stitches on my chin from a bike crash.', 'body'],
+      ['I can wiggle my ears.', 'body'],
+      ['I was born with an extra tooth.', 'body'],
+      ['I have a scar from a fishing hook.', 'body'],
+      ['I can touch my nose with my tongue.', 'body'],
+      ['I broke my toe kicking a door.', 'body'],
+      ['I am left-handed but I write with my right hand.', 'body'],
+      ['I lost a tooth biting an apple.', 'body'],
+      ['I have never broken a bone.', 'body'],
+      ['I can bend my thumb all the way back.', 'body'],
+      ['I once walked straight into a glass door.', 'body'],
+      ['I have a birthmark shaped like a boot.', 'body'],
+      ['I wore an eye patch for a year as a kid.', 'body'],
+      ['I fainted once at a school assembly.', 'body'],
+      ['I had braces twice.', 'body'],
+      ['I sleep with my eyes half open.', 'body'],
+      ['I broke my nose playing tag.', 'body'],
+      ['I have one foot a full size bigger than the other.', 'body'],
+      ['I am afraid of balloons.', 'quirk'],
+      ['I have to sleep with socks on.', 'quirk'],
+      ['I have never seen a Star Wars movie.', 'quirk'],
+      ['I count the stairs every time I climb them.', 'quirk'],
+      ['I am scared of escalators.', 'quirk'],
+      ['I collect hotel keys.', 'quirk'],
+      ['I have kept every birthday card I ever got.', 'quirk'],
+      ['I talk in my sleep.', 'quirk'],
+      ['I once sleepwalked out of the house.', 'quirk'],
+      ['I cannot whistle.', 'quirk'],
+      ['I never learned to ride a bike.', 'quirk'],
+      ['I have a lucky shirt I wear on important days.', 'quirk'],
+      ['I collect erasers.', 'quirk'],
+      ['I have a collection of more than 200 coins.', 'quirk'],
+      ['I still sleep with a night light.', 'quirk'],
+      ['I always put my left shoe on first.', 'quirk'],
+      ['I name every car I ride in.', 'quirk'],
+      ['I cannot sleep without a fan on.', 'quirk'],
+      ['I have never been to a concert.', 'quirk'],
+      ['I keep a secret diary.', 'quirk'],
+      ['I can solve a Rubik\'s cube in under two minutes.', 'skill'],
+      ['I can juggle three oranges.', 'skill'],
+      ['I can do a backflip into a pool.', 'skill'],
+      ['I won a chess tournament.', 'skill'],
+      ['I can walk on my hands.', 'skill'],
+      ['I know how to knit a scarf.', 'skill'],
+      ['I can type without looking at the keyboard.', 'skill'],
+      ['I once won a hula hoop contest.', 'skill'],
+      ['I can hold my breath for almost two minutes.', 'skill'],
+      ['I know a card trick nobody has figured out.', 'skill'],
+      ['I can balance a spoon on my nose.', 'skill'],
+      ['I won a staring contest that lasted ten minutes.', 'skill'],
+      ['I can draw a perfect circle freehand.', 'skill'],
+      ['I can ride a unicycle.', 'skill'],
+      ['I taught myself to yo-yo.', 'skill'],
+      ['I can read upside down as fast as right side up.', 'skill'],
+      ['I won first place in a costume contest.', 'skill'],
+      ['I can do the splits.', 'skill'],
+      ['I can recite a whole poem from memory.', 'skill'],
+      ['I can snap my fingers on both hands at once but cannot wink.', 'skill'],
+      ['I have been skydiving.', 'adventure', 'a'],
+      ['I once got lost in the woods for three hours.', 'adventure'],
+      ['I have flown in a helicopter.', 'adventure'],
+      ['I jumped off a ten-meter diving board.', 'adventure'],
+      ['I crashed a go-kart into a wall.', 'adventure'],
+      ['I learned to drive on a tractor.', 'adventure', 'a'],
+      ['I have been scuba diving.', 'adventure', 'a'],
+      ['I once camped in the snow.', 'adventure'],
+      ['I have ridden a zip line over a river.', 'adventure'],
+      ['I got stuck at the top of a Ferris wheel.', 'adventure'],
+      ['I have climbed a volcano.', 'adventure'],
+      ['I once fell out of a canoe fully dressed.', 'adventure'],
+      ['I have driven a boat.', 'adventure'],
+      ['I went down a waterslide backwards by accident.', 'adventure'],
+      ['I have slept outside under the stars with no tent.', 'adventure'],
+      ['I got locked inside a store after closing.', 'adventure'],
+      ['I once rode a roller coaster nine times in a row.', 'adventure'],
+      ['I have been in a hot air balloon.', 'adventure'],
+      ['I tipped over a sailboat.', 'adventure'],
+      ['I have been inside a cave with bats.', 'adventure'],
+      ['I was almost named after a great-grandparent.', 'family'],
+      ['I have a middle name nobody here knows.', 'family'],
+      ['I was born on a holiday.', 'family'],
+      ['I shared a bedroom until I was twelve.', 'family'],
+      ['I had an imaginary friend named Pickle.', 'family'],
+      ['I ran away from home for one hour.', 'family'],
+      ['I was the smallest kid in my class.', 'family'],
+      ['I cut my own hair before a family photo.', 'family'],
+      ['I got lost in a supermarket and they called my name on the speaker.', 'family'],
+      ['I believed in the tooth fairy until I was eleven.', 'family'],
+      ['I had a nickname that I hated.', 'family'],
+      ['I was born three weeks early.', 'family'],
+      ['I wore the same costume four Halloweens in a row.', 'family'],
+      ['I once hid in a closet so long that everyone went looking for me.', 'family'],
+      ['I flushed a toy down the toilet and flooded the bathroom.', 'family'],
+      ['I got my head stuck in a railing.', 'family'],
+      ['I thought my teacher lived at the school.', 'family'],
+      ['I once sold my sibling\'s toys at a yard sale.', 'family'],
+      ['I used to eat dirt as a toddler.', 'family'],
+      ['I broke a lamp and blamed the dog.', 'family']
+    ]
+  },
   rounds: [
     { key: 'vote', title: 'Everybody Votes', how: ['A question with four choices. Everyone answers on their own phone.', 'Your team scores the share of teammates who get it right.', 'The fastest right answer earns a bonus.'] },
     { key: 'likely', title: 'Most Likely To', how: ['No trivia. Vote for the person in this room who fits best.', 'You score when you vote with the biggest group.', 'Yes, you can vote for yourself.'] },
+    { key: 'fam', title: 'Know Your Family', how: ['Everyone types one true thing about themselves that most people here do not know.', 'The game hides it among three made-up ones. Everybody votes for the true one.', 'Pick the truth: 100 points. You also score for every person your own fact fools.'] },
     { key: 'board', title: 'The Board', how: ['One player picks a category and a point value. The TV says whose turn it is.', 'Then everyone answers on their own phone. You have 20 seconds.', 'Every right answer scores. The fastest right answer earns a bonus and picks next.'] },
     { key: 'tf', title: 'True or False Blitz', how: ['A statement appears. True or false?', 'Everyone answers. You have 12 seconds.', 'Your team scores the share of teammates who get it right.'] },
     { key: 'zoom', title: 'Zoom In', how: ['A famous place slowly comes into view. Wait for GO, then buzz when you know it.', 'Buzz before GO and you are out for that picture and lose 50 points.', 'After GO the fastest finger answers. A wrong answer costs 50 points.'] },
@@ -3440,7 +3772,7 @@ RC.content = {
     { key: 'crillion', title: 'Crillion', how: ['Everyone types one answer to the same question. Spelling does not matter.', 'The more obscure your answer, the more it scores. The most obscure answer in the room wins 50 extra.', 'If someone else types the same thing, you split the points. A wrong answer scores zero.'] },
     { key: 'feud', title: 'Survey Says', how: ['We asked 1,000 imaginary people. Find their top 5 answers.', 'Wait for GO, then buzz. Buzz early and you are out and lose 50 points.', 'Three strikes and the next team can steal. The last survey is worth double.'] }
   ],
-  order: ['vote', 'likely', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'crillion', 'feud'],
+  order: ['vote', 'likely', 'fam', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'crillion', 'feud'],
   /* Set this to a private judge address to let an AI model rule on Crillion answers that are not on the sheet. */
   judgeUrl: '',
 
@@ -3692,7 +4024,7 @@ RC.createEngine = function (C, opts) {
     return ' ' + S.teams[ld].name + (gap <= 100 ? ' lead by just ' + gap + '. This is close.' : ' are ' + gap + ' in front. Somebody catch them!');
   }
   /* Part way through a screen, the host calls out whoever everyone is waiting on. Once per screen. */
-  var WAITING = { vote_q: 1, ml_q: 1, num_q: 1, cr_q: 1, board_q: 1 }, TURNS = { board_pick: 'pick a category', phrase_turn: 'pick a letter', feud_pick: 'pick an answer', zoom_ans: 'pick your answer' };
+  var WAITING = { vote_q: 1, ml_q: 1, num_q: 1, cr_q: 1, board_q: 1, fam_in: 1, fam_q: 1 }, TURNS = { board_pick: 'pick a category', phrase_turn: 'pick a letter', feud_pick: 'pick an answer', zoom_ans: 'pick your answer' };
   function nagTick(now) {
     if (S.nag || !S.deadline || !S.t0) { return false; }
     var ph = S.phase, part = (now - S.t0) / (S.deadline - S.t0);
@@ -3773,6 +4105,7 @@ RC.createEngine = function (C, opts) {
     else if (key === 'phrase') { P.ps = draw('phrases', C.phrases, cnt(4, 2)); S.pi = -1; S.pteam = trailing(); nextPhrase(now); }
     else if (key === 'feud') { setupFeud(); S.fi = -1; nextFeud(now); }
     else if (key === 'crillion') { P.cq = draw('crillion', C.crillion, cnt(5, 3)); S.ci = -1; nextCr(now); }
+    else if (key === 'fam') { famStart(now); }
   }
   function roundEnd(now) {
     S.turn = null;
@@ -4261,6 +4594,82 @@ RC.createEngine = function (C, opts) {
   }
 
   /* ---------- advance: called on deadline or when the showrunner taps Next ---------- */
+  /* ---------- know your family ---------- */
+  var FAM_STOP = { that: 1, this: 1, with: 1, have: 1, once: 1, when: 1, from: 1, been: 1, were: 1, never: 1, about: 1, there: 1, every: 1, whole: 1, time: 1, year: 1, years: 1, first: 1, same: 1, than: 1, more: 1, them: 1, they: 1, into: 1, still: 1, only: 1, just: 1, over: 1, used: 1 };
+  function famWords(t) { var w = String(t).toLowerCase().replace(/[^a-z ]/g, ' ').split(' '), out = {}; for (var i = 0; i < w.length; i++) { if (w[i].length >= 4 && !FAM_STOP[w[i]]) { out[w[i].substr(0, 6)] = 1; } } return out; }
+  function famTidy(t) { // light clean-up, so the true fact does not stand out from the made-up ones by its typing
+    t = clean(t, 110).replace(/[\s.!]+$/, '');
+    t = t.replace(/\bi\b/g, 'I').replace(/\b[Ii]m\b/g, "I'm").replace(/\b[Ii]ve\b/g, "I've").replace(/\b[Ii] m\b/g, "I'm");
+    if (!t) { return ''; }
+    t = t.charAt(0).toUpperCase() + t.substr(1);
+    if (t === t.toUpperCase() && t.length > 8) { t = t.charAt(0) + t.substr(1).toLowerCase().replace(/\bi\b/g, 'I'); }
+    return t + (/[?]$/.test(t) ? '' : '.');
+  }
+  function famFakes(text, kid) { // three made-up facts on the same topic and of about the same length
+    var low = text.toLowerCase(), cats = {}, tw = famWords(text), same = [], rest = [], i, k, b;
+    for (i = 0; i < C.fam.cats.length; i++) { if (new RegExp(C.fam.cats[i][1]).test(low)) { cats[C.fam.cats[i][0]] = 1; } }
+    for (i = 0; i < C.fam.bank.length; i++) {
+      b = C.fam.bank[i];
+      if (P.famUsed[i] || (kid && b[2] === 'a')) { continue; }
+      var bw = famWords(b[0]), share = 0; for (k in bw) { if (tw[k]) { share++; } }
+      if (share >= 2 || b[0].toLowerCase() === low) { continue; }       // too close to the truth to be fair
+      (cats[b[1]] ? same : rest).push(i);
+    }
+    function closest(list, n) { var c = shuffle(list).slice(0, 9); c.sort(function (x, y) { return Math.abs(C.fam.bank[x][0].length - text.length) - Math.abs(C.fam.bank[y][0].length - text.length); }); return c.slice(0, n); }
+    var take = closest(same, 3);
+    if (take.length < 3) { take = take.concat(closest(rest, 3 - take.length)); }
+    var out = [];
+    for (i = 0; i < take.length; i++) { P.famUsed[take[i]] = 1; out.push(C.fam.bank[take[i]][0]); }
+    return out;
+  }
+  function famStart(now) {
+    P.fam = {}; P.famUsed = {}; P.famOrder = []; S.fmi = -1;
+    S.fam = { done: [] }; S.fq = null; S.nv = 0; S.rv = null;
+    setPhase('fam_in', now, 150000);
+    say('Everybody, look at your phone. Type one true thing about yourself that most people in this room do not know. Start it with the word I. Keep it short, and keep it secret.');
+  }
+  function famBegin(now) {
+    var ids = [];
+    for (var i = 0; i < S.order.length; i++) { if (P.fam[S.order[i]] && pl(S.order[i])) { ids.push(S.order[i]); } }
+    if (!ids.length) { say('Nobody sent a fact, so we skip this one.'); return roundEnd(now); }
+    P.famOrder = shuffle(ids).slice(0, cnt(20, 6));
+    S.fmi = -1;
+    famNext(now);
+  }
+  function famNext(now) {
+    S.fmi++;
+    while (S.fmi < P.famOrder.length && !pl(P.famOrder[S.fmi])) { S.fmi++; }
+    if (S.fmi >= P.famOrder.length) { return roundEnd(now); }
+    var pid = P.famOrder[S.fmi], f = P.fam[pid];
+    var fakes = famFakes(f.text, f.kid);
+    P.cur = mc({ q: '', o: [f.text].concat(fakes) });
+    P.votes = {};
+    S.fq = { n: S.fmi + 1, of: P.famOrder.length, who: pid, name: nm(pid), t: pl(pid).t, o: P.cur.o };
+    S.nv = 0; S.rv = null;
+    setPhase('fam_q', now, 14000 + 30000);
+    S.acted[pid] = true;                                               // nobody waits on the person the facts are about
+    var spoken = ''; for (var i = 0; i < P.cur.o.length; i++) { spoken += ' ' + 'ABCD'.charAt(i) + '. ' + P.cur.o[i]; }
+    say('Four things about ' + nm(pid) + '. Only one is true. ' + nm(pid) + ', keep a straight face.' + spoken);
+  }
+  function famEnd(now) {
+    var counts = [], ok = zeros(), den = zeros(), nok = 0, voters = 0, okp = {}, who = S.fq.who, sub = pl(who), i, pid, v, p;
+    for (i = 0; i < P.cur.o.length; i++) { counts.push(0); }
+    for (i = 0; i < S.order.length; i++) {
+      pid = S.order[i]; v = P.votes[pid]; p = pl(pid);
+      if (!p || pid === who) { continue; }
+      if (v || present(pid, now)) { den[p.t]++; }
+      if (v) { voters++; counts[v.a]++; if (v.a === P.cur.a) { ok[p.t]++; nok++; okp[pid] = 1; p.pts += 100; } }
+    }
+    var gains = zeros(), fooled = voters - nok, bonus = voters ? Math.round(100 * fooled / voters / 10) * 10 : 0;
+    for (var t = 0; t < NT(); t++) { gains[t] = den[t] ? Math.round(100 * ok[t] / den[t]) : 0; }
+    if (sub && bonus) { sub.pts += bonus; if (gains[sub.t] != null) { gains[sub.t] += bonus; } }
+    addGains(gains);
+    S.rv = { a: P.cur.a, counts: counts, gains: gains, nok: nok, okp: okp, fooled: fooled, bonus: bonus, voters: voters };
+    setPhase('fam_rv', now, 11000);
+    say('The true one is ' + 'ABCD'.charAt(P.cur.a) + '. ' + P.cur.o[P.cur.a] + ' ' + (voters ? (nok === 0 ? S.fq.name + ' fooled every one of you!' : (fooled === 0 ? 'Everybody knew it. ' + S.fq.name + ', you have no secrets.' : nok + (nok === 1 ? ' person' : ' people') + ' knew it. ' + S.fq.name + ' fooled ' + fooled + '.')) : 'Nobody voted.') + standingLine());
+    fx(nok > 0 ? 'right' : 'wrong');
+  }
+
   function advance(now, timedOut) {
     var ph = S.phase;
     if (ph === 'lobby') { if (!timedOut) { goMenu(now); } }
@@ -4288,6 +4697,9 @@ RC.createEngine = function (C, opts) {
     else if (ph === 'cr_q') { crJudge(now); }
     else if (ph === 'cr_judge') { for (var ri = 0; ri < S.cr.rows.length; ri++) { if (S.cr.rows[ri].st === 'ask') { S.cr.rows[ri].st = 'no'; S.cr.rows[ri].why = 'Not accepted.'; } } crReveal(now); }
     else if (ph === 'cr_reveal') { nextCr(now); }
+    else if (ph === 'fam_in') { famBegin(now); }
+    else if (ph === 'fam_q') { famEnd(now); }
+    else if (ph === 'fam_rv') { famNext(now); }
     else if (ph === 'round_end') { goMenu(now); }
   }
   /* ---------- showrunner commands ---------- */
@@ -4445,6 +4857,18 @@ RC.createEngine = function (C, opts) {
         if (allActed(now)) { endWord(now); }
       } else { S.wr[pid] = (S.wr[pid] || 0) + 1; }
     }
+    else if (m.t === 'fam' && ph === 'fam_in') {
+      var ft = famTidy(m.text);
+      if (P.fam[pid] || ft.replace(/[^A-Za-z0-9]/g, '').length < 6) { return; }
+      P.fam[pid] = { text: ft, kid: m.kid ? 1 : 0 }; S.acted[pid] = true; S.nv++; S.fam.done.push(p.n);
+      if (allActed(now)) { famBegin(now); }
+    }
+    else if (m.t === 'famv' && ph === 'fam_q') {
+      a = parseInt(m.a, 10);
+      if (pid === S.fq.who || P.votes[pid] || !(a >= 0 && a < P.cur.o.length)) { return; }
+      P.votes[pid] = { a: a, at: now }; S.acted[pid] = true; S.nv++;
+      if (allActed(now)) { famEnd(now); }
+    }
     else if (m.t === 'cr' && ph === 'cr_q') {
       var ct = clean(m.text, 40);
       if (P.crA[pid] || !ct) { return; }
@@ -4552,7 +4976,7 @@ RC.createEngine = function (C, opts) {
     hostKey: function () { return H.key; },
     used: function () { return H.used; },
     _private: function () { return P; },
-    _near: near, _soundKey: soundKey, _crMatch: crMatch
+    _near: near, _soundKey: soundKey, _crMatch: crMatch, _famTidy: famTidy, _famFakes: function (t, kid) { P.famUsed = P.famUsed || {}; return famFakes(t, kid); }
   };
 };
 if (typeof module !== 'undefined') { module.exports = RC; }
@@ -5008,6 +5432,20 @@ if (typeof module !== 'undefined') { module.exports = RC; }
         return '<div class="h2">' + esc(S.ml.text) + '</div><div class="answer">' + (S.rv.win.length ? esc(S.rv.win.join(' and ')) : 'No votes') + '</div><div class="tally">' + tl + '</div>' +
           '<div class="status">' + gainsHtml(S.rv) + '</div>';
       }
+      if (ph === 'fam_in') {
+        var fd = S.fam && S.fam.done ? S.fam.done : [], fdh = '';
+        for (var fi = 0; fi < fd.length; fi++) { fdh += '<span class="famin">' + esc(fd[fi]) + '</span>'; }
+        return '<div class="tag">Know Your Family</div><div class="h2">Type one true thing about yourself<br>that most people here do not know</div><div class="famlist">' + (fdh || '<span class="famwait">Nobody yet</span>') + '</div><div class="status">' + waitHtml().replace('answered', 'sent in') + '</div>' + timerHtml(150000);
+      }
+      if ((ph === 'fam_q' || ph === 'fam_rv') && S.fq) {
+        var fq = S.fq, frv = ph === 'fam_rv' ? S.rv : null;
+        var fh = '<div class="tag">Person ' + fq.n + ' of ' + fq.of + '</div><div class="h2">Which one is true about <span class="t' + (S.solo ? 1 : fq.t) + 'c">' + esc(fq.name) + '</span>?</div><div class="opts fam">';
+        for (var fo = 0; fo < fq.o.length; fo++) { fh += '<div class="opt o' + fo + (frv ? (frv.a === fo ? ' win' : ' dim') : '') + '"><span class="l">' + 'ABCD'.charAt(fo) + '</span><span class="ft">' + esc(fq.o[fo]) + '</span>' + (frv ? '<span class="n">' + frv.counts[fo] + '</span>' : '') + '</div>'; }
+        fh += '</div>';
+        if (frv) { fh += '<div class="status">' + (frv.voters ? frv.nok + ' of ' + frv.voters + ' knew it' + (frv.bonus ? ' &nbsp;&middot;&nbsp; ' + esc(fq.name) + ' fooled ' + frv.fooled + ': +' + frv.bonus : '') + (S.solo ? '' : '<br>' + gainsHtml(frv)) : 'Nobody voted') + '</div>'; }
+        else { fh += '<div class="status">' + esc(fq.name) + ' does not vote. ' + waitHtml() + '</div>' + timerHtml(44000); }
+        return fh;
+      }
       if (ph === 'num_q') { return '<div class="tag">Question ' + S.nm.n + ' of ' + S.nm.of + '</div><div class="h2">' + esc(S.nm.text) + '</div><div class="status">Type your best guess. ' + waitHtml() + '</div>' + timerHtml(30000); }
       if (ph === 'num_reveal') {
         var nl = ''; S.rv.list.forEach(function (x) { nl += (nl ? ', ' : '') + '<span class="t' + x.t + 'c">' + esc(x.n) + '</span> ' + esc(x.v); });
@@ -5328,6 +5766,21 @@ if (typeof module !== 'undefined') { module.exports = RC; }
         return h;
       }
       if (ph === 'feud_reveal' || ph === 'round_end') { return '<h2>Scores</h2>' + standing() + (S.solo ? '' : '<p>You have ' + m.pts + ' points of your own, number ' + myRank() + ' of ' + S.order.length + '.</p>') + watch(); }
+      if (ph === 'fam_in') {
+        lk = locked('Got it. Your secret is safe'); if (lk) { return lk; }
+        return '<div class="q">One true thing about you that most people here do not know</div><p class="small">One short sentence that starts with "I". Example: I once lived on a boat. The game will hide it among three made-up ones, so do not tell anyone.</p><input class="field fact" id="famin" maxlength="100" autocomplete="off" placeholder="I ..."><div class="half"><button class="pbtn go" data-a="fam" data-v="1">Send<br><small>I am a kid</small></button><button class="pbtn go" data-a="fam" data-v="0">Send<br><small>I am a grown-up</small></button></div>';
+      }
+      if (ph === 'fam_q' && S.fq) {
+        if (S.fq.who === pid) { return '<h2>This one is about you</h2><p>Keep a straight face. You score for every person you fool.</p>' + watch(); }
+        lk = locked('Vote locked in'); if (lk) { return lk; }
+        h = '<div class="q">Which one is true about ' + esc(S.fq.name) + '?</div>';
+        for (var fo2 = 0; fo2 < S.fq.o.length; fo2++) { h += '<button class="pbtn o' + fo2 + ' fact" data-a="famv" data-v="' + fo2 + '">' + 'ABCD'.charAt(fo2) + '. ' + esc(S.fq.o[fo2]) + '</button>'; }
+        return h;
+      }
+      if (ph === 'fam_rv' && S.fq) {
+        if (S.fq.who === pid) { return '<h2>You fooled ' + S.rv.fooled + ' of ' + S.rv.voters + '</h2><p>' + (S.rv.bonus ? 'That is worth ' + S.rv.bonus + ' points.' : 'They know you too well.') + '</p>' + watch(); }
+        return '<h2>' + (S.rv.okp && S.rv.okp[pid] ? 'You knew it! +100' : 'Fooled you') + '</h2><p>True: ' + esc(S.fq.o[S.rv.a]) + '</p>' + watch();
+      }
       if (ph === 'cr_q') {
         lk = locked('Answer locked in'); if (lk) { return lk; }
         return '<div class="q">' + esc(S.cr.text) + '</div><p class="small">One answer. The most obscure right answer wins. Spelling does not matter. If someone else types the same thing, you split the points.</p><input class="field" id="crin" maxlength="40" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Your answer"><button class="pbtn go" data-a="cr">Lock it in</button>';
@@ -5414,7 +5867,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       put('psheet', sheet); }
       tickUI();
     }
-    var GUARD = { ans: 1, vote: 1, mlv: 1, fpick: 1, tile: 1, c_next: 1, c_crj: 1 };
+    var GUARD = { ans: 1, vote: 1, mlv: 1, fpick: 1, tile: 1, c_next: 1, c_crj: 1, famv: 1 };
     var CONFIRM = { c_restart: 1, c_again: 1, c_reset: 1, c_kick: 1 };
     function onAct(b) {
       var a = b.getAttribute('data-a'), v = b.getAttribute('data-v'), el;
@@ -5453,6 +5906,8 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       else if (a === 'c_reset') { ctl('reset'); ui.menu = false; }
       else if (a === 'c_skipq') { ctl('next', { k: S.k }); ui.menu = false; }
       else if (a === 'c_crj') { var cj = v.split(','); ctl('crj', { p: cj[0], ok: cj[1] === '1', said: 5, by: 'the host' }); }
+      else if (a === 'fam') { el = document.getElementById('famin'); if (!el || el.value.replace(/[^A-Za-z0-9]/g, '').length < 6) { if (el) { el.focus(); } return; } var ftxt = el.value; el.blur(); doAct({ t: 'fam', text: ftxt, kid: v === '1' ? 1 : 0 }, ''); }
+      else if (a === 'famv') { doAct({ t: 'famv', a: +v }, 'ABCD'.charAt(+v)); }
       else if (a === 'cr') { el = document.getElementById('crin'); if (!el || !el.value.replace(/\s/g, '')) { if (el) { el.focus(); } return; } var ctxt = el.value; el.blur(); doAct({ t: 'cr', text: ctxt }, ctxt); }
       else if (a === 'c_tomenu') { ctl('menu'); ui.menu = false; }
       else if (a === 'tile') { var cl = v.split(','); doAct({ t: 'pick', c: +cl[0], l: +cl[1] }, 'Picked'); }
