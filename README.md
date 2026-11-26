@@ -27,14 +27,14 @@ Play them in any order, as many times as you like. "Short rounds" on the menu tr
 |---|---|
 | Everybody Votes | Everyone answers on their phone. A team scores the share of its players who are right, so uneven teams stay fair. |
 | Most Likely To | No trivia. Vote for the person in the room who fits. You score when you vote with the biggest group. |
-| The Board | Pick a category and value, buzz in, answer on your phone. A miss lets the other team steal. |
+| The Board | One player picks a category and value. Then everyone answers on their own phone, with 20 seconds on the clock. Every right answer scores the tile, and the fastest right answer earns half the tile on top. There is no buzzer. |
 | True or False Blitz | A statement, 12 seconds, true or false. |
 | Zoom In | A drawing of a famous place zooms out or uncovers tile by tile. Buzz early for more points. |
 | Closest Call | Every answer is a number. Everyone types a guess. Closest wins 150. |
 | Phrase Fever | Take turns on letters. Anyone can hit Solve and type the phrase. Five misses lose the puzzle. |
 | Name That Decade | Something happened. Pick the decade. |
 | Word Scramble | Unscramble the word. First in wins 150, everyone else can still score 40. |
-| Crillion | Everyone types one answer to the same question. A correct answer scores 100 minus the number of people out of 100 who would say it, so obscure answers win. A wrong answer scores zero. In team play a team gets the average of its players. |
+| Crillion | Everyone types one answer to the same question. A correct answer scores 100 minus the number of people out of 100 who would say it. If someone else in the room types the same answer, those players split the points, so the answer nobody else thought of wins. A wrong answer scores zero. In team play a team gets the average of its players. |
 | Survey Says | Find the top 5 answers. Three strikes and the other team can steal. The numbers are the show's own made-up poll of 1,000 people, not a real survey. |
 
 The look is "Studio 74", a 1970s game-show set: cocoa, mustard, orange and teal, with a marquee board and a dome buzzer.
@@ -44,7 +44,10 @@ The look is "Studio 74", a 1970s game-show set: cocoa, mustard, orange and teal,
 - `index.html` is the whole game in one file. `node build.js` rebuilds it from `src/`.
 - `src/content.js` holds every question, phrase and survey. The first option of each question is the right answer. Edit it to add your own.
 - `src/engine.js` is the rules, with no screen or network code. `node test/engine.test.js` plays 300 simulated shows, team and solo. `test/repro_vote.py` with `test/zombie-proxy.js` reproduces a phone whose connection has gone silent.
+- A Next tap only counts for the screen it was tapped on, and not in the first second after a screen opens. This stops a double tap from skipping the question that just came up. Answer buttons also ignore taps for half a second after they appear.
+- Every Crillion question has 30 to 70 right answers on its sheet, so a room of 12 does not pile onto the same few.
 - Crillion is judged by a built-in answer sheet for each question (`crillion` in `src/content.js`, with made-up "said by" numbers). An answer that is not on the sheet goes to the showrunner's phone as Correct or Wrong. `judgeUrl` in `src/content.js` is a hook for a private AI judge: when it holds an address, the TV sends off-sheet answers there first. It is empty by default, so no AI is called.
+- Typed answers (Crillion, Phrase Fever, Word Scramble) do not need perfect spelling. The engine accepts an answer that is a few letters off or that sounds the same ("Kolumbeea" for Colombia). `node test/fuzzy.test.js` checks misspellings that must pass and different words that must not.
 - `src/app.js` is the TV screen, the phone screen and the relay connection.
 - Phones and TV talk through free public MQTT relays (EMQX, Eclipse, HiveMQ, Mosquitto) over secure websockets. The page connects to all four and needs only one to work.
 

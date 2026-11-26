@@ -75,7 +75,7 @@
   function dotsHtml() { var s = '<span class="dots">'; net.conns.forEach(function (c) { s += '<i class="' + (c.up ? 'on' : '') + '"></i>'; }); return s + '</span>'; }
 
   /* ---------------- shared ---------------- */
-  var VERSION = 3;         // must match the engine's state version
+  var VERSION = 4;         // must match the engine's state version
   var S = null;            // latest public state
   var clockOff = 0;        // my clock minus the TV's clock
   function hnow() { var n = Date.now() - clockOff; if (S && S.paused && S.pat) { return S.pat; } return n; }
@@ -311,12 +311,11 @@
       return h + '</div><div class="status">' + who(S.turn) + ' is picking</div>' + timerHtml(20000);
     }
     function clueHtml() {
-      var q = S.q, h = '<div class="tag">' + esc(q.cat) + ' &middot; ' + q.val + '</div><div class="clue">' + esc(q.text) + '</div>';
-      if (S.phase === 'board_q') {
-        var who2 = S.steal ? esc(S.stealWho || 'Anyone else') + ' can steal. BUZZ!' : 'BUZZ NOW!';
-        h += '<div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="' + who2 + '" data-off="Get ready...">Get ready...</div>' + timerHtml(12000);
-      } else if (S.phase === 'board_ans') { h += '<div class="status">' + who(S.turn) + ' is answering</div>' + timerHtml(11000); }
-      else { h += '<div class="answer">' + esc(S.rv.text) + '</div><div class="status">' + (S.rv.who ? '<span class="t' + S.rv.team + 'c">' + esc(S.rv.who) + '</span> +' + S.rv.val : 'No points') + '</div>'; }
+      var q = S.q, rv = S.phase === 'board_reveal' ? S.rv : null, h = '<div class="tag">' + esc(q.cat) + ' &middot; ' + q.val + '</div><div class="h2">' + esc(q.text) + '</div><div class="opts">';
+      for (var i = 0; i < q.o.length; i++) { h += '<div class="opt o' + i + (rv ? (rv.a === i ? ' win' : ' dim') : '') + '"><span class="l">' + 'ABCD'.charAt(i) + '</span>' + esc(q.o[i]) + (rv ? '<span class="n">' + rv.counts[i] + '</span>' : '') + '</div>'; }
+      h += '</div>';
+      if (rv) { h += '<div class="status">' + (rv.nok ? gainsHtml(rv) + ' &nbsp; Fastest: ' + esc(rv.fast) + ' +' + rv.bonus : 'Nobody got it') + '</div>'; }
+      else { h += '<div class="status">Everyone answers on their phone. ' + waitHtml() + '</div>' + timerHtml(26000); }
       return h;
     }
     function zoomHtml() {
@@ -400,24 +399,24 @@
         return '<div class="tag">Word ' + S.ws.n + ' of ' + S.ws.of + ' &middot; Hint: ' + esc(S.ws.hint) + '</div><div class="phrase"><span class="word">' + lh + '</span></div><div class="status">' + (ph === 'scr_reveal' && !S.ws.done.length ? 'Nobody got it' : done) + '</div>' + (ph === 'scr_q' ? timerHtml(35000) : '');
       }
       if (ph === 'board_pick') { return boardHtml(); }
-      if (ph === 'board_q' || ph === 'board_ans' || ph === 'board_reveal') { return clueHtml(); }
+      if (ph === 'board_q' || ph === 'board_reveal') { return clueHtml(); }
       if (ph === 'zoom_q' || ph === 'zoom_ans' || ph === 'zoom_reveal') { return zoomHtml(); }
       if (ph === 'phrase_turn' || ph === 'phrase_solve' || ph === 'phrase_reveal') { return phraseHtml(); }
       if (ph === 'feud_face' || ph === 'feud_pick' || ph === 'feud_reveal') { return feudHtml(); }
-      if (ph === 'cr_q') { return '<div class="tag">Question ' + S.cr.n + ' of ' + S.cr.of + '</div><div class="h2">' + esc(S.cr.text) + '</div><div class="status">Type one answer. Obscure is good. ' + waitHtml() + '</div>' + timerHtml(46000); }
+      if (ph === 'cr_q') { return '<div class="tag">Question ' + S.cr.n + ' of ' + S.cr.of + '</div><div class="h2">' + esc(S.cr.text) + '</div><div class="status">Type one answer nobody else will think of. ' + waitHtml() + '</div>' + timerHtml(46000); }
       if (ph === 'cr_judge' || ph === 'cr_reveal') {
         var rows = S.cr.rows, two = rows.length > 6, ch = '<div class="h2">' + esc(S.cr.text) + '</div><div class="crl' + (two ? ' two' : '') + '">';
         for (var ci = 0; ci < rows.length && ci < 12; ci++) {
           var r = rows[ci], right;
           if (r.st === 'ask') { right = '<i class="ask">judge?</i>'; }
           else if (ph === 'cr_judge') { right = '<i class="ask">...</i>'; }
-          else if (r.st === 'ok') { right = '<small>' + r.said + ' of 100</small><i>' + r.pts + '</i>'; }
+          else if (r.st === 'ok') { right = '<small>' + (r.dup > 1 ? r.dup + ' said it, split' : r.said + ' of 100') + '</small><i>' + r.pts + '</i>'; }
           else { right = '<small>' + esc(r.why || 'not accepted') + '</small><i class="bad">0</i>'; }
-          ch += '<div class="crr' + (ph === 'cr_reveal' && r.st !== 'ok' ? ' out' : '') + '"><span class="t' + (S.solo ? 1 : r.t) + 'c">' + esc(r.n) + '</span><b>' + esc(ph === 'cr_reveal' && r.st === 'ok' ? r.name : r.text) + '</b>' + right + '</div>';
+          ch += '<div class="crr' + (ph === 'cr_reveal' && r.st !== 'ok' ? ' out' : '') + '"><span class="t' + (S.solo ? 1 : r.t) + 'c">' + esc(r.n) + '</span><b>' + esc(r.text) + (ph === 'cr_reveal' && r.st === 'ok' && r.name.toLowerCase() !== String(r.text).toLowerCase().replace(/^\s+|\s+$/g, '') ? ' <em>= ' + esc(r.name) + '</em>' : '') + '</b>' + right + '</div>';
         }
         ch += '</div>';
-        if (ph === 'cr_judge') { return ch + '<div class="status go">The judge is deciding</div>' + timerHtml(45000); }
-        return ch + '<div class="status">' + (S.rv.who ? 'Most obscure: ' + esc(S.rv.who) + '. ' : '') + (S.solo ? '' : '<span class="t0c">' + esc(tname(0)) + ' +' + S.rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + S.rv.gains[1] + '</span>') + '</div>';
+        if (ph === 'cr_judge') { return ch + '<div class="status go">The judge is deciding</div>' + timerHtml(75000); }
+        return ch + '<div class="status">' + (S.rv.allSame ? 'Everybody said the same thing. ' : (S.rv.who ? 'Most random: ' + esc(S.rv.who) + '. ' : '')) + (S.solo ? '' : '<span class="t0c">' + esc(tname(0)) + ' +' + S.rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + S.rv.gains[1] + '</span>') + '</div>';
       }
       if (ph === 'round_end') { return '<div class="tag">Scores after</div><div class="h2">' + esc(S.re.title) + '</div>' + (S.solo ? '' : barsHtml()) + ranksHtml(S.solo ? 12 : 6); }
       if (ph === 'final') {
@@ -628,7 +627,7 @@
       if (ph === 'num_reveal') { return '<h2>Answer: ' + esc(S.rv.a) + '</h2>' + (S.rv.who ? '<p>Closest: ' + esc(S.rv.who) + '</p>' : '') + watch(); }
       if (ph === 'scr_q') {
         if (S.acted && S.acted[pid]) { return '<h2>You got it!</h2>' + watch('Waiting for the others.'); }
-        return '<p class="small">Hint: ' + esc(S.ws.hint) + '</p><div class="pmask big2">' + esc(S.ws.mix) + '</div><input class="field" id="wordin" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="The word"><button class="pbtn go" data-a="word">Send</button>';
+        return '<p class="small">Hint: ' + esc(S.ws.hint) + '</p><div class="pmask big2">' + esc(S.ws.mix) + '</div><input class="field" id="wordin" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="The word"><button class="pbtn go" data-a="word">Send</button><p class="small">Close spelling counts.</p>';
       }
       if (ph === 'scr_reveal') { return '<h2>' + esc(S.rv.text) + '</h2>' + watch(); }
       if (ph === 'board_pick') {
@@ -641,16 +640,25 @@
         }
         return h + '</div>';
       }
-      if (ph === 'board_q' || ph === 'zoom_q') {
-        if (S.locked[S.solo ? pid : m.t]) { return '<h2>' + (S.solo ? 'You are locked out' : 'Your team is locked out') + '</h2>' + watch(S.solo ? 'The others get a try.' : 'The other team gets a try.'); }
-        return (ph === 'board_q' ? '<div class="q">' + esc(S.q.text) + '</div>' : '<h2>What place is this?</h2>') + buzzBtn('BUZZ') + '<p class="small">Buzz only if you know it. You answer on this phone.</p>';
+      if (ph === 'board_q') {
+        lk = locked('Locked in'); if (lk) { return lk; }
+        var bo = []; for (var bi = 0; bi < S.q.o.length; bi++) { bo.push({ i: bi, text: S.q.o[bi] }); }
+        return '<p class="small">' + esc(S.q.cat) + ' for ' + S.q.val + '. Everyone answers. Take your time.</p><div class="q">' + esc(S.q.text) + '</div>' + optBtns(bo, 'ans');
       }
-      if (ph === 'board_ans' || ph === 'zoom_ans') {
+      if (ph === 'zoom_q') {
+        if (S.locked[S.solo ? pid : m.t]) { return '<h2>' + (S.solo ? 'You are locked out' : 'Your team is locked out') + '</h2>' + watch(S.solo ? 'The others get a try.' : 'The other team gets a try.'); }
+        return '<h2>What place is this?</h2>' + buzzBtn('BUZZ') + '<p class="small">Buzz only if you know it. You answer on this phone.</p>';
+      }
+      if (ph === 'zoom_ans') {
         if (!mine) { return '<h2>' + esc(pname(S.turn)) + ' buzzed first</h2>' + watch(); }
         if (s) { return '<h2>' + esc(s.label) + '</h2>' + watch(); }
-        return '<h2>You buzzed! Pick fast.</h2>' + (S.q && ph === 'board_ans' ? '<div class="q">' + esc(S.q.text) + '</div>' : '') + optBtns(S.opts, 'ans');
+        return '<h2>You buzzed! Now pick.</h2><div class="gap"></div>' + optBtns(S.opts, 'ans');
       }
-      if (ph === 'board_reveal' || ph === 'zoom_reveal') { return '<h2>' + esc(S.rv.text) + '</h2>' + watch(); }
+      if (ph === 'board_reveal') {
+        var mineB = S.rv.fast === m.n;
+        return '<h2>' + esc(S.rv.text) + '</h2>' + (S.rv.nok ? '<p>' + S.rv.nok + (S.rv.nok === 1 ? ' player' : ' players') + ' got it.' + (mineB ? ' You were fastest!' : '') + '</p>' : '<p>Nobody got it.</p>') + watch();
+      }
+      if (ph === 'zoom_reveal') { return '<h2>' + esc(S.rv.text) + '</h2>' + watch(); }
       if (ph === 'phrase_turn') {
         var mask = '<div class="pmask">' + esc(S.ph.mask.join('')) + '</div>';
         if (mine && !s) {
@@ -665,7 +673,7 @@
       if (ph === 'phrase_solve') {
         if (S.solver !== pid) { return '<h2>' + esc(pname(S.solver)) + ' is solving</h2>' + watch(); }
         if (s) { return '<h2>Sent</h2>' + watch(); }
-        return '<h2>Type the whole phrase</h2><div class="pmask">' + esc(S.ph.mask.join('')) + '</div><input class="field" id="solve" autocomplete="off" autocapitalize="characters" placeholder="THE PHRASE" style="font-size:20px"><button class="pbtn go" data-a="solve">Solve</button>';
+        return '<h2>Type the whole phrase</h2><div class="pmask">' + esc(S.ph.mask.join('')) + '</div><input class="field" id="solve" autocomplete="off" autocapitalize="characters" placeholder="THE PHRASE" style="font-size:20px"><button class="pbtn go" data-a="solve">Solve</button><p class="small">Close spelling counts.</p>';
       }
       if (ph === 'phrase_reveal') { return '<h2>' + esc(S.rv.text) + '</h2>' + watch(); }
       if (ph === 'feud_face') { return '<div class="q">' + esc(S.f.q) + '</div>' + buzzBtn('BUZZ') + '<p class="small">Buzz to give the first answer.</p>'; }
@@ -679,18 +687,25 @@
       if (ph === 'feud_reveal' || ph === 'round_end') { return '<h2>Scores</h2>' + standing() + (S.solo ? '' : '<p>You have ' + m.pts + ' points of your own, number ' + myRank() + ' of ' + S.order.length + '.</p>') + watch(); }
       if (ph === 'cr_q') {
         lk = locked('Answer locked in'); if (lk) { return lk; }
-        return '<div class="q">' + esc(S.cr.text) + '</div><p class="small">One answer. The fewer people who would say it, the more you score.</p><input class="field" id="crin" maxlength="40" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Your answer"><button class="pbtn go" data-a="cr">Lock it in</button>';
+        return '<div class="q">' + esc(S.cr.text) + '</div><p class="small">One answer. The fewer people who would say it, the more you score. Close spelling counts.</p><input class="field" id="crin" maxlength="40" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Your answer"><button class="pbtn go" data-a="cr">Lock it in</button>';
       }
       if (ph === 'cr_judge') {
         if (S.boss !== pid) { return '<h2>The judge is deciding</h2>' + watch(); }
-        h = '<h2>You are the judge</h2><p>These answers are not on the answer sheet. Is each one correct?</p><div class="q">' + esc(S.cr.text) + '</div>';
-        S.cr.rows.forEach(function (r) { if (r.st === 'ask') { h += '<p><b>' + esc(r.text) + '</b> <span class="small">from ' + esc(r.n) + '</span></p><div class="half"><button class="pbtn dark" data-a="c_crj" data-v="' + esc(r.p) + ',1">Correct</button><button class="pbtn plain c" data-a="c_crj" data-v="' + esc(r.p) + ',0">Wrong</button></div>'; } });
+        h = '<h2>You are the judge</h2><p>These answers are not on the answer sheet. Is each one correct? Spelling does not matter.</p><div class="q">' + esc(S.cr.text) + '</div>';
+        var askSeen = {};
+        S.cr.rows.forEach(function (r) {
+          var key = String(r.text).toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (r.st !== 'ask' || askSeen[key]) { return; }
+          askSeen[key] = 1;
+          var names = []; S.cr.rows.forEach(function (o) { if (o.st === 'ask' && String(o.text).toLowerCase().replace(/[^a-z0-9]/g, '') === key) { names.push(o.n); } });
+          h += '<p><b>' + esc(r.text) + '</b> <span class="small">from ' + esc(names.join(', ')) + '</span></p><div class="half"><button class="pbtn dark" data-a="c_crj" data-v="' + esc(r.p) + ',1">Correct</button><button class="pbtn plain c" data-a="c_crj" data-v="' + esc(r.p) + ',0">Wrong</button></div>';
+        });
         return h;
       }
       if (ph === 'cr_reveal') {
         var mineR = null; S.cr.rows.forEach(function (r) { if (r.p === pid) { mineR = r; } });
         if (!mineR) { return '<h2>No answer from you</h2>' + watch(); }
-        return '<h2>' + (mineR.st === 'ok' ? mineR.pts + ' points' : '0 points') + '</h2><p>' + (mineR.st === 'ok' ? esc(mineR.name) + ': about ' + mineR.said + ' of 100 people would say it.' : esc(mineR.text) + ': ' + esc(mineR.why || 'not accepted.')) + '</p>' + watch();
+        return '<h2>' + (mineR.st === 'ok' ? mineR.pts + ' points' : '0 points') + '</h2><p>' + (mineR.st === 'ok' ? esc(mineR.name) + ': about ' + mineR.said + ' of 100 people would say it.' + (mineR.dup > 1 ? ' ' + mineR.dup + ' of you typed it, so the points are split.' : ' Nobody else in the room typed it.') : esc(mineR.text) + ': ' + esc(mineR.why || 'not accepted.')) + '</p>' + watch();
       }
       if (ph === 'final') {
         var endBtn = S.boss === pid ? '<button class="pbtn go" data-a="c_again">New show, same players</button>' : '';
@@ -717,7 +732,7 @@
       else if (ae && ae.tagName === 'INPUT' && ae.id === 'nm' && !ui.joined) { /* typing a name: wait */ }
       else if (ae && ae.tagName === 'INPUT' && (ae.id === 'tn0' || ae.id === 'tn1') && S && S.phase === 'lobby') { /* typing team names: wait */ }
       else if (ae && ae.tagName === 'INPUT' && (ae.id === 'wordin' || ae.id === 'numin' || ae.id === 'crin') && S && cache.pbodyK === S.k && !(S.acted && S.acted[pid]) && !sentHere()) { /* typing an answer: wait */ }
-      else { if (put('pbody', html)) { cache.pbodyK = S ? S.k : ''; } }
+      else { var oldK = cache.pbodyK; if (put('pbody', html)) { cache.pbodyK = S ? S.k : ''; if (cache.pbodyK !== oldK) { cache.pbodyAt = Date.now(); } } }
       var boss = S && m && S.boss === pid && S.phase !== 'lobby' && S.phase !== 'menu' && S.phase !== 'final';
       var passive = S && /^intro$|_reveal$|^round_end$/.test(S.phase);
       put('pboss', boss ? '<div class="bossbar">' + (passive ? '<button data-a="c_next">NEXT</button>' : '<button class="alt wide" data-a="c_next">Skip this one</button>') + '<button class="alt" data-a="c_pause">' + (S.paused ? 'Go' : 'Pause') + '</button><button class="alt" data-a="c_menu">Menu</button></div>' : '');
@@ -734,8 +749,11 @@
       put('psheet', sheet);
       tickUI();
     }
+    var GUARD = { ans: 1, vote: 1, mlv: 1, fpick: 1, tile: 1, c_next: 1, c_crj: 1 };
     function onAct(b) {
       var a = b.getAttribute('data-a'), v = b.getAttribute('data-v'), el;
+      // A choice that shows up under a finger that was already tapping does not count: half a second of grace.
+      if (GUARD[a] && Date.now() - (cache.pbodyAt || 0) < 550) { return; }
       if (a === 'team') { el = document.getElementById('nm'); if (el) { ui.name = el.value; } ui.team = +v; cache.pbody = null; put('pbody', bodyHtml()); return; }
       if (a === 'join') {
         el = document.getElementById('nm'); var name = (el ? el.value : ui.name).replace(/[<>]/g, '').replace(/^\s+|\s+$/g, '').substring(0, 14);
@@ -756,16 +774,16 @@
       else if (a === 'c_play') { ctl('play', { key: v }); try { window.scrollTo(0, 0); } catch (e) { } }
       else if (a === 'c_short') { ctl('short', { on: !S.short }); }
       else if (a === 'c_solo') { ctl('solo', { on: v === '1' }); }
-      else if (a === 'c_crj') { var cj = v.split(','); ctl('crj', { p: cj[0], ok: cj[1] === '1', said: 8, by: 'the showrunner' }); }
+      else if (a === 'c_crj') { var cj = v.split(','); ctl('crj', { p: cj[0], ok: cj[1] === '1', said: 5, by: 'the showrunner' }); }
       else if (a === 'cr') { el = document.getElementById('crin'); if (!el || !el.value.replace(/\s/g, '')) { if (el) { el.focus(); } return; } var ctxt = el.value; el.blur(); doAct({ t: 'cr', text: ctxt }, ctxt); }
       else if (a === 'c_tomenu') { ctl('menu'); ui.menu = false; }
       else if (a === 'tile') { var cl = v.split(','); doAct({ t: 'pick', c: +cl[0], l: +cl[1] }, 'Picked'); }
       else if (a === 'buzz') { if (S.phase !== 'phrase_turn' && hnow() < (S.openAt || 0) - 150) { return; } if (sentHere()) { return; } try { if (navigator.vibrate) { navigator.vibrate(60); } } catch (e) { } doAct({ t: 'buzz' }, 'Buzzed'); }
-      else if (a === 'ans') { doAct({ t: 'ans', a: +v }, 'Answer sent'); }
+      else if (a === 'ans') { doAct({ t: 'ans', a: +v }, S.phase === 'board_q' && S.q && S.q.o ? S.q.o[+v] : 'Answer sent'); }
       else if (a === 'letter') { doAct({ t: 'letter', l: v }, v); }
       else if (a === 'solve') { el = document.getElementById('solve'); if (!el || !el.value) { return; } var txt = el.value; el.blur(); doAct({ t: 'solve', text: txt }, 'Sent'); }
       else if (a === 'fpick') { doAct({ t: 'fpick', o: +v }, 'Answer sent'); }
-      else if (a === 'c_next') { ctl('next'); }
+      else if (a === 'c_next') { ctl('next', { k: S.k }); }
       else if (a === 'c_pause') { ctl('pause'); }
       else if (a === 'c_menu') { ui.menu = !ui.menu; }
       else if (a === 'c_end') { ctl('end'); ui.menu = false; }
