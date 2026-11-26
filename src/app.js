@@ -81,6 +81,7 @@
   function hnow() { var n = Date.now() - clockOff; if (S && S.paused && S.pat) { return S.pat; } return n; }
   function tname(t) { return S.teams[t] ? S.teams[t].name : ''; }
   function gameTitle(key) { for (var i = 0; i < C.rounds.length; i++) { if (C.rounds[i].key === key) { return C.rounds[i].title; } } return key; }
+  function rankList() { var out = []; S.order.forEach(function (id) { var p = S.players[id]; if (p) { out.push({ p: id, n: p.n, pts: p.pts, t: p.t }); } }); out.sort(function (a, b) { return b.pts - a.pts; }); return out; }
   function pname(pid) { return pid && S.players[pid] ? S.players[pid].n : 'Someone'; }
   function pteam(pid) { return pid && S.players[pid] ? S.players[pid].t : 0; }
   function timerHtml(len) { return S.deadline ? '<div class="timer"><i data-dl="' + S.deadline + '" data-len="' + len + '"></i></div>' : ''; }
@@ -185,6 +186,30 @@
       if (S.order.length && now - lastIn > 15000 && now - lastKick > 15000) { lastKick = now; netKick(); }
       tickUI();
     }, 100);
+    /* Optional live judge for Crillion. Off unless content.js sets judgeUrl. The TV asks it about answers that
+       are not on the sheet; if it does not answer in time, the showrunner decides on their phone as usual. */
+    var judgedK = '';
+    function askJudge() {
+      if (!C.judgeUrl || S.phase !== 'cr_judge' || judgedK === S.k) { return; }
+      judgedK = S.k;
+      var k = S.k, asks = [];
+      S.cr.rows.forEach(function (r) { if (r.st === 'ask') { asks.push({ p: r.p, text: r.text }); } });
+      try {
+        var x = new XMLHttpRequest();
+        x.open('POST', C.judgeUrl, true); x.timeout = 20000;
+        x.setRequestHeader('Content-Type', 'application/json');
+        x.onload = function () {
+          if (S.k !== k || x.status !== 200) { return; }
+          try {
+            var res = JSON.parse(x.responseText).results || [];
+            res.forEach(function (j) { if (j && S.k === k) { E.cmd('crj', { p: j.p, ok: !!j.ok, said: j.said, why: j.why, by: 'the AI judge' }, Date.now()); } });
+            dirty = true;
+          } catch (e) { }
+        };
+        x.send(JSON.stringify({ room: ROOM, question: S.cr.text, answers: asks }));
+      } catch (e) { }
+    }
+    setInterval(askJudge, 500);
     function wake() { if (!document.hidden && Date.now() - lastIn > 6000 && S.order.length) { lastKick = Date.now(); netKick(); } }
     document.addEventListener('visibilitychange', wake);
     window.addEventListener('online', function () { lastKick = Date.now(); netKick(); });
@@ -235,14 +260,28 @@
     function topHtml() {
       var sub = S.phase === 'lobby' ? 'Join on your phone' : (S.phase === 'menu' ? 'Pick a game' : (S.phase === 'final' ? 'Final score' : 'Game ' + S.round + ' &middot; ' + esc(S.rt || '')));
       function tm(t) { var ctrl = (S.turn && pteam(S.turn) === t) ? ' ctrl' : ''; return '<div class="tm t' + t + ctrl + '"><div class="tn">' + esc(tname(t)) + '</div><div class="ts">' + S.teams[t].score + '</div></div>'; }
+      if (S.solo) { // no teams: the top bar shows who is first and second
+        var rk = rankList();
+        var sp = function (i, t) { var r = rk[i]; return '<div class="tm t' + t + (r && S.turn === r.p ? ' ctrl' : '') + '"><div class="tn">' + (r ? (i + 1) + '. ' + esc(r.n) : (i ? '2nd place' : '1st place')) + '</div><div class="ts">' + (r ? r.pts : 0) + '</div></div>'; };
+        return sp(0, 0) + '<div class="mid"><div class="logo">Rain Check!</div><div class="sub">' + sub + '</div></div>' + sp(1, 1);
+      }
       return tm(0) + '<div class="mid"><div class="logo">Rain Check!</div><div class="sub">' + sub + '</div></div>' + tm(1);
     }
-    function who(pid) { return '<span class="t' + pteam(pid) + 'c">' + esc(pname(pid)) + '</span>'; }
+    function who(pid) { return '<span class="t' + (S.solo ? 0 : pteam(pid)) + 'c">' + esc(pname(pid)) + '</span>'; }
+    function gainsHtml(rv) { // what a round just paid out: per team, or a head count in solo play
+      if (S.solo) { return (rv.nok || 0) + (rv.nok === 1 ? ' player scores' : ' players score'); }
+      return '<span class="t0c">' + esc(tname(0)) + ' +' + rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + rv.gains[1] + '</span>';
+    }
+    function ranksHtml(max) { // every player's own points, best first
+      var rk = rankList(), h = '<div class="ranks">';
+      for (var i = 0; i < rk.length && i < max; i++) { h += '<div class="rk"><b>' + (i + 1) + '</b><span class="t' + (S.solo ? (i === 0 ? 0 : 1) : rk[i].t) + 'c">' + esc(rk[i].n) + '</span><i>' + rk[i].pts + '</i></div>'; }
+      return h + '</div>';
+    }
     function lobbyHtml() {
-      var cols = ['', ''];
-      S.order.forEach(function (pid) { var p = S.players[pid]; if (!p) { return; } cols[p.t] += '<div class="chip' + ((Date.now() - p.seen) > 30000 ? ' off' : '') + '">' + esc(p.n) + (pid === S.boss ? ' <small>RUNS THE SHOW</small>' : '') + '</div>'; });
+      var cols = ['', ''], nth = 0;
+      S.order.forEach(function (pid) { var p = S.players[pid]; if (!p) { return; } cols[S.solo ? (nth++ % 2) : p.t] += '<div class="chip' + ((Date.now() - p.seen) > 30000 ? ' off' : '') + '">' + esc(p.n) + (pid === S.boss ? ' <small>RUNS THE SHOW</small>' : '') + '</div>'; });
       return '<div class="lobby"><div class="qr">' + qrSvg + '<div class="url">' + esc(SHORT) + '</div><div class="code">' + ROOM + '</div></div>' +
-        '<div class="teams"><div class="col t0"><h3>' + esc(tname(0)) + '</h3>' + cols[0] + '</div><div class="col t1"><h3>' + esc(tname(1)) + '</h3>' + cols[1] + '</div></div></div><div class="lineup">' + (S.boss ? '<b>' + esc(pname(S.boss)) + '</b> runs the show. Tap a game on that phone to start.' : 'The first player to join runs the show.') + '</div>';
+        '<div class="teams"><div class="col t0"><h3>' + (S.solo ? 'Players' : esc(tname(0))) + '</h3>' + cols[0] + '</div><div class="col t1"><h3>' + (S.solo ? 'No teams' : esc(tname(1))) + '</h3>' + cols[1] + '</div></div></div><div class="lineup">' + (S.boss ? '<b>' + esc(pname(S.boss)) + '</b> runs the show. Tap a game on that phone to start.' : 'The first player to join runs the show.') + '</div>';
     }
     function gmenuHtml() {
       var h = '<div class="h2">Pick a game</div><div class="gmenu">';
@@ -258,7 +297,7 @@
       var q = S.q, rv = S.phase === 'vote_reveal' ? S.rv : null, h = '<div class="tag">Question ' + q.n + ' of ' + q.of + '</div><div class="h2">' + esc(q.text) + '</div><div class="opts">';
       for (var i = 0; i < q.o.length; i++) { h += '<div class="opt o' + i + (rv ? (rv.a === i ? ' win' : ' dim') : '') + '"><span class="l">' + 'ABCD'.charAt(i) + '</span>' + esc(q.o[i]) + (rv ? '<span class="n">' + rv.counts[i] + '</span>' : '') + '</div>'; }
       h += '</div>';
-      if (rv) { h += '<div class="status"><span class="t0c">' + esc(tname(0)) + ' +' + rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + rv.gains[1] + '</span>' + (rv.fast ? ' &nbsp; Fastest: ' + esc(rv.fast) : '') + '</div>'; }
+      if (rv) { h += '<div class="status">' + gainsHtml(rv) + (rv.fast ? ' &nbsp; Fastest: ' + esc(rv.fast) : '') + '</div>'; }
       else { h += '<div class="status">' + waitHtml() + '</div>' + timerHtml(q.kind === 'tf' ? 16000 : 26000); }
       return h;
     }
@@ -274,7 +313,7 @@
     function clueHtml() {
       var q = S.q, h = '<div class="tag">' + esc(q.cat) + ' &middot; ' + q.val + '</div><div class="clue">' + esc(q.text) + '</div>';
       if (S.phase === 'board_q') {
-        var who2 = S.steal ? esc(tname(S.locked[0] ? 1 : 0)) + ' can steal. BUZZ!' : 'BUZZ NOW!';
+        var who2 = S.steal ? esc(S.stealWho || 'Anyone else') + ' can steal. BUZZ!' : 'BUZZ NOW!';
         h += '<div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="' + who2 + '" data-off="Get ready...">Get ready...</div>' + timerHtml(12000);
       } else if (S.phase === 'board_ans') { h += '<div class="status">' + who(S.turn) + ' is answering</div>' + timerHtml(11000); }
       else { h += '<div class="answer">' + esc(S.rv.text) + '</div><div class="status">' + (S.rv.who ? '<span class="t' + S.rv.team + 'c">' + esc(S.rv.who) + '</span> +' + S.rv.val : 'No points') + '</div>'; }
@@ -328,7 +367,7 @@
       h += '</div><div class="tag yel">Pot</div><div class="pot">' + f.pot + '</div>';
       if (S.phase === 'feud_face') { h += '<div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="BUZZ NOW!" data-off="Get ready...">Get ready...</div>'; }
       else if (S.phase === 'feud_pick') { h += '<div class="status">' + (f.mode === 'steal' ? 'STEAL: ' : '') + who(S.turn) + ' is choosing</div>'; }
-      else { h += '<div class="status">' + (S.rv.team >= 0 ? '<span class="t' + S.rv.team + 'c">' + esc(tname(S.rv.team)) + '</span> +' + S.rv.pot : 'No points') + '</div>'; }
+      else { h += '<div class="status">' + (S.rv.solo ? 'Board finished' : (S.rv.team >= 0 ? '<span class="t' + S.rv.team + 'c">' + esc(tname(S.rv.team)) + '</span> +' + S.rv.pot : 'No points')) + '</div>'; }
       return h + '</div></div>' + (S.phase === 'feud_pick' ? timerHtml(f.mode === 'steal' ? 25000 : (f.mode === 'face' ? 14000 : 18000)) : '');
     }
     function barsHtml() {
@@ -346,7 +385,7 @@
       if (ph === 'ml_reveal') {
         var tl = ''; S.rv.top.forEach(function (x) { tl += (tl ? ', ' : '') + esc(x.n) + ' ' + x.c; });
         return '<div class="h2">' + esc(S.ml.text) + '</div><div class="answer">' + (S.rv.win.length ? esc(S.rv.win.join(' and ')) : 'No votes') + '</div><div class="tally">' + tl + '</div>' +
-          '<div class="status"><span class="t0c">' + esc(tname(0)) + ' +' + S.rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + S.rv.gains[1] + '</span></div>';
+          '<div class="status">' + gainsHtml(S.rv) + '</div>';
       }
       if (ph === 'num_q') { return '<div class="tag">Question ' + S.nm.n + ' of ' + S.nm.of + '</div><div class="h2">' + esc(S.nm.text) + '</div><div class="status">Type your best guess. ' + waitHtml() + '</div>' + timerHtml(30000); }
       if (ph === 'num_reveal') {
@@ -365,13 +404,29 @@
       if (ph === 'zoom_q' || ph === 'zoom_ans' || ph === 'zoom_reveal') { return zoomHtml(); }
       if (ph === 'phrase_turn' || ph === 'phrase_solve' || ph === 'phrase_reveal') { return phraseHtml(); }
       if (ph === 'feud_face' || ph === 'feud_pick' || ph === 'feud_reveal') { return feudHtml(); }
-      if (ph === 'round_end') { return '<div class="tag">Scores after</div><div class="h1">' + esc(S.re.title) + '</div>' + barsHtml(); }
+      if (ph === 'cr_q') { return '<div class="tag">Question ' + S.cr.n + ' of ' + S.cr.of + '</div><div class="h2">' + esc(S.cr.text) + '</div><div class="status">Type one answer. Obscure is good. ' + waitHtml() + '</div>' + timerHtml(46000); }
+      if (ph === 'cr_judge' || ph === 'cr_reveal') {
+        var rows = S.cr.rows, two = rows.length > 6, ch = '<div class="h2">' + esc(S.cr.text) + '</div><div class="crl' + (two ? ' two' : '') + '">';
+        for (var ci = 0; ci < rows.length && ci < 12; ci++) {
+          var r = rows[ci], right;
+          if (r.st === 'ask') { right = '<i class="ask">judge?</i>'; }
+          else if (ph === 'cr_judge') { right = '<i class="ask">...</i>'; }
+          else if (r.st === 'ok') { right = '<small>' + r.said + ' of 100</small><i>' + r.pts + '</i>'; }
+          else { right = '<small>' + esc(r.why || 'not accepted') + '</small><i class="bad">0</i>'; }
+          ch += '<div class="crr' + (ph === 'cr_reveal' && r.st !== 'ok' ? ' out' : '') + '"><span class="t' + (S.solo ? 1 : r.t) + 'c">' + esc(r.n) + '</span><b>' + esc(ph === 'cr_reveal' && r.st === 'ok' ? r.name : r.text) + '</b>' + right + '</div>';
+        }
+        ch += '</div>';
+        if (ph === 'cr_judge') { return ch + '<div class="status go">The judge is deciding</div>' + timerHtml(45000); }
+        return ch + '<div class="status">' + (S.rv.who ? 'Most obscure: ' + esc(S.rv.who) + '. ' : '') + (S.solo ? '' : '<span class="t0c">' + esc(tname(0)) + ' +' + S.rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + S.rv.gains[1] + '</span>') + '</div>';
+      }
+      if (ph === 'round_end') { return '<div class="tag">Scores after</div><div class="h2">' + esc(S.re.title) + '</div>' + (S.solo ? '' : barsHtml()) + ranksHtml(S.solo ? 12 : 6); }
       if (ph === 'final') {
         var conf = '', cols = ['#C4520F', '#17696B', '#F2B705', '#FBF0D9'];
         for (var i = 0; i < 28; i++) { conf += '<div class="conf" style="left:' + ((i * 37) % 100) + '%;background:' + cols[i % 4] + ';-webkit-animation-delay:' + ((i * 0.23) % 3.4) + 's;animation-delay:' + ((i * 0.23) % 3.4) + 's"></div>'; }
         var f = S.fin;
-        return conf + '<div class="h1">' + (f.winner < 0 ? 'It is a tie!' : '<span class="t' + f.winner + 'c">' + esc(tname(f.winner)) + '</span> win!') + '</div>' + barsHtml() +
-          '<div class="status">' + (f.mvp ? 'Top scorer: ' + esc(f.mvp) + ' (' + f.mvpPts + ')' : '') + (f.king ? ' &nbsp; Fastest buzzer: ' + esc(f.king) + ' (' + f.kingN + ')' : '') + '</div>';
+        if (f.solo) { return conf + '<div class="h1">' + (f.tie ? 'A tie at the top!' : '<span class="t0c">' + esc(f.champ) + '</span> wins!') + '</div>' + ranksHtml(12) + '<div class="status">' + (f.king ? 'Fastest buzzer: ' + esc(f.king) + ' (' + f.kingN + ')' : '') + '</div>'; }
+        return conf + '<div class="h1">' + (f.winner < 0 ? 'It is a tie!' : '<span class="t' + f.winner + 'c">' + esc(tname(f.winner)) + '</span> win!') + '</div>' + barsHtml() + ranksHtml(6) +
+          '<div class="status">' + (f.king ? 'Fastest buzzer: ' + esc(f.king) + ' (' + f.kingN + ')' : '') + '</div>';
       }
       return '';
     }
@@ -489,6 +544,11 @@
 
     function joinHtml() {
       var n0 = S ? tname(0) : 'Thunder', n1 = S ? tname(1) : 'Lightning';
+      if (S && S.solo) { // no teams in this show: a name is all we need
+        return '<h2>Join Rain Check!</h2><p>Room ' + ROOM + '</p>' +
+          '<input class="field" id="nm" maxlength="14" placeholder="Your first name" value="' + esc(ui.name) + '" autocomplete="off">' +
+          '<button class="pbtn go" data-a="join">I am in</button>';
+      }
       return '<h2>Join Rain Check!</h2><p>Room ' + ROOM + '</p>' +
         '<input class="field" id="nm" maxlength="14" placeholder="Your first name" value="' + esc(ui.name) + '" autocomplete="off">' +
         '<p>Pick your team</p>' +
@@ -496,10 +556,19 @@
         '<button class="pbtn c o1' + (ui.team === 1 ? ' sel' : '') + '" data-a="team" data-v="1">' + esc(n1) + '</button>' +
         '<button class="pbtn go" data-a="join"' + (ui.team < 0 ? ' disabled' : '') + '>I am in</button>';
     }
+    function modeHtml() {
+      return '<h3>How do you want to play?</h3><div class="half"><button class="pbtn plain c' + (S.solo ? '' : ' sel') + '" data-a="c_solo" data-v="0">Two teams</button><button class="pbtn plain c' + (S.solo ? ' sel' : '') + '" data-a="c_solo" data-v="1">Every player for themselves</button></div>';
+    }
+    function myRank() { var rk = rankList(); for (var i = 0; i < rk.length; i++) { if (rk[i].p === pid) { return i + 1; } } return 0; }
+    function standing() { // one line of score, for whichever way the show is being played
+      if (S.solo) { var rk = rankList(); return '<p>' + (rk.length ? esc(rk[0].n) + ' leads with ' + rk[0].pts + '. ' : '') + 'You are number ' + myRank() + ' with ' + (me() ? me().pts : 0) + '.</p>'; }
+      return '<p>' + esc(tname(0)) + ' ' + S.teams[0].score + ' &middot; ' + esc(tname(1)) + ' ' + S.teams[1].score + '</p>';
+    }
     function pickerHtml() {
       var h = '<div class="half">';
       for (var i = 0; i < C.order.length; i++) { var k = C.order[i], n = S.played[k] || 0; h += '<button class="pbtn game c' + (n ? ' done' : '') + '" data-a="c_play" data-v="' + k + '">' + esc(gameTitle(k)) + (n ? '<small>played</small>' : '') + '</button>'; }
       h += '</div><button class="pbtn plain c' + (S.short ? ' sel' : '') + '" data-a="c_short">Short rounds: ' + (S.short ? 'on' : 'off') + '</button>';
+      h += modeHtml();
       if (S.round > 0) { h += '<button class="pbtn plain c" data-a="c_end">Finish the show and see the winner</button>'; }
       return h;
     }
@@ -513,12 +582,13 @@
       var m = me(), lists = ['', ''];
       S.order.forEach(function (id) { var p = S.players[id]; if (p) { lists[p.t] += esc(p.n) + (id === S.boss ? ' (showrunner)' : '') + '<br>'; } });
       var h = '<h2>You are in, ' + esc(m.n) + '!</h2>' + (S.boss === pid ? '' : '<p>' + esc(pname(S.boss)) + ' will start the show.</p>') +
+        (S.solo ? '<div class="plist"><b class="t0c">Players</b>' + lists[0] + lists[1] + '</div>' :
         '<div class="plist"><b class="t0c">' + esc(tname(0)) + '</b>' + (lists[0] || '<span class="small">nobody yet</span>') + '<b class="t1c">' + esc(tname(1)) + '</b>' + (lists[1] || '<span class="small">nobody yet</span>') + '</div>' +
-        '<button class="pbtn plain c" data-a="switch">Switch my team</button>';
+        '<button class="pbtn plain c" data-a="switch">Switch my team</button>');
       if (S.boss === pid) {
         h += '<h2>You run the show</h2><p>When everyone is in, tap a game to start it. After each game you come back here and pick the next one.</p>' + pickerHtml() +
-          '<h3>Team names</h3><input class="field" id="tn0" maxlength="14" value="' + esc(tname(0)) + '" style="font-size:19px;margin:4px 0"><input class="field" id="tn1" maxlength="14" value="' + esc(tname(1)) + '" style="font-size:19px;margin:4px 0">' +
-          '<div class="half" style="margin-top:8px"><button class="pbtn plain c" data-a="c_names">Save names</button><button class="pbtn plain c" data-a="c_preset">Kids vs Adults</button></div>';
+          (S.solo ? '' : '<h3>Team names</h3><input class="field" id="tn0" maxlength="14" value="' + esc(tname(0)) + '" style="font-size:19px;margin:4px 0"><input class="field" id="tn1" maxlength="14" value="' + esc(tname(1)) + '" style="font-size:19px;margin:4px 0">' +
+          '<div class="half" style="margin-top:8px"><button class="pbtn plain c" data-a="c_names">Save names</button><button class="pbtn plain c" data-a="c_preset">Kids vs Adults</button></div>');
       }
       return h;
     }
@@ -530,7 +600,7 @@
       var ph = S.phase, mine = S.turn === pid, s = sentHere(), h = '';
       if (ph === 'lobby') { return lobbyHtml(); }
       if (ph === 'menu') {
-        var sc = '<p>' + esc(tname(0)) + ' ' + S.teams[0].score + ' &middot; ' + esc(tname(1)) + ' ' + S.teams[1].score + '</p>';
+        var sc = standing();
         if (S.boss === pid) { return '<h2>Pick the next game</h2>' + sc + pickerHtml(); }
         return '<h2>' + esc(pname(S.boss)) + ' is picking the next game</h2>' + sc + watch();
       }
@@ -572,7 +642,7 @@
         return h + '</div>';
       }
       if (ph === 'board_q' || ph === 'zoom_q') {
-        if (S.locked[m.t]) { return '<h2>Your team is locked out</h2>' + watch('The other team gets a try.'); }
+        if (S.locked[S.solo ? pid : m.t]) { return '<h2>' + (S.solo ? 'You are locked out' : 'Your team is locked out') + '</h2>' + watch(S.solo ? 'The others get a try.' : 'The other team gets a try.'); }
         return (ph === 'board_q' ? '<div class="q">' + esc(S.q.text) + '</div>' : '<h2>What place is this?</h2>') + buzzBtn('BUZZ') + '<p class="small">Buzz only if you know it. You answer on this phone.</p>';
       }
       if (ph === 'board_ans' || ph === 'zoom_ans') {
@@ -588,7 +658,7 @@
           for (var k = 0; k < 26; k++) { var L = LETTERS.charAt(k); h += '<button data-a="letter" data-v="' + L + '"' + (S.used.indexOf(L) >= 0 ? ' disabled' : '') + '>' + L + '</button>'; }
           h += '</div>';
         } else { h = '<h2>' + (mine ? 'Sent' : esc(pname(S.turn)) + ' picks a letter') + '</h2>' + mask; }
-        if (S.slock[m.t]) { h += '<p class="small">Your team guessed wrong. Wait for the next letter to solve.</p>'; }
+        if (S.slock[S.solo ? pid : m.t]) { h += '<p class="small">' + (S.solo ? 'You' : 'Your team') + ' guessed wrong. Wait for the next letter to solve.</p>'; }
         else if (!s) { h += '<button class="pbtn go" data-a="buzz">I CAN SOLVE IT</button>'; }
         return h;
       }
@@ -606,8 +676,27 @@
         for (var o = 0; o < S.f.o.length; o++) { if (S.f.tried.indexOf(o) < 0) { h += '<button class="pbtn plain c" data-a="fpick" data-v="' + o + '">' + esc(S.f.o[o]) + '</button>'; } }
         return h;
       }
-      if (ph === 'feud_reveal' || ph === 'round_end') { return '<h2>' + esc(tname(0)) + ' ' + S.teams[0].score + ' &middot; ' + esc(tname(1)) + ' ' + S.teams[1].score + '</h2>' + watch(); }
-      if (ph === 'final') { return '<h2>' + (S.fin.winner < 0 ? 'A tie!' : esc(tname(S.fin.winner)) + ' win!') + '</h2><p>You scored ' + m.pts + ' points for your team.</p>' + (S.boss === pid ? '<button class="pbtn go" data-a="c_again">New show, same players</button>' : ''); }
+      if (ph === 'feud_reveal' || ph === 'round_end') { return '<h2>Scores</h2>' + standing() + (S.solo ? '' : '<p>You have ' + m.pts + ' points of your own, number ' + myRank() + ' of ' + S.order.length + '.</p>') + watch(); }
+      if (ph === 'cr_q') {
+        lk = locked('Answer locked in'); if (lk) { return lk; }
+        return '<div class="q">' + esc(S.cr.text) + '</div><p class="small">One answer. The fewer people who would say it, the more you score.</p><input class="field" id="crin" maxlength="40" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Your answer"><button class="pbtn go" data-a="cr">Lock it in</button>';
+      }
+      if (ph === 'cr_judge') {
+        if (S.boss !== pid) { return '<h2>The judge is deciding</h2>' + watch(); }
+        h = '<h2>You are the judge</h2><p>These answers are not on the answer sheet. Is each one correct?</p><div class="q">' + esc(S.cr.text) + '</div>';
+        S.cr.rows.forEach(function (r) { if (r.st === 'ask') { h += '<p><b>' + esc(r.text) + '</b> <span class="small">from ' + esc(r.n) + '</span></p><div class="half"><button class="pbtn dark" data-a="c_crj" data-v="' + esc(r.p) + ',1">Correct</button><button class="pbtn plain c" data-a="c_crj" data-v="' + esc(r.p) + ',0">Wrong</button></div>'; } });
+        return h;
+      }
+      if (ph === 'cr_reveal') {
+        var mineR = null; S.cr.rows.forEach(function (r) { if (r.p === pid) { mineR = r; } });
+        if (!mineR) { return '<h2>No answer from you</h2>' + watch(); }
+        return '<h2>' + (mineR.st === 'ok' ? mineR.pts + ' points' : '0 points') + '</h2><p>' + (mineR.st === 'ok' ? esc(mineR.name) + ': about ' + mineR.said + ' of 100 people would say it.' : esc(mineR.text) + ': ' + esc(mineR.why || 'not accepted.')) + '</p>' + watch();
+      }
+      if (ph === 'final') {
+        var endBtn = S.boss === pid ? '<button class="pbtn go" data-a="c_again">New show, same players</button>' : '';
+        if (S.fin.solo) { return '<h2>' + (S.fin.tie ? 'A tie at the top!' : esc(S.fin.champ) + ' wins!') + '</h2><p>You finished number ' + myRank() + ' with ' + m.pts + ' points.</p>' + endBtn; }
+        return '<h2>' + (S.fin.winner < 0 ? 'A tie!' : esc(tname(S.fin.winner)) + ' win!') + '</h2><p>You scored ' + m.pts + ' points. That makes you number ' + myRank() + ' of ' + S.order.length + '.</p>' + endBtn;
+      }
       return watch();
     }
     function render() {
@@ -619,7 +708,7 @@
       else if (stale) { ban = '<div class="banner">Reconnecting to the TV...</div>'; }
       else if (ui.rtt > 2500) { ban = '<div class="banner">This phone has a slow connection. Move closer to the Wi-Fi.</div>'; }
       put('pbanner', ban);
-      put('ptop', m ? '<div class="ptop t' + m.t + '"><span class="pill">' + esc(m.n) + ', ' + esc(tname(m.t)) + '</span><span class="sc">' + S.teams[0].score + ' to ' + S.teams[1].score + '</span></div>' : '<div class="ptop tn"><span class="sc">Rain Check!</span><span>Room ' + ROOM + '</span></div>');
+      put('ptop', m ? '<div class="ptop t' + (S.solo ? 1 : m.t) + '"><span class="pill">' + esc(m.n) + (S.solo ? '' : ', ' + esc(tname(m.t))) + '</span><span class="sc">' + (S.solo ? m.pts + ' pts' : S.teams[0].score + ' to ' + S.teams[1].score) + '</span></div>' : '<div class="ptop tn"><span class="sc">Rain Check!</span><span>Room ' + ROOM + '</span></div>');
       // do not redraw a screen with a text box while someone is typing in it
       var wr = S && S.phase === 'scr_q' && S.wr ? (S.wr[pid] || 0) : 0;
       put('pnote', S && ui.failK && ui.failK === S.k ? '<div class="pnote bad">That did not reach the TV. Tap again.</div>' : (wr && !(S.acted && S.acted[pid]) ? '<div class="pnote bad">Not it. Try again. (' + wr + (wr === 1 ? ' try' : ' tries') + ')</div>' : ''));
@@ -627,7 +716,7 @@
       if (ae && ae.tagName === 'INPUT' && cache.pbody && cache.pbody.replace(/value="[^"]*"/g, '') === html.replace(/value="[^"]*"/g, '')) { /* keep */ }
       else if (ae && ae.tagName === 'INPUT' && ae.id === 'nm' && !ui.joined) { /* typing a name: wait */ }
       else if (ae && ae.tagName === 'INPUT' && (ae.id === 'tn0' || ae.id === 'tn1') && S && S.phase === 'lobby') { /* typing team names: wait */ }
-      else if (ae && ae.tagName === 'INPUT' && (ae.id === 'wordin' || ae.id === 'numin') && S && cache.pbodyK === S.k && !(S.acted && S.acted[pid]) && !sentHere()) { /* typing an answer: wait */ }
+      else if (ae && ae.tagName === 'INPUT' && (ae.id === 'wordin' || ae.id === 'numin' || ae.id === 'crin') && S && cache.pbodyK === S.k && !(S.acted && S.acted[pid]) && !sentHere()) { /* typing an answer: wait */ }
       else { if (put('pbody', html)) { cache.pbodyK = S ? S.k : ''; } }
       var boss = S && m && S.boss === pid && S.phase !== 'lobby' && S.phase !== 'menu' && S.phase !== 'final';
       var passive = S && /^intro$|_reveal$|^round_end$/.test(S.phase);
@@ -637,8 +726,8 @@
         var conn = '', tnow = S.now || Date.now();
         S.order.forEach(function (id) { var p = S.players[id]; if (p) { conn += esc(p.n) + ': ' + (tnow - p.seen > 10000 ? 'no signal' : (p.rtt ? (p.rtt < 700 ? 'good' : (p.rtt < 2000 ? 'slow' : 'very slow')) + ' (' + p.rtt + ' ms)' : 'checking')) + (p.late ? ', ' + p.late + ' late taps' : '') + '<br>'; } });
         sheet = '<div class="sheet"><button class="pbtn go" data-a="c_tomenu">Back to the game menu</button>' +
-          '<div class="r2"><button class="pbtn plain c" data-a="c_adj" data-v="0,50">' + esc(tname(0)) + ' +50</button><button class="pbtn plain c" data-a="c_adj" data-v="0,-50">' + esc(tname(0)) + ' -50</button></div>' +
-          '<div class="r2"><button class="pbtn plain c" data-a="c_adj" data-v="1,50">' + esc(tname(1)) + ' +50</button><button class="pbtn plain c" data-a="c_adj" data-v="1,-50">' + esc(tname(1)) + ' -50</button></div>' +
+          (S.solo ? '' : '<div class="r2"><button class="pbtn plain c" data-a="c_adj" data-v="0,50">' + esc(tname(0)) + ' +50</button><button class="pbtn plain c" data-a="c_adj" data-v="0,-50">' + esc(tname(0)) + ' -50</button></div>' +
+          '<div class="r2"><button class="pbtn plain c" data-a="c_adj" data-v="1,50">' + esc(tname(1)) + ' +50</button><button class="pbtn plain c" data-a="c_adj" data-v="1,-50">' + esc(tname(1)) + ' -50</button></div>') +
           '<h3>Phone connections</h3><div class="plist">' + conn + '</div>' +
           '<button class="pbtn plain c" data-a="c_end">Finish the show and see the winner</button><button class="pbtn dark" data-a="c_menu">Close</button></div>';
       }
@@ -651,7 +740,7 @@
       if (a === 'join') {
         el = document.getElementById('nm'); var name = (el ? el.value : ui.name).replace(/[<>]/g, '').replace(/^\s+|\s+$/g, '').substring(0, 14);
         if (!name) { if (el) { el.focus(); } return; }
-        if (ui.team < 0) { return; }
+        if (ui.team < 0) { if (S && S.solo) { ui.team = 0; } else { return; } }
         ui.name = name; ui.joined = true; lsSet('rc_name', name); lsSet('rc_room', ROOM); lsSet('rc_team', String(ui.team));
         wakeLock();
         if (el) { el.blur(); }
@@ -666,6 +755,9 @@
       else if (a === 'word') { el = document.getElementById('wordin'); if (!el || !el.value) { if (el) { el.focus(); } return; } send({ t: 'word', k: S.k, n: 1, text: el.value }); el.value = ''; return; }
       else if (a === 'c_play') { ctl('play', { key: v }); try { window.scrollTo(0, 0); } catch (e) { } }
       else if (a === 'c_short') { ctl('short', { on: !S.short }); }
+      else if (a === 'c_solo') { ctl('solo', { on: v === '1' }); }
+      else if (a === 'c_crj') { var cj = v.split(','); ctl('crj', { p: cj[0], ok: cj[1] === '1', said: 8, by: 'the showrunner' }); }
+      else if (a === 'cr') { el = document.getElementById('crin'); if (!el || !el.value.replace(/\s/g, '')) { if (el) { el.focus(); } return; } var ctxt = el.value; el.blur(); doAct({ t: 'cr', text: ctxt }, ctxt); }
       else if (a === 'c_tomenu') { ctl('menu'); ui.menu = false; }
       else if (a === 'tile') { var cl = v.split(','); doAct({ t: 'pick', c: +cl[0], l: +cl[1] }, 'Picked'); }
       else if (a === 'buzz') { if (S.phase !== 'phrase_turn' && hnow() < (S.openAt || 0) - 150) { return; } if (sentHere()) { return; } try { if (navigator.vibrate) { navigator.vibrate(60); } } catch (e) { } doAct({ t: 'buzz' }, 'Buzzed'); }

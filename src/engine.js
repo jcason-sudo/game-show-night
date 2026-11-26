@@ -44,12 +44,28 @@ RC.createEngine = function (C, opts) {
     S.rot[t] = (S.rot[t] + 1) % list.length;
     return list[S.rot[t]];
   }
-  function nextPlayerAny(t, now) { var p = nextPlayer(t, now); if (p) { return p; } return nextPlayer(1 - t, now); }
+  function nextAll(now) { // every player for themselves: rotate through everyone who is here
+    var list = [];
+    for (var i = 0; i < S.order.length; i++) { if (present(S.order[i], now)) { list.push(S.order[i]); } }
+    if (!list.length) { return null; }
+    S.rotA = ((S.rotA || 0) + 1) % list.length;
+    return list[S.rotA];
+  }
+  function nextPlayerAny(t, now) { if (S.solo) { return nextAll(now); } var p = nextPlayer(t, now); if (p) { return p; } return nextPlayer(1 - t, now); }
+  /* A "side" is whoever shares a lockout: a team in team play, one player in solo play. */
+  function side(pid) { var p = pl(pid); if (!p) { return 'x'; } return S.solo ? pid : p.t; }
+  function othersLeft(lockMap, now) { for (var i = 0; i < S.order.length; i++) { if (present(S.order[i], now) && !lockMap[side(S.order[i])]) { return true; } } return false; }
   function award(team, pts, pid) {
-    if (team !== 0 && team !== 1) { return; }
-    S.teams[team].score += pts;
     if (pid && pl(pid)) { pl(pid).pts += pts; }
+    if (S.solo || (team !== 0 && team !== 1)) { return; }
+    S.teams[team].score += pts;
     S.gain = { id: (S.gain ? S.gain.id : 0) + 1, team: team, pts: pts };
+  }
+  function ranking() { // players, best first
+    var out = [];
+    for (var i = 0; i < S.order.length; i++) { var p = pl(S.order[i]); if (p) { out.push({ p: S.order[i], n: p.n, pts: p.pts, t: p.t }); } }
+    out.sort(function (x, y) { return y.pts - x.pts; });
+    return out;
   }
   function nm(pid) { return pid && pl(pid) ? pl(pid).n : 'Nobody'; }
   function trailing() { if (S.teams[0].score === S.teams[1].score) { return rnd() < 0.5 ? 0 : 1; } return S.teams[0].score < S.teams[1].score ? 0 : 1; }
@@ -63,7 +79,7 @@ RC.createEngine = function (C, opts) {
       players: {}, order: [], boss: null, round: 0, rot: [-1, -1],
       say: { id: 0, text: '' }, fx: { id: 0, name: '' }, gain: null,
       acted: {}, deadline: 0, turn: null,
-      short: false, played: {}, cur: ''
+      short: false, solo: false, played: {}, cur: ''
     };
     P = {};
     return S;
@@ -99,13 +115,15 @@ RC.createEngine = function (C, opts) {
     else if (key === 'zoom') { P.zs = shuffle(C.zoom).slice(0, cnt(5, 3)); S.zi = -1; nextZoom(now); }
     else if (key === 'phrase') { P.ps = shuffle(C.phrases).slice(0, cnt(4, 2)); S.pi = -1; S.pteam = trailing(); nextPhrase(now); }
     else if (key === 'feud') { setupFeud(); S.fi = -1; nextFeud(now); }
+    else if (key === 'crillion') { P.cq = shuffle(C.crillion).slice(0, cnt(5, 3)); S.ci = -1; nextCr(now); }
   }
   function roundEnd(now) {
     S.turn = null;
     S.re = { n: S.round, title: S.rt };
     setPhase('round_end', now, 10000);
-    var a = S.teams[0], b = S.teams[1];
-    say(a.score === b.score ? 'It is all tied up at ' + a.score + '!' : (a.score > b.score ? a.name : b.name) + ' lead, ' + Math.max(a.score, b.score) + ' to ' + Math.min(a.score, b.score) + '.');
+    var a = S.teams[0], b = S.teams[1], rk = ranking();
+    if (S.solo) { say(rk.length ? rk[0].n + ' is in front with ' + rk[0].pts + ' points.' : 'No points yet.'); }
+    else { say(a.score === b.score ? 'It is all tied up at ' + a.score + '!' : (a.score > b.score ? a.name : b.name) + ' lead, ' + Math.max(a.score, b.score) + ' to ' + Math.min(a.score, b.score) + '.'); }
     fx('fanfare');
   }
   function finale(now) {
@@ -116,10 +134,13 @@ RC.createEngine = function (C, opts) {
       if (!best || p.pts > best.pts) { best = p; }
       if (!king || p.bz > king.bz) { king = p; }
     }
-    S.fin = { winner: a === b ? -1 : (a > b ? 0 : 1), mvp: best ? best.n : '', mvpPts: best ? best.pts : 0, king: king && king.bz ? king.n : '', kingN: king ? king.bz : 0 };
+    var rk = ranking();
+    S.fin = { solo: !!S.solo, winner: a === b ? -1 : (a > b ? 0 : 1), mvp: best ? best.n : '', mvpPts: best ? best.pts : 0, king: king && king.bz ? king.n : '', kingN: king ? king.bz : 0,
+      champ: rk.length ? rk[0].n : '', tie: rk.length > 1 && rk[0].pts === rk[1].pts };
     S.turn = null;
     setPhase('final', now, 0);
-    say((S.fin.winner < 0 ? 'It is a tie! ' : S.teams[S.fin.winner].name + ' win! ') + line('final'));
+    if (S.solo) { say((S.fin.tie ? 'It is a tie at the top! ' : S.fin.champ + ' wins! ') + line('final')); }
+    else { say((S.fin.winner < 0 ? 'It is a tie! ' : S.teams[S.fin.winner].name + ' win! ') + line('final')); }
     fx('win');
   }
 
@@ -146,14 +167,14 @@ RC.createEngine = function (C, opts) {
       if (v || present(pid, now)) { den[p.t]++; }
       if (v) {
         counts[v.a]++;
-        if (v.a === P.cur.a) { ok[p.t]++; p.pts += 10; if (!fast || v.at < P.votes[fast].at) { fast = pid; } }
+        if (v.a === P.cur.a) { ok[p.t]++; p.pts += 100; if (!fast || v.at < P.votes[fast].at) { fast = pid; } }
       }
     }
     var gains = [0, 0];
     for (var t = 0; t < 2; t++) { gains[t] = den[t] ? Math.round(100 * ok[t] / den[t]) : 0; }
-    if (fast) { gains[pl(fast).t] += 20; }
-    S.teams[0].score += gains[0]; S.teams[1].score += gains[1];
-    S.rv = { a: P.cur.a, counts: counts, gains: gains, fast: fast ? pl(fast).n : '', fact: P.cur.f };
+    if (fast) { gains[pl(fast).t] += 20; pl(fast).pts += 20; }
+    if (!S.solo) { S.teams[0].score += gains[0]; S.teams[1].score += gains[1]; }
+    S.rv = { a: P.cur.a, counts: counts, gains: gains, nok: ok[0] + ok[1], fast: fast ? pl(fast).n : '', fact: P.cur.f };
     setPhase('vote_reveal', now, 9000);
     say('The answer is ' + P.cur.o[P.cur.a] + '. ' + (P.cur.f || ''));
     fx(ok[0] + ok[1] > 0 ? 'right' : 'wrong');
@@ -181,10 +202,10 @@ RC.createEngine = function (C, opts) {
     for (i = 0; i < S.order.length; i++) {
       pid = S.order[i]; var p = pl(pid); if (!p) { continue; }
       if (P.mv[pid] || present(pid, now)) { den[p.t]++; }
-      if (P.mv[pid] && tally[P.mv[pid]] === max) { ok[p.t]++; p.pts += 10; }
+      if (P.mv[pid] && tally[P.mv[pid]] === max) { ok[p.t]++; p.pts += 100; }
     }
-    for (var t = 0; t < 2; t++) { gains[t] = den[t] ? Math.round(100 * ok[t] / den[t]) : 0; S.teams[t].score += gains[t]; }
-    S.rv = { win: win, top: top.slice(0, 4), gains: gains };
+    for (var t = 0; t < 2; t++) { gains[t] = den[t] ? Math.round(100 * ok[t] / den[t]) : 0; if (!S.solo) { S.teams[t].score += gains[t]; } }
+    S.rv = { win: win, top: top.slice(0, 4), gains: gains, nok: ok[0] + ok[1] };
     setPhase('ml_reveal', now, 9000);
     say(win.length ? 'The family says: ' + win.join(' and ') + '!' : 'Nobody voted.');
     fx(win.length ? 'right' : 'wrong');
@@ -233,6 +254,61 @@ RC.createEngine = function (C, opts) {
     if (!S.rv.who) { fx('wrong'); }
   }
 
+  /* ---------- crillion: the most obscure correct answer wins ---------- */
+  function crNorm(t) { return String(t || '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9 ]/g, '').replace(/\b(the|a|an|lake|mount|mt|saint|st)\b/g, ' ').replace(/\s+/g, ' ').replace(/^ | $/g, ''); }
+  function crMatch(item, text) { // returns {st:'ok',name,said} | {st:'no',why} | {st:'ask'}
+    var a = crNorm(text), i, j, best = null, bd = 99;
+    if (!a) { return { st: 'no', why: 'No answer.' }; }
+    for (i = 0; i < item.no.length; i++) { if (crNorm(item.no[i][0]) === a) { return { st: 'no', why: item.no[i][1] }; } }
+    for (i = 0; i < item.a.length; i++) {
+      var names = [item.a[i][0]].concat(item.a[i][2] || []);
+      for (j = 0; j < names.length; j++) {
+        var b = crNorm(names[j]), d = lev(a, b), tol = b.length >= 9 ? 2 : (b.length >= 5 ? 1 : 0);
+        if (d <= tol && d < bd) { bd = d; best = item.a[i]; }
+      }
+    }
+    if (best) { return { st: 'ok', name: best[0], said: best[1] }; }
+    return { st: 'ask' };
+  }
+  function nextCr(now) {
+    S.ci++;
+    if (S.ci >= P.cq.length) { return roundEnd(now); }
+    var it = P.cq[S.ci];
+    S.cr = { n: S.ci + 1, of: P.cq.length, text: it.q, rows: [] };
+    P.crA = {}; S.nv = 0; S.rv = null;
+    setPhase('cr_q', now, readMs(it.q) + 40000);
+    say(it.q + ' Type one answer. The more obscure, the better.');
+  }
+  function crJudge(now) {
+    var it = P.cq[S.ci], rows = [], ask = 0;
+    for (var i = 0; i < S.order.length; i++) {
+      var pid = S.order[i], a = P.crA[pid];
+      if (!a || !pl(pid)) { continue; }
+      var r = crMatch(it, a.text);
+      if (r.st === 'ask') { ask++; }
+      rows.push({ p: pid, n: nm(pid), t: pl(pid).t, text: a.text, st: r.st, name: r.name || '', said: r.said || 0, why: r.why || '', by: '' });
+    }
+    S.cr.rows = rows;
+    if (ask) { setPhase('cr_judge', now, 45000); say('Some answers are not on my sheet. The judge decides.'); }
+    else { crReveal(now); }
+  }
+  function crReveal(now) {
+    var rows = S.cr.rows, sum = [0, 0], den = [0, 0], i, best = null;
+    for (i = 0; i < rows.length; i++) {
+      var r = rows[i]; r.pts = r.st === 'ok' ? 100 - r.said : 0;
+      if (pl(r.p)) { pl(r.p).pts += r.pts; sum[pl(r.p).t] += r.pts; }
+      if (r.st === 'ok' && (!best || r.pts > best.pts)) { best = r; }
+    }
+    for (i = 0; i < S.order.length; i++) { var p = pl(S.order[i]); if (p && (P.crA[S.order[i]] || present(S.order[i], now))) { den[p.t]++; } }
+    var gains = [0, 0];
+    for (var t = 0; t < 2; t++) { gains[t] = den[t] ? Math.round(sum[t] / den[t]) : 0; if (!S.solo) { S.teams[t].score += gains[t]; } }
+    rows.sort(function (x, y) { return y.pts - x.pts; });
+    S.rv = { gains: gains, who: best ? best.n : '', text: best ? best.name : '', pts: best ? best.pts : 0 };
+    setPhase('cr_reveal', now, 14000);
+    say(best ? 'Most obscure: ' + best.n + ' with ' + best.name + ', for ' + best.pts + ' points.' : 'Nobody scored on that one.');
+    fx(best ? 'right' : 'wrong');
+  }
+
   /* ---------- round 2: the board ---------- */
   function setupBoard(now) {
     var cats = shuffle(range(C.board.length)).slice(0, cnt(5, 3));
@@ -242,13 +318,13 @@ RC.createEngine = function (C, opts) {
       for (var l = 0; l < cat.levels.length; l++) { row.push(pickOne(cat.levels[l])); }
       P.board.push(row); S.board.cats.push(cat.name); S.board.used.push([0, 0, 0, 0]);
     }
-    S.ctrl = activeTeam(trailing(), now);
+    S.ctrl = activeTeam(trailing(), now); S.ctrlP = null;
   }
   function tilesLeft() { var n = 0; for (var c = 0; c < S.board.used.length; c++) { for (var l = 0; l < 4; l++) { if (!S.board.used[c][l]) { n++; } } } return n; }
   function boardPick(now) {
     if (!tilesLeft()) { return roundEnd(now); }
     S.ctrl = activeTeam(S.ctrl, now);
-    S.turn = nextPlayerAny(S.ctrl, now);
+    S.turn = (S.solo && S.ctrlP && present(S.ctrlP, now)) ? S.ctrlP : nextPlayerAny(S.ctrl, now);
     S.q = null; S.rv = null;
     setPhase('board_pick', now, 20000);
     say(nm(S.turn) + ', pick a category.');
@@ -257,29 +333,29 @@ RC.createEngine = function (C, opts) {
     S.board.used[c][l] = 1;
     P.cur = mc(P.board[c][l]);
     S.q = { cat: S.board.cats[c], val: (l + 1) * 100, text: P.cur.q };
-    S.locked = [false, false]; S.wrong = []; S.steal = false; S.turn = null;
+    S.locked = {}; S.wrong = []; S.steal = false; S.turn = null;
     var r = readMs(P.cur.q);
     S.openAt = now + r;
     setPhase('board_q', now, r + 12000);
     say(S.q.cat + ' for ' + S.q.val + '. ' + P.cur.q);
   }
   function optsLeft() { var out = []; for (var i = 0; i < P.cur.o.length; i++) { if (S.wrong.indexOf(i) < 0) { out.push({ i: i, text: P.cur.o[i] }); } } return out; }
-  function boardWrong(team, a, now) {
-    S.locked[team] = true;
+  function stealName(pid) { var p = pl(pid); return S.solo || !p ? 'Anyone else' : S.teams[1 - p.t].name; }
+  function boardWrong(pid, a, now) {
+    S.locked[side(pid)] = true;
     if (a >= 0) { S.wrong.push(a); }
     fx('wrong');
-    var other = 1 - team;
-    if (teamPresent(other, now) && !S.locked[other]) {
-      S.steal = true; S.turn = null; S.openAt = now + 1500;
+    if (othersLeft(S.locked, now) && optsLeft().length > 1) {
+      S.steal = true; S.stealWho = stealName(pid); S.turn = null; S.openAt = now + 1500;
       setPhase('board_q', now, 1500 + 9000);
-      say(line('wrong') + ' ' + S.teams[other].name + ', ' + line('steal'));
+      say(line('wrong') + ' ' + S.stealWho + ', ' + line('steal'));
     } else { boardReveal(null, now); }
   }
   function boardReveal(pid, now) {
     S.rv = { text: P.cur.o[P.cur.a], who: pid ? nm(pid) : '', team: pid ? pl(pid).t : -1, val: S.q.val };
     S.turn = null;
     setPhase('board_reveal', now, 6500);
-    if (pid) { say(line('right') + ' ' + S.q.val + ' points for ' + S.teams[pl(pid).t].name + '.'); fx('right'); }
+    if (pid) { say(line('right') + ' ' + S.q.val + ' points for ' + (S.solo ? nm(pid) : S.teams[pl(pid).t].name) + '.'); fx('right'); }
     else { say('The answer was ' + S.rv.text + '.'); }
   }
 
@@ -293,7 +369,7 @@ RC.createEngine = function (C, opts) {
     P.cur = mc({ q: '', o: z.o });
     S.z = { n: S.zi + 1, of: P.zs.length, img: z.id, mode: S.zi % 2 ? 'tiles' : 'zoom', fx: z.fx, fy: z.fy, seed: Math.floor(rnd() * 99999) };
     S.zt0 = now + 3000; S.zdur = 30000; S.zfrozen = null; S.openAt = S.zt0;
-    S.locked = [false, false]; S.wrong = []; S.rv = null; S.turn = null;
+    S.locked = {}; S.wrong = []; S.rv = null; S.turn = null;
     setPhase('zoom_q', now, 3000 + 30000 + 6000);
     say('Picture ' + S.z.n + '. What famous place is this? Buzz when you know.');
   }
@@ -304,15 +380,14 @@ RC.createEngine = function (C, opts) {
     if (pid) { say(line('right') + ' ' + S.rv.text + '. ' + S.zval + ' points.'); fx('right'); }
     else { say('The answer: ' + S.rv.text + '.'); }
   }
-  function zoomWrong(team, a, now) {
-    S.locked[team] = true;
+  function zoomWrong(pid, a, now) {
+    S.locked[side(pid)] = true;
     if (a >= 0) { S.wrong.push(a); }
     fx('wrong');
-    var other = 1 - team;
-    if (teamPresent(other, now) && !S.locked[other] && P.zleft > 1500) {
+    if (othersLeft(S.locked, now) && P.zleft > 1500 && optsLeft().length > 1) {
       S.zt0 = now - S.zfrozen * S.zdur; S.zfrozen = null; S.turn = null; S.openAt = now;
       setPhase('zoom_q', now, P.zleft);
-      say(line('wrong') + ' ' + S.teams[other].name + ', keep looking.');
+      say(line('wrong') + ' ' + stealName(pid) + ', keep looking.');
     } else { zoomReveal(null, now); }
   }
 
@@ -325,14 +400,14 @@ RC.createEngine = function (C, opts) {
     var mask = [];
     for (var i = 0; i < P.ph.length; i++) { var ch = P.ph.charAt(i); mask.push(/[A-Z]/.test(ch) ? '_' : ch); }
     S.ph = { n: S.pi + 1, of: P.ps.length, hint: ph.h, mask: mask };
-    S.used = ''; S.miss = 0; S.slock = [false, false]; S.last = null; S.rv = null; S.idle = 0;
+    S.used = ''; S.miss = 0; S.slock = {}; S.last = null; S.rv = null; S.idle = 0; P.keep = null;
     if (S.pi > 0) { S.pteam = 1 - S.pteam; }
     say('Puzzle ' + S.ph.n + '. The hint is: ' + ph.h + '.');
     phraseTurn(now);
   }
   function phraseTurn(now) {
     S.pteam = activeTeam(S.pteam, now);
-    S.turn = nextPlayerAny(S.pteam, now); S.solver = null;
+    S.turn = (S.solo && P.keep && present(P.keep, now)) ? P.keep : nextPlayerAny(S.pteam, now); S.solver = null; P.keep = null;
     setPhase('phrase_turn', now, 22000);
   }
   function phraseReveal(pid, how, now) {
@@ -392,18 +467,20 @@ RC.createEngine = function (C, opts) {
   function slotsOpen() { var n = 0; for (var i = 0; i < 5; i++) { if (!S.f.slots[i]) { n++; } } return n; }
   function feudPlayTurn(now) {
     S.f.mode = 'play';
-    S.f.play = activeTeam(S.f.play, now);
+    S.f.play = activeTeam(S.f.play < 0 ? 0 : S.f.play, now);
     S.turn = nextPlayerAny(S.f.play, now);
     setPhase('feud_pick', now, 18000);
   }
   function feudReveal(team, now) {
     for (var r = 0; r < 5; r++) { if (!S.f.slots[r]) { revealSlot(r, false); } }
-    S.rv = { team: team, pot: S.f.pot };
+    if (S.solo) { team = -1; }
+    S.rv = { team: team, pot: S.f.pot, solo: !!S.solo };
     if (team >= 0) { award(team, S.f.pot, null); }
     S.turn = null;
     setPhase('feud_reveal', now, 10000);
-    say(team >= 0 ? S.teams[team].name + ' take ' + S.f.pot + ' points!' : 'No points this time.');
-    fx(team >= 0 ? 'right' : 'wrong');
+    if (S.solo) { say(S.f.strikes >= 3 ? 'Three strikes. Here is the rest of the board.' : 'The board is cleared!'); }
+    else { say(team >= 0 ? S.teams[team].name + ' take ' + S.f.pot + ' points!' : 'No points this time.'); }
+    fx(team >= 0 || S.solo ? 'right' : 'wrong');
   }
   function feudPick(o, now) { // o = option index, or -1 on timeout
     var f = S.f, team = S.turn && pl(S.turn) ? pl(S.turn).t : f.play;
@@ -412,6 +489,11 @@ RC.createEngine = function (C, opts) {
     var hit = rank >= 0 && !f.slots[rank];
     if (hit) { revealSlot(rank, true); f.pot += slotPts(rank); if (S.turn && pl(S.turn)) { pl(S.turn).pts += slotPts(rank); } fx('ding'); say(line('survey') + ' ' + f.slots[rank].text + '!'); }
     else { f.x++; fx('strike'); say(line('strike')); }
+    if (S.solo) { // no teams: every hit scores for the player who found it, three strikes ends the board
+      if (!hit && f.mode !== 'face') { f.strikes++; }
+      if (!slotsOpen() || f.strikes >= 3) { return feudReveal(-1, now); }
+      return feudPlayTurn(now);
+    }
     if (f.mode === 'face') {
       f.play = hit ? team : activeTeam(1 - team, now);
       if (!slotsOpen()) { return feudReveal(f.play, now); }
@@ -451,17 +533,20 @@ RC.createEngine = function (C, opts) {
     else if (ph === 'scr_reveal') { nextWord(now); }
     else if (ph === 'board_pick') { for (var l = 0; l < 4; l++) { for (var c = 0; c < S.board.used.length; c++) { if (!S.board.used[c][l]) { return openTile(c, l, now); } } } }
     else if (ph === 'board_q') { say(line('nobuzz')); boardReveal(null, now); }
-    else if (ph === 'board_ans') { boardWrong(pl(S.turn) ? pl(S.turn).t : 0, -1, now); }
+    else if (ph === 'board_ans') { boardWrong(S.turn, -1, now); }
     else if (ph === 'board_reveal') { boardPick(now); }
     else if (ph === 'zoom_q') { zoomReveal(null, now); }
-    else if (ph === 'zoom_ans') { zoomWrong(pl(S.turn) ? pl(S.turn).t : 0, -1, now); }
+    else if (ph === 'zoom_ans') { zoomWrong(S.turn, -1, now); }
     else if (ph === 'zoom_reveal') { nextZoom(now); }
     else if (ph === 'phrase_turn') { S.idle++; if (S.idle >= 6) { phraseReveal(null, 'bust', now); } else { S.pteam = 1 - S.pteam; phraseTurn(now); } }
-    else if (ph === 'phrase_solve') { var st = pl(S.solver) ? pl(S.solver).t : 0; S.slock[st] = true; fx('wrong'); if (!phraseMiss(now)) { phraseTurn(now); } }
+    else if (ph === 'phrase_solve') { S.slock[side(S.solver)] = true; fx('wrong'); if (!phraseMiss(now)) { phraseTurn(now); } }
     else if (ph === 'phrase_reveal') { nextPhrase(now); }
     else if (ph === 'feud_face') { S.f.play = activeTeam(trailing(), now); feudPlayTurn(now); }
     else if (ph === 'feud_pick') { feudPick(-1, now); }
     else if (ph === 'feud_reveal') { nextFeud(now); }
+    else if (ph === 'cr_q') { crJudge(now); }
+    else if (ph === 'cr_judge') { for (var ri = 0; ri < S.cr.rows.length; ri++) { if (S.cr.rows[ri].st === 'ask') { S.cr.rows[ri].st = 'no'; S.cr.rows[ri].why = 'Not accepted.'; } } crReveal(now); }
+    else if (ph === 'cr_reveal') { nextCr(now); }
     else if (ph === 'round_end') { goMenu(now); }
   }
   /* ---------- showrunner commands ---------- */
@@ -480,13 +565,28 @@ RC.createEngine = function (C, opts) {
     }
     else if (c === 'skip') { if (S.phase !== 'lobby' && S.phase !== 'final' && S.phase !== 'round_end') { roundEnd(now); } }
     else if (c === 'adj') { var t = a.team === 1 ? 1 : 0; var d2 = Math.max(-500, Math.min(500, parseInt(a.d, 10) || 0)); S.teams[t].score += d2; }
+    else if (c === 'solo') { if (S.phase === 'lobby' || S.phase === 'menu') { S.solo = !!a.on; } }
+    else if (c === 'crj') { // the judge rules on one answer that was not on the sheet
+      if (S.phase === 'cr_judge') {
+        var left = 0;
+        for (var ji = 0; ji < S.cr.rows.length; ji++) {
+          var jr = S.cr.rows[ji];
+          if (jr.st === 'ask' && jr.p === a.p) {
+            if (a.ok) { jr.st = 'ok'; jr.said = Math.max(1, Math.min(99, parseInt(a.said, 10) || 8)); jr.name = jr.text; jr.by = clean(a.by, 20) || 'the judge'; }
+            else { jr.st = 'no'; jr.why = clean(a.why, 90) || 'Not accepted.'; }
+          }
+          if (jr.st === 'ask') { left++; }
+        }
+        if (!left) { crReveal(now); }
+      }
+    }
     else if (c === 'short') { if (S.phase === 'lobby' || S.phase === 'menu') { S.short = !!a.on; } }
     else if (c === 'boss') { if (pl(a.pid)) { S.boss = a.pid; } }
     else if (c === 'teams') { if (a.names && a.names.length === 2) { S.teams[0].name = clean(a.names[0], 14) || 'Thunder'; S.teams[1].name = clean(a.names[1], 14) || 'Lightning'; } }
     else if (c === 'kick') { if (pl(a.pid)) { delete S.players[a.pid]; S.order.splice(S.order.indexOf(a.pid), 1); if (S.boss === a.pid) { S.boss = S.order[0] || null; } } }
     else if (c === 'end') { if (S.round > 0) { if (S.paused) { cmd('pause', null, now); } finale(now); } }
     else if (c === 'again') {
-      S.teams[0].score = 0; S.teams[1].score = 0; S.round = 0; S.rot = [-1, -1]; S.played = {}; S.cur = ''; P = {};
+      S.teams[0].score = 0; S.teams[1].score = 0; S.round = 0; S.rot = [-1, -1]; S.rotA = 0; S.played = {}; S.cur = ''; P = {};
       for (var i = 0; i < S.order.length; i++) { var p = pl(S.order[i]); p.pts = 0; p.bz = 0; }
       S.q = null; S.rv = null; S.fin = null; S.turn = null;
       setPhase('lobby', now, 0);
@@ -549,6 +649,12 @@ RC.createEngine = function (C, opts) {
         if (allActed(now)) { endWord(now); }
       } else { S.wr[pid] = (S.wr[pid] || 0) + 1; }
     }
+    else if (m.t === 'cr' && ph === 'cr_q') {
+      var ct = clean(m.text, 40);
+      if (P.crA[pid] || !ct) { return; }
+      P.crA[pid] = { text: ct, at: now }; S.acted[pid] = true; S.nv++;
+      if (allActed(now)) { crJudge(now); }
+    }
     else if (m.t === 'pick' && ph === 'board_pick') {
       var c = parseInt(m.c, 10), l = parseInt(m.l, 10);
       if ((pid !== S.turn && pid !== S.boss) || !(c >= 0 && c < S.board.used.length) || !(l >= 0 && l < 4) || S.board.used[c][l]) { return; }
@@ -557,13 +663,13 @@ RC.createEngine = function (C, opts) {
     else if (m.t === 'buzz') {
       if (ph === 'board_q' || ph === 'zoom_q' || ph === 'feud_face') {
         if (now < S.openAt - 200) { return; }
-        if (ph !== 'feud_face' && S.locked[team2]) { return; }
+        if (ph !== 'feud_face' && S.locked[side(pid)]) { return; }
         S.turn = pid; p.bz++; fx('buzz');
         if (ph === 'board_q') { S.opts = optsLeft(); setPhase('board_ans', now, 11000); say(p.n + '!'); }
         else if (ph === 'zoom_q') { S.zfrozen = zfrac(now); S.zval = zvalue(S.zfrozen); P.zleft = S.deadline - now; S.opts = optsLeft(); setPhase('zoom_ans', now, 10000); say(p.n + '!'); }
         else { S.f.mode = 'face'; setPhase('feud_pick', now, 14000); say(p.n + '! What do you say?'); }
       } else if (ph === 'phrase_turn') {
-        if (S.slock[team2]) { return; }
+        if (S.slock[side(pid)]) { return; }
         S.solver = pid; p.bz++; fx('buzz');
         setPhase('phrase_solve', now, 25000);
         say(p.n + ' wants to solve!');
@@ -574,20 +680,21 @@ RC.createEngine = function (C, opts) {
       a = parseInt(m.a, 10);
       if (!(a >= 0 && a < P.cur.o.length) || S.wrong.indexOf(a) >= 0) { return; }
       if (a === P.cur.a) {
-        if (ph === 'board_ans') { award(team2, S.q.val, pid); S.ctrl = team2; boardReveal(pid, now); }
+        if (ph === 'board_ans') { award(team2, S.q.val, pid); S.ctrl = team2; S.ctrlP = pid; boardReveal(pid, now); }
         else { award(team2, S.zval, pid); zoomReveal(pid, now); }
-      } else if (ph === 'board_ans') { boardWrong(team2, a, now); } else { zoomWrong(team2, a, now); }
+      } else if (ph === 'board_ans') { boardWrong(pid, a, now); } else { zoomWrong(pid, a, now); }
     }
     else if (m.t === 'letter' && ph === 'phrase_turn') {
       var L = String(m.l || '').toUpperCase().charAt(0);
       if (pid !== S.turn || !/[A-Z]/.test(L) || S.used.indexOf(L) >= 0) { return; }
-      S.used += L; S.slock = [false, false]; S.idle = 0;
+      S.used += L; S.slock = {}; S.idle = 0;
       var n = 0;
       for (var x = 0; x < P.ph.length; x++) { if (P.ph.charAt(x) === L) { S.ph.mask[x] = L; n++; } }
       S.last = { l: L, n: n, who: p.n };
       if (n > 0) {
         award(team2, 20 * n, pid); fx('ding');
         if (!hiddenCount()) { award(team2, 100, pid); return phraseReveal(pid, 'letters', now); }
+        P.keep = pid; // solo play: a hit keeps your turn
         phraseTurn(now);
       } else {
         fx('wrong');
@@ -598,7 +705,7 @@ RC.createEngine = function (C, opts) {
       if (pid !== S.solver) { return; }
       if (phraseMatch(m.text)) { award(team2, 150 + 25 * hiddenCount(), pid); phraseReveal(pid, 'solve', now); }
       else {
-        S.slock[team2] = true; S.last = { bad: clean(m.text, 40), who: p.n }; fx('wrong'); say(line('wrong'));
+        S.slock[side(pid)] = true; S.last = { bad: clean(m.text, 40), who: p.n }; fx('wrong'); say(line('wrong'));
         if (!phraseMiss(now)) { phraseTurn(now); }
       }
     }

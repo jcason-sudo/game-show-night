@@ -215,7 +215,7 @@ button { touch-action: manipulation; cursor: pointer; }
 
 /* game menu */
 .gmenu { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-justify-content: center; justify-content: center; width: 86vw; }
-.gtile { width: 15.6vw; height: 13.5vh; margin: 0.8vh 0.6vw; border: 0; border-radius: 2.6vh; background: #17696B; color: #FFFFFF; font-size: 3.1vh; font-weight: 900; line-height: 1.1; padding: 0 0.6vw; box-shadow: 0 0.9vh 0 #3A2214; }
+.gtile { width: 13.2vw; height: 12vh; margin: 0.7vh 0.45vw; border: 0; border-radius: 2.6vh; background: #17696B; color: #FFFFFF; font-size: 2.7vh; font-weight: 900; line-height: 1.1; padding: 0 0.5vw; box-shadow: 0 0.9vh 0 #3A2214; }
 .gtile:focus { outline: 0.7vh solid #F2B705; }
 .gtile.done { background: #FFFFFF; color: #3A2214; box-shadow: inset 0 0 0 0.5vh #3A2214; }
 .gtile small { display: block; font-size: 2vh; color: #C4520F; margin-top: 0.4vh; }
@@ -225,3 +225,22 @@ button { touch-action: manipulation; cursor: pointer; }
 .pbtn.game small { display: block; font-size: 13px; color: #C4520F; }
 .bossbar button.alt.wide { -webkit-flex: 1; flex: 1; width: auto; }
 button.banner { display: block; width: 100%; border: 0; }
+
+/* player standings */
+.ranks { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-justify-content: center; justify-content: center; width: 84vw; margin-top: 0.6vh; }
+.rk { width: 26vw; margin: 0.45vh 0.6vw; height: 5.2vh; border-radius: 99vh; background: #FFFFFF; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 0 1.4vw 0 0.5vh; font-size: 3vh; font-weight: 900; text-align: left; }
+.rk b { -webkit-flex: none; flex: none; width: 4.2vh; height: 4.2vh; line-height: 4.2vh; border-radius: 50%; background: #F2B705; text-align: center; font-size: 2.4vh; margin-right: 1vw; }
+.rk span { -webkit-flex: 1; flex: 1; white-space: nowrap; overflow: hidden; }
+.rk i { font-style: normal; font-family: 'Bagel Fat One', 'Nunito', sans-serif; font-weight: 400; }
+/* crillion */
+.crl { width: 84vw; display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-justify-content: center; justify-content: center; }
+.crr { width: 70vw; height: 6.2vh; margin: 0.5vh 0.6vw; border-radius: 99vh; background: #FFFFFF; box-shadow: inset 0 0 0 0.4vh #3A2214; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 0 1.6vw; font-size: 3.2vh; font-weight: 900; text-align: left; }
+.crl.two .crr { width: 40vw; height: 5.4vh; font-size: 2.7vh; }
+.crr span { -webkit-flex: none; flex: none; width: 32%; white-space: nowrap; overflow: hidden; }
+.crr b { -webkit-flex: 1; flex: 1; white-space: nowrap; overflow: hidden; }
+.crr small { font-size: 2.1vh; font-weight: 800; margin-right: 1vw; white-space: nowrap; }
+.crr i { font-style: normal; font-family: 'Bagel Fat One', 'Nunito', sans-serif; font-weight: 400; color: #17696B; }
+.crr i.bad, .crr i.ask { color: #C4520F; }
+.crr i.bad { font-family: 'Nunito', sans-serif; font-weight: 900; }
+.crr small { max-width: 46%; overflow: hidden; }
+.crr.out { opacity: 0.55; }

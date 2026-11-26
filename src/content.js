@@ -200,6 +200,39 @@ RC.content = {
     { w: 'PILLOW', h: 'Bedtime' }, { w: 'GUITAR', h: 'Music' }, { w: 'ELEPHANT', h: 'Animal' }, { w: 'HOLIDAY', h: 'Time off' }
   ],
 
+  /* Crillion. Each answer: [name, how many people out of 100 would say it, other spellings].
+     The counts are the show's own estimates, not a real survey. "no" lists common wrong answers and why. */
+  crillion: [
+    { q: 'Name a country in South America.', a: [['Brazil', 88], ['Argentina', 74], ['Peru', 52], ['Colombia', 49, ['columbia']], ['Chile', 45], ['Venezuela', 38], ['Ecuador', 27], ['Bolivia', 22], ['Uruguay', 18], ['Paraguay', 14], ['Guyana', 6], ['Suriname', 3, ['surinam']]],
+      no: [['Mexico', 'Mexico is in North America.'], ['Panama', 'Panama is in Central America.'], ['French Guiana', 'French Guiana is part of France, not a country.'], ['Costa Rica', 'Costa Rica is in Central America.'], ['Cuba', 'Cuba is in the Caribbean.'], ['Spain', 'Spain is in Europe.'], ['Guatemala', 'Guatemala is in Central America.'], ['Honduras', 'Honduras is in Central America.']] },
+    { q: 'Name a planet in our solar system.', a: [['Earth', 80], ['Mars', 78], ['Jupiter', 62], ['Saturn', 60], ['Venus', 41], ['Mercury', 33], ['Neptune', 24], ['Uranus', 21]],
+      no: [['Pluto', 'Pluto has been a dwarf planet since 2006.'], ['Sun', 'The Sun is a star.'], ['Moon', 'The Moon is a moon.'], ['Ceres', 'Ceres is a dwarf planet.']] },
+    { q: 'Name one of the seven dwarfs in Snow White.', a: [['Dopey', 71], ['Grumpy', 68], ['Sleepy', 55], ['Happy', 47], ['Sneezy', 39], ['Doc', 30], ['Bashful', 17]],
+      no: [['Lazy', 'There is no Lazy.'], ['Smiley', 'There is no Smiley.'], ['Sleazy', 'Not one of the seven.'], ['Snoozy', 'You may be thinking of Sleepy.']] },
+    { q: 'Name a U.S. state that starts with the letter M.', a: [['Michigan', 58], ['Massachusetts', 51], ['Maine', 44], ['Mississippi', 43], ['Minnesota', 37], ['Montana', 34], ['Maryland', 31], ['Missouri', 25]],
+      no: [['Miami', 'Miami is a city.'], ['Memphis', 'Memphis is a city.'], ['Mexico', 'Mexico is a country. New Mexico starts with N.'], ['Manhattan', 'Manhattan is part of New York City.'], ['Milwaukee', 'Milwaukee is a city.']] },
+    { q: 'Name a color of the rainbow.', a: [['Red', 85], ['Blue', 74], ['Yellow', 63], ['Green', 60], ['Orange', 48], ['Violet', 22, ['purple']], ['Indigo', 15]],
+      no: [['Pink', 'Pink is not in the rainbow.'], ['White', 'White is all the colors together.'], ['Black', 'Black is not in the rainbow.'], ['Brown', 'Brown is not in the rainbow.'], ['Gold', 'That is at the end of it.']] },
+    { q: 'Name one of the five Great Lakes.', a: [['Superior', 62], ['Michigan', 60], ['Erie', 47, ['eerie']], ['Huron', 33], ['Ontario', 29]],
+      no: [['Tahoe', 'Lake Tahoe is in California and Nevada.'], ['Champlain', 'Lake Champlain is not one of the five.'], ['Okeechobee', 'Lake Okeechobee is in Florida.'], ['Salt Lake', 'The Great Salt Lake is in Utah.']] },
+    { q: 'Name a chess piece.', a: [['Queen', 76], ['King', 70], ['Pawn', 62], ['Knight', 50, ['horse']], ['Bishop', 34], ['Rook', 31, ['castle', 'tower']]],
+      no: [['Jack', 'That is a playing card.'], ['Ace', 'That is a playing card.'], ['Checker', 'That is a different game.'], ['Joker', 'That is a playing card.']] },
+    { q: 'Name a continent.', a: [['Europe', 68], ['Africa', 66], ['Asia', 60], ['North America', 58], ['South America', 49], ['Australia', 41, ['oceania', 'australasia']], ['Antarctica', 27, ['antartica']]],
+      no: [['America', 'Say North America or South America.'], ['Arctic', 'The Arctic is an ocean, not a continent.'], ['Greenland', 'Greenland is an island.'], ['India', 'India is a country.'], ['Central America', 'Central America is part of North America.']] },
+    { q: 'Name a month that has exactly 30 days.', a: [['September', 52], ['June', 47], ['April', 44], ['November', 38]],
+      no: [['February', 'February has 28 or 29 days.'], ['January', 'January has 31 days.'], ['March', 'March has 31 days.'], ['May', 'May has 31 days.'], ['July', 'July has 31 days.'], ['August', 'August has 31 days.'], ['October', 'October has 31 days.'], ['December', 'December has 31 days.']] },
+    { q: 'Name one of the four Beatles.', a: [['John Lennon', 82, ['john', 'lennon']], ['Paul McCartney', 79, ['paul', 'mccartney']], ['Ringo Starr', 58, ['ringo', 'starr']], ['George Harrison', 37, ['george', 'harrison']]],
+      no: [['Mick Jagger', 'Mick Jagger is a Rolling Stone.'], ['Elvis', 'Elvis was never a Beatle.'], ['Pete Best', 'Pete Best left before they were famous.'], ['Yoko Ono', 'Yoko Ono was never in the band.']] },
+    { q: 'Name a sign of the zodiac.', a: [['Leo', 52], ['Scorpio', 44], ['Gemini', 41], ['Cancer', 39], ['Aries', 38], ['Taurus', 36], ['Pisces', 35], ['Libra', 34], ['Virgo', 33], ['Aquarius', 31], ['Sagittarius', 28, ['sagitarius']], ['Capricorn', 27]],
+      no: [['Dragon', 'The dragon is in the Chinese zodiac.'], ['Orion', 'Orion is a constellation, not a zodiac sign.'], ['Tiger', 'The tiger is in the Chinese zodiac.']] },
+    { q: 'Name one of the world\'s oceans.', a: [['Pacific', 84], ['Atlantic', 80], ['Indian', 46], ['Arctic', 38], ['Southern', 9, ['antarctic']]],
+      no: [['Mediterranean', 'The Mediterranean is a sea.'], ['Caribbean', 'The Caribbean is a sea.'], ['Dead Sea', 'The Dead Sea is a lake.'], ['Gulf of Mexico', 'That is a gulf.']] },
+    { q: 'Name a country in Central America.', a: [['Costa Rica', 55], ['Panama', 52], ['Guatemala', 38], ['Honduras', 33], ['Nicaragua', 30], ['El Salvador', 27, ['salvador']], ['Belize', 16]],
+      no: [['Mexico', 'Mexico is in North America.'], ['Cuba', 'Cuba is in the Caribbean.'], ['Colombia', 'Colombia is in South America.'], ['Puerto Rico', 'Puerto Rico is a U.S. territory in the Caribbean.'], ['Venezuela', 'Venezuela is in South America.']] },
+    { q: 'Name an instrument you would see in an orchestra.', a: [['Violin', 81], ['Trumpet', 52], ['Flute', 50], ['Cello', 44], ['Clarinet', 33], ['Trombone', 27], ['Tuba', 22], ['Harp', 20], ['Oboe', 14], ['Viola', 12], ['French horn', 12, ['horn']], ['Double bass', 10, ['bass', 'contrabass']], ['Timpani', 7, ['kettledrum', 'kettle drums']], ['Bassoon', 6], ['Xylophone', 6], ['Piccolo', 5], ['Cymbals', 4, ['cymbal']], ['Triangle', 4], ['Piano', 30], ['Drums', 28, ['drum', 'snare drum', 'bass drum']]],
+      no: [['Kazoo', 'Not in a standard orchestra.'], ['Banjo', 'Not in a standard orchestra.'], ['Ukulele', 'Not in a standard orchestra.']] }
+  ],
+
   /* the catalog of games, in the order a show plays them */
   rounds: [
     { key: 'vote', title: 'Everybody Votes', how: ['Everyone answers on their own phone.', 'Your team scores the share of teammates who get it right.', 'Fastest correct answer earns a bonus.'] },
@@ -211,9 +244,12 @@ RC.content = {
     { key: 'phrase', title: 'Phrase Fever', how: ['Take turns picking letters.', 'Anyone can hit SOLVE and type the phrase.', 'Five misses and the puzzle is lost.'] },
     { key: 'decade', title: 'Name That Decade', how: ['Something happened. In which decade?', 'Everyone answers on their own phone.', 'Grandparents, this one is yours.'] },
     { key: 'scramble', title: 'Word Scramble', how: ['The letters are mixed up. Type the word.', 'First to solve wins 150. Everyone else can still score 40.', 'Wrong tries cost nothing.'] },
+    { key: 'crillion', title: 'Crillion', how: ['Everyone types one answer to the same question.', 'The fewer people who would think of it, the more it scores.', 'A wrong answer scores zero.'] },
     { key: 'feud', title: 'Survey Says', how: ['We asked 1,000 imaginary people. Find their top 5 answers.', 'Three strikes and the other team can steal.', 'The last survey is worth double.'] }
   ],
-  order: ['vote', 'likely', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'feud'],
+  order: ['vote', 'likely', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'crillion', 'feud'],
+  /* Set this to a private judge address to let an AI model rule on Crillion answers that are not on the sheet. */
+  judgeUrl: '',
 
   lines: {
     welcome: ['Welcome to Rain Check, the only game show that needs bad weather. I am your host, Drizzle McCloud.'],

@@ -19,6 +19,9 @@ function play(seed, nPlayers, teamSplit, skill) {
   var todo = orders[['classic', 'all', 'quick'][seed % 3]].slice();
   var total = todo.length;
   E.handle({ p: 'p0', t: 'ctl', c: 'short', a: { on: seed % 4 === 0 } }, now);
+  var solo = seed % 2 === 0;
+  E.handle({ p: 'p0', t: 'ctl', c: 'solo', a: { on: solo } }, now);
+  assert.strictEqual(!!E.state().solo, solo);
   E.handle({ p: 'p1', t: 'ctl', c: 'play', a: { key: todo[0] } }, now); // not the showrunner: ignored
   assert.strictEqual(E.state().phase, 'lobby');
   E.handle({ p: 'p0', t: 'ctl', c: 'play', a: { key: 'nonsense' } }, now);
@@ -43,6 +46,14 @@ function play(seed, nPlayers, teamSplit, skill) {
     if (ph === 'vote_q') { E.handle({ p: pid, t: 'vote', k: k, a: good ? P.cur.a : Math.floor(rnd() * P.cur.o.length) }, now); }
     else if (ph === 'ml_q') { E.handle({ p: pid, t: 'mlv', k: k, v: S.ml.who[Math.floor(rnd() * S.ml.who.length)].p }, now); }
     else if (ph === 'num_q') { E.handle({ p: pid, t: 'num', k: k, v: good ? P.nq[S.ni].a : Math.round(P.nq[S.ni].a * (0.5 + rnd())) }, now); }
+    else if (ph === 'cr_q') {
+      var item = P.cq[S.ci], txt = good ? item.a[Math.floor(rnd() * item.a.length)][0].toLowerCase() : (rnd() < 0.5 ? item.no[0][0] : 'zz unknown ' + Math.floor(rnd() * 9));
+      E.handle({ p: pid, t: 'cr', k: k, text: txt }, now);
+    }
+    else if (ph === 'cr_judge' && rnd() < 0.3) {
+      var asks = S.cr.rows.filter(function (r) { return r.st === 'ask'; });
+      if (asks.length) { E.handle({ p: 'p0', t: 'ctl', c: 'crj', a: { p: asks[0].p, ok: rnd() < 0.5, said: 9 } }, now); }
+    }
     else if (ph === 'scr_q' && rnd() < 0.5) { E.handle({ p: pid, t: 'word', k: k, text: good ? P.word.toLowerCase() : 'zzz' }, now); }
     else if (ph === 'board_pick' && rnd() < 0.5) { E.handle({ p: S.turn, t: 'pick', k: k, c: Math.floor(rnd() * 5), l: Math.floor(rnd() * 4) }, now); }
     else if ((ph === 'board_q' || ph === 'zoom_q' || ph === 'feud_face') && rnd() < 0.25) { E.handle({ p: pid, t: 'buzz', k: k }, now); }
@@ -64,6 +75,7 @@ function play(seed, nPlayers, teamSplit, skill) {
   assert.strictEqual(S.phase, 'final', 'game did not finish, stuck in ' + S.phase);
   assert.ok(S.teams[0].score >= 0 && S.teams[1].score >= 0);
   assert.strictEqual(S.round, total, 'did not play every picked game');
+  if (solo) { assert.strictEqual(S.teams[0].score + S.teams[1].score, 0, 'solo play must not move team scores'); assert.ok(S.fin.solo); }
   return { seen: seen, scores: [S.teams[0].score, S.teams[1].score], minutes: Math.round((now - 1000000) / 60000), fin: S.fin };
 }
 
@@ -76,7 +88,7 @@ for (var seed = 1; seed <= 300; seed++) {
   for (var k in r.seen) { phases[k] = 1; }
   if (seed <= 4) { out.push('seed ' + seed + ' players ' + n + ' scores ' + r.scores.join('-') + ' game minutes ' + r.minutes); }
 }
-var need = ['intro', 'vote_q', 'vote_reveal', 'board_pick', 'board_q', 'board_ans', 'board_reveal', 'zoom_q', 'zoom_ans', 'zoom_reveal', 'phrase_turn', 'phrase_solve', 'phrase_reveal', 'feud_face', 'feud_pick', 'feud_reveal', 'round_end', 'ml_q', 'ml_reveal', 'num_q', 'num_reveal', 'scr_q', 'scr_reveal', 'menu'];
+var need = ['intro', 'vote_q', 'vote_reveal', 'board_pick', 'board_q', 'board_ans', 'board_reveal', 'zoom_q', 'zoom_ans', 'zoom_reveal', 'phrase_turn', 'phrase_solve', 'phrase_reveal', 'feud_face', 'feud_pick', 'feud_reveal', 'round_end', 'ml_q', 'ml_reveal', 'num_q', 'num_reveal', 'scr_q', 'scr_reveal', 'menu', 'cr_q', 'cr_judge', 'cr_reveal'];
 need.forEach(function (p) { assert.ok(phases[p], 'phase never reached: ' + p); });
 
 // content sanity
@@ -91,5 +103,35 @@ C.order.forEach(function (g) { assert.ok(C.rounds.some(function (r) { return r.k
 C.surveys.forEach(function (s) { assert.strictEqual(s.a.length, 8, s.q); assert.strictEqual(s.a.reduce(function (t, x) { return t + x[1]; }, 0), 1000, s.q); for (var i = 1; i < 8; i++) { assert.ok(s.a[i][1] < s.a[i - 1][1], s.q); } });
 assert.ok(C.board.length >= 5 && C.zoom.length >= 5 && C.phrases.length >= 4 && C.surveys.length >= 3);
 
+// Crillion judging, answer by answer
+(function () {
+  var C2 = JSON.parse(JSON.stringify(RC.content)); C2.crillion = [RC.content.crillion[0]];
+  var E = RC.createEngine(C2, { rand: lcg(5) }), now = 5000000, names = ['a', 'b', 'c', 'd', 'e'];
+  E.init('CRIL', now);
+  names.forEach(function (n, i) { E.handle({ p: n, t: 'hello', name: n.toUpperCase(), team: i % 2 }, now); });
+  E.handle({ p: 'a', t: 'ctl', c: 'play', a: { key: 'crillion' } }, now);
+  E.handle({ p: 'a', t: 'ctl', c: 'next' }, now);
+  assert.strictEqual(E.state().phase, 'cr_q');
+  var k = E.state().k, ans = { a: 'paraguay', b: 'Columbia', c: ' French Guiana ', d: 'Atlantis', e: 'BRASIL' };
+  names.forEach(function (n) { E.handle({ p: n, t: 'cr', k: k, text: ans[n] }, now); });
+  var S = E.state(), by = {};
+  assert.strictEqual(S.phase, 'cr_judge', 'an answer off the sheet must go to the judge');
+  S.cr.rows.forEach(function (r) { by[r.p] = r; });
+  assert.strictEqual(by.a.st, 'ok'); assert.strictEqual(by.a.name, 'Paraguay'); assert.strictEqual(by.a.said, 14);
+  assert.strictEqual(by.b.name, 'Colombia', 'common misspelling accepted');
+  assert.strictEqual(by.c.st, 'no'); assert.ok(/France/.test(by.c.why));
+  assert.strictEqual(by.d.st, 'ask');
+  assert.strictEqual(by.e.name, 'Brazil', 'one-letter slip accepted');
+  E.handle({ p: 'b', t: 'ctl', c: 'crj', a: { p: 'd', ok: false } }, now);   // not the showrunner
+  assert.strictEqual(E.state().phase, 'cr_judge');
+  E.handle({ p: 'a', t: 'ctl', c: 'crj', a: { p: 'd', ok: false, why: 'Atlantis is a legend.' } }, now);
+  S = E.state();
+  assert.strictEqual(S.phase, 'cr_reveal');
+  assert.strictEqual(S.cr.rows[0].p, 'a'); assert.strictEqual(S.cr.rows[0].pts, 86);
+  assert.strictEqual(S.rv.who, 'A');
+  assert.strictEqual(S.teams[0].score, Math.round((86 + 0 + 12) / 3), 'team score is the team average');
+  assert.strictEqual(S.teams[1].score, Math.round((51 + 0) / 2));
+})();
+
 console.log(out.join('\n'));
-console.log('OK: 300 simulated games finished (5-game, 4-game and all-ten sessions picked from the menu), all ' + need.length + ' phases reached, content checks passed');
+console.log('OK: 300 simulated games finished (team and solo play; 5-game, 4-game and all-games sessions), all ' + need.length + ' phases reached, content checks passed');

@@ -225,7 +225,7 @@ button { touch-action: manipulation; cursor: pointer; }
 
 /* game menu */
 .gmenu { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-justify-content: center; justify-content: center; width: 86vw; }
-.gtile { width: 15.6vw; height: 13.5vh; margin: 0.8vh 0.6vw; border: 0; border-radius: 2.6vh; background: #17696B; color: #FFFFFF; font-size: 3.1vh; font-weight: 900; line-height: 1.1; padding: 0 0.6vw; box-shadow: 0 0.9vh 0 #3A2214; }
+.gtile { width: 13.2vw; height: 12vh; margin: 0.7vh 0.45vw; border: 0; border-radius: 2.6vh; background: #17696B; color: #FFFFFF; font-size: 2.7vh; font-weight: 900; line-height: 1.1; padding: 0 0.5vw; box-shadow: 0 0.9vh 0 #3A2214; }
 .gtile:focus { outline: 0.7vh solid #F2B705; }
 .gtile.done { background: #FFFFFF; color: #3A2214; box-shadow: inset 0 0 0 0.5vh #3A2214; }
 .gtile small { display: block; font-size: 2vh; color: #C4520F; margin-top: 0.4vh; }
@@ -235,6 +235,25 @@ button { touch-action: manipulation; cursor: pointer; }
 .pbtn.game small { display: block; font-size: 13px; color: #C4520F; }
 .bossbar button.alt.wide { -webkit-flex: 1; flex: 1; width: auto; }
 button.banner { display: block; width: 100%; border: 0; }
+
+/* player standings */
+.ranks { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-justify-content: center; justify-content: center; width: 84vw; margin-top: 0.6vh; }
+.rk { width: 26vw; margin: 0.45vh 0.6vw; height: 5.2vh; border-radius: 99vh; background: #FFFFFF; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 0 1.4vw 0 0.5vh; font-size: 3vh; font-weight: 900; text-align: left; }
+.rk b { -webkit-flex: none; flex: none; width: 4.2vh; height: 4.2vh; line-height: 4.2vh; border-radius: 50%; background: #F2B705; text-align: center; font-size: 2.4vh; margin-right: 1vw; }
+.rk span { -webkit-flex: 1; flex: 1; white-space: nowrap; overflow: hidden; }
+.rk i { font-style: normal; font-family: 'Bagel Fat One', 'Nunito', sans-serif; font-weight: 400; }
+/* crillion */
+.crl { width: 84vw; display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-justify-content: center; justify-content: center; }
+.crr { width: 70vw; height: 6.2vh; margin: 0.5vh 0.6vw; border-radius: 99vh; background: #FFFFFF; box-shadow: inset 0 0 0 0.4vh #3A2214; display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; padding: 0 1.6vw; font-size: 3.2vh; font-weight: 900; text-align: left; }
+.crl.two .crr { width: 40vw; height: 5.4vh; font-size: 2.7vh; }
+.crr span { -webkit-flex: none; flex: none; width: 32%; white-space: nowrap; overflow: hidden; }
+.crr b { -webkit-flex: 1; flex: 1; white-space: nowrap; overflow: hidden; }
+.crr small { font-size: 2.1vh; font-weight: 800; margin-right: 1vw; white-space: nowrap; }
+.crr i { font-style: normal; font-family: 'Bagel Fat One', 'Nunito', sans-serif; font-weight: 400; color: #17696B; }
+.crr i.bad, .crr i.ask { color: #C4520F; }
+.crr i.bad { font-family: 'Nunito', sans-serif; font-weight: 900; }
+.crr small { max-width: 46%; overflow: hidden; }
+.crr.out { opacity: 0.55; }
 </style>
 </head>
 <body>
@@ -2817,6 +2836,39 @@ RC.content = {
     { w: 'PILLOW', h: 'Bedtime' }, { w: 'GUITAR', h: 'Music' }, { w: 'ELEPHANT', h: 'Animal' }, { w: 'HOLIDAY', h: 'Time off' }
   ],
 
+  /* Crillion. Each answer: [name, how many people out of 100 would say it, other spellings].
+     The counts are the show's own estimates, not a real survey. "no" lists common wrong answers and why. */
+  crillion: [
+    { q: 'Name a country in South America.', a: [['Brazil', 88], ['Argentina', 74], ['Peru', 52], ['Colombia', 49, ['columbia']], ['Chile', 45], ['Venezuela', 38], ['Ecuador', 27], ['Bolivia', 22], ['Uruguay', 18], ['Paraguay', 14], ['Guyana', 6], ['Suriname', 3, ['surinam']]],
+      no: [['Mexico', 'Mexico is in North America.'], ['Panama', 'Panama is in Central America.'], ['French Guiana', 'French Guiana is part of France, not a country.'], ['Costa Rica', 'Costa Rica is in Central America.'], ['Cuba', 'Cuba is in the Caribbean.'], ['Spain', 'Spain is in Europe.'], ['Guatemala', 'Guatemala is in Central America.'], ['Honduras', 'Honduras is in Central America.']] },
+    { q: 'Name a planet in our solar system.', a: [['Earth', 80], ['Mars', 78], ['Jupiter', 62], ['Saturn', 60], ['Venus', 41], ['Mercury', 33], ['Neptune', 24], ['Uranus', 21]],
+      no: [['Pluto', 'Pluto has been a dwarf planet since 2006.'], ['Sun', 'The Sun is a star.'], ['Moon', 'The Moon is a moon.'], ['Ceres', 'Ceres is a dwarf planet.']] },
+    { q: 'Name one of the seven dwarfs in Snow White.', a: [['Dopey', 71], ['Grumpy', 68], ['Sleepy', 55], ['Happy', 47], ['Sneezy', 39], ['Doc', 30], ['Bashful', 17]],
+      no: [['Lazy', 'There is no Lazy.'], ['Smiley', 'There is no Smiley.'], ['Sleazy', 'Not one of the seven.'], ['Snoozy', 'You may be thinking of Sleepy.']] },
+    { q: 'Name a U.S. state that starts with the letter M.', a: [['Michigan', 58], ['Massachusetts', 51], ['Maine', 44], ['Mississippi', 43], ['Minnesota', 37], ['Montana', 34], ['Maryland', 31], ['Missouri', 25]],
+      no: [['Miami', 'Miami is a city.'], ['Memphis', 'Memphis is a city.'], ['Mexico', 'Mexico is a country. New Mexico starts with N.'], ['Manhattan', 'Manhattan is part of New York City.'], ['Milwaukee', 'Milwaukee is a city.']] },
+    { q: 'Name a color of the rainbow.', a: [['Red', 85], ['Blue', 74], ['Yellow', 63], ['Green', 60], ['Orange', 48], ['Violet', 22, ['purple']], ['Indigo', 15]],
+      no: [['Pink', 'Pink is not in the rainbow.'], ['White', 'White is all the colors together.'], ['Black', 'Black is not in the rainbow.'], ['Brown', 'Brown is not in the rainbow.'], ['Gold', 'That is at the end of it.']] },
+    { q: 'Name one of the five Great Lakes.', a: [['Superior', 62], ['Michigan', 60], ['Erie', 47, ['eerie']], ['Huron', 33], ['Ontario', 29]],
+      no: [['Tahoe', 'Lake Tahoe is in California and Nevada.'], ['Champlain', 'Lake Champlain is not one of the five.'], ['Okeechobee', 'Lake Okeechobee is in Florida.'], ['Salt Lake', 'The Great Salt Lake is in Utah.']] },
+    { q: 'Name a chess piece.', a: [['Queen', 76], ['King', 70], ['Pawn', 62], ['Knight', 50, ['horse']], ['Bishop', 34], ['Rook', 31, ['castle', 'tower']]],
+      no: [['Jack', 'That is a playing card.'], ['Ace', 'That is a playing card.'], ['Checker', 'That is a different game.'], ['Joker', 'That is a playing card.']] },
+    { q: 'Name a continent.', a: [['Europe', 68], ['Africa', 66], ['Asia', 60], ['North America', 58], ['South America', 49], ['Australia', 41, ['oceania', 'australasia']], ['Antarctica', 27, ['antartica']]],
+      no: [['America', 'Say North America or South America.'], ['Arctic', 'The Arctic is an ocean, not a continent.'], ['Greenland', 'Greenland is an island.'], ['India', 'India is a country.'], ['Central America', 'Central America is part of North America.']] },
+    { q: 'Name a month that has exactly 30 days.', a: [['September', 52], ['June', 47], ['April', 44], ['November', 38]],
+      no: [['February', 'February has 28 or 29 days.'], ['January', 'January has 31 days.'], ['March', 'March has 31 days.'], ['May', 'May has 31 days.'], ['July', 'July has 31 days.'], ['August', 'August has 31 days.'], ['October', 'October has 31 days.'], ['December', 'December has 31 days.']] },
+    { q: 'Name one of the four Beatles.', a: [['John Lennon', 82, ['john', 'lennon']], ['Paul McCartney', 79, ['paul', 'mccartney']], ['Ringo Starr', 58, ['ringo', 'starr']], ['George Harrison', 37, ['george', 'harrison']]],
+      no: [['Mick Jagger', 'Mick Jagger is a Rolling Stone.'], ['Elvis', 'Elvis was never a Beatle.'], ['Pete Best', 'Pete Best left before they were famous.'], ['Yoko Ono', 'Yoko Ono was never in the band.']] },
+    { q: 'Name a sign of the zodiac.', a: [['Leo', 52], ['Scorpio', 44], ['Gemini', 41], ['Cancer', 39], ['Aries', 38], ['Taurus', 36], ['Pisces', 35], ['Libra', 34], ['Virgo', 33], ['Aquarius', 31], ['Sagittarius', 28, ['sagitarius']], ['Capricorn', 27]],
+      no: [['Dragon', 'The dragon is in the Chinese zodiac.'], ['Orion', 'Orion is a constellation, not a zodiac sign.'], ['Tiger', 'The tiger is in the Chinese zodiac.']] },
+    { q: 'Name one of the world\'s oceans.', a: [['Pacific', 84], ['Atlantic', 80], ['Indian', 46], ['Arctic', 38], ['Southern', 9, ['antarctic']]],
+      no: [['Mediterranean', 'The Mediterranean is a sea.'], ['Caribbean', 'The Caribbean is a sea.'], ['Dead Sea', 'The Dead Sea is a lake.'], ['Gulf of Mexico', 'That is a gulf.']] },
+    { q: 'Name a country in Central America.', a: [['Costa Rica', 55], ['Panama', 52], ['Guatemala', 38], ['Honduras', 33], ['Nicaragua', 30], ['El Salvador', 27, ['salvador']], ['Belize', 16]],
+      no: [['Mexico', 'Mexico is in North America.'], ['Cuba', 'Cuba is in the Caribbean.'], ['Colombia', 'Colombia is in South America.'], ['Puerto Rico', 'Puerto Rico is a U.S. territory in the Caribbean.'], ['Venezuela', 'Venezuela is in South America.']] },
+    { q: 'Name an instrument you would see in an orchestra.', a: [['Violin', 81], ['Trumpet', 52], ['Flute', 50], ['Cello', 44], ['Clarinet', 33], ['Trombone', 27], ['Tuba', 22], ['Harp', 20], ['Oboe', 14], ['Viola', 12], ['French horn', 12, ['horn']], ['Double bass', 10, ['bass', 'contrabass']], ['Timpani', 7, ['kettledrum', 'kettle drums']], ['Bassoon', 6], ['Xylophone', 6], ['Piccolo', 5], ['Cymbals', 4, ['cymbal']], ['Triangle', 4], ['Piano', 30], ['Drums', 28, ['drum', 'snare drum', 'bass drum']]],
+      no: [['Kazoo', 'Not in a standard orchestra.'], ['Banjo', 'Not in a standard orchestra.'], ['Ukulele', 'Not in a standard orchestra.']] }
+  ],
+
   /* the catalog of games, in the order a show plays them */
   rounds: [
     { key: 'vote', title: 'Everybody Votes', how: ['Everyone answers on their own phone.', 'Your team scores the share of teammates who get it right.', 'Fastest correct answer earns a bonus.'] },
@@ -2828,9 +2880,12 @@ RC.content = {
     { key: 'phrase', title: 'Phrase Fever', how: ['Take turns picking letters.', 'Anyone can hit SOLVE and type the phrase.', 'Five misses and the puzzle is lost.'] },
     { key: 'decade', title: 'Name That Decade', how: ['Something happened. In which decade?', 'Everyone answers on their own phone.', 'Grandparents, this one is yours.'] },
     { key: 'scramble', title: 'Word Scramble', how: ['The letters are mixed up. Type the word.', 'First to solve wins 150. Everyone else can still score 40.', 'Wrong tries cost nothing.'] },
+    { key: 'crillion', title: 'Crillion', how: ['Everyone types one answer to the same question.', 'The fewer people who would think of it, the more it scores.', 'A wrong answer scores zero.'] },
     { key: 'feud', title: 'Survey Says', how: ['We asked 1,000 imaginary people. Find their top 5 answers.', 'Three strikes and the other team can steal.', 'The last survey is worth double.'] }
   ],
-  order: ['vote', 'likely', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'feud'],
+  order: ['vote', 'likely', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'crillion', 'feud'],
+  /* Set this to a private judge address to let an AI model rule on Crillion answers that are not on the sheet. */
+  judgeUrl: '',
 
   lines: {
     welcome: ['Welcome to Rain Check, the only game show that needs bad weather. I am your host, Drizzle McCloud.'],
@@ -3036,12 +3091,28 @@ RC.createEngine = function (C, opts) {
     S.rot[t] = (S.rot[t] + 1) % list.length;
     return list[S.rot[t]];
   }
-  function nextPlayerAny(t, now) { var p = nextPlayer(t, now); if (p) { return p; } return nextPlayer(1 - t, now); }
+  function nextAll(now) { // every player for themselves: rotate through everyone who is here
+    var list = [];
+    for (var i = 0; i < S.order.length; i++) { if (present(S.order[i], now)) { list.push(S.order[i]); } }
+    if (!list.length) { return null; }
+    S.rotA = ((S.rotA || 0) + 1) % list.length;
+    return list[S.rotA];
+  }
+  function nextPlayerAny(t, now) { if (S.solo) { return nextAll(now); } var p = nextPlayer(t, now); if (p) { return p; } return nextPlayer(1 - t, now); }
+  /* A "side" is whoever shares a lockout: a team in team play, one player in solo play. */
+  function side(pid) { var p = pl(pid); if (!p) { return 'x'; } return S.solo ? pid : p.t; }
+  function othersLeft(lockMap, now) { for (var i = 0; i < S.order.length; i++) { if (present(S.order[i], now) && !lockMap[side(S.order[i])]) { return true; } } return false; }
   function award(team, pts, pid) {
-    if (team !== 0 && team !== 1) { return; }
-    S.teams[team].score += pts;
     if (pid && pl(pid)) { pl(pid).pts += pts; }
+    if (S.solo || (team !== 0 && team !== 1)) { return; }
+    S.teams[team].score += pts;
     S.gain = { id: (S.gain ? S.gain.id : 0) + 1, team: team, pts: pts };
+  }
+  function ranking() { // players, best first
+    var out = [];
+    for (var i = 0; i < S.order.length; i++) { var p = pl(S.order[i]); if (p) { out.push({ p: S.order[i], n: p.n, pts: p.pts, t: p.t }); } }
+    out.sort(function (x, y) { return y.pts - x.pts; });
+    return out;
   }
   function nm(pid) { return pid && pl(pid) ? pl(pid).n : 'Nobody'; }
   function trailing() { if (S.teams[0].score === S.teams[1].score) { return rnd() < 0.5 ? 0 : 1; } return S.teams[0].score < S.teams[1].score ? 0 : 1; }
@@ -3055,7 +3126,7 @@ RC.createEngine = function (C, opts) {
       players: {}, order: [], boss: null, round: 0, rot: [-1, -1],
       say: { id: 0, text: '' }, fx: { id: 0, name: '' }, gain: null,
       acted: {}, deadline: 0, turn: null,
-      short: false, played: {}, cur: ''
+      short: false, solo: false, played: {}, cur: ''
     };
     P = {};
     return S;
@@ -3091,13 +3162,15 @@ RC.createEngine = function (C, opts) {
     else if (key === 'zoom') { P.zs = shuffle(C.zoom).slice(0, cnt(5, 3)); S.zi = -1; nextZoom(now); }
     else if (key === 'phrase') { P.ps = shuffle(C.phrases).slice(0, cnt(4, 2)); S.pi = -1; S.pteam = trailing(); nextPhrase(now); }
     else if (key === 'feud') { setupFeud(); S.fi = -1; nextFeud(now); }
+    else if (key === 'crillion') { P.cq = shuffle(C.crillion).slice(0, cnt(5, 3)); S.ci = -1; nextCr(now); }
   }
   function roundEnd(now) {
     S.turn = null;
     S.re = { n: S.round, title: S.rt };
     setPhase('round_end', now, 10000);
-    var a = S.teams[0], b = S.teams[1];
-    say(a.score === b.score ? 'It is all tied up at ' + a.score + '!' : (a.score > b.score ? a.name : b.name) + ' lead, ' + Math.max(a.score, b.score) + ' to ' + Math.min(a.score, b.score) + '.');
+    var a = S.teams[0], b = S.teams[1], rk = ranking();
+    if (S.solo) { say(rk.length ? rk[0].n + ' is in front with ' + rk[0].pts + ' points.' : 'No points yet.'); }
+    else { say(a.score === b.score ? 'It is all tied up at ' + a.score + '!' : (a.score > b.score ? a.name : b.name) + ' lead, ' + Math.max(a.score, b.score) + ' to ' + Math.min(a.score, b.score) + '.'); }
     fx('fanfare');
   }
   function finale(now) {
@@ -3108,10 +3181,13 @@ RC.createEngine = function (C, opts) {
       if (!best || p.pts > best.pts) { best = p; }
       if (!king || p.bz > king.bz) { king = p; }
     }
-    S.fin = { winner: a === b ? -1 : (a > b ? 0 : 1), mvp: best ? best.n : '', mvpPts: best ? best.pts : 0, king: king && king.bz ? king.n : '', kingN: king ? king.bz : 0 };
+    var rk = ranking();
+    S.fin = { solo: !!S.solo, winner: a === b ? -1 : (a > b ? 0 : 1), mvp: best ? best.n : '', mvpPts: best ? best.pts : 0, king: king && king.bz ? king.n : '', kingN: king ? king.bz : 0,
+      champ: rk.length ? rk[0].n : '', tie: rk.length > 1 && rk[0].pts === rk[1].pts };
     S.turn = null;
     setPhase('final', now, 0);
-    say((S.fin.winner < 0 ? 'It is a tie! ' : S.teams[S.fin.winner].name + ' win! ') + line('final'));
+    if (S.solo) { say((S.fin.tie ? 'It is a tie at the top! ' : S.fin.champ + ' wins! ') + line('final')); }
+    else { say((S.fin.winner < 0 ? 'It is a tie! ' : S.teams[S.fin.winner].name + ' win! ') + line('final')); }
     fx('win');
   }
 
@@ -3138,14 +3214,14 @@ RC.createEngine = function (C, opts) {
       if (v || present(pid, now)) { den[p.t]++; }
       if (v) {
         counts[v.a]++;
-        if (v.a === P.cur.a) { ok[p.t]++; p.pts += 10; if (!fast || v.at < P.votes[fast].at) { fast = pid; } }
+        if (v.a === P.cur.a) { ok[p.t]++; p.pts += 100; if (!fast || v.at < P.votes[fast].at) { fast = pid; } }
       }
     }
     var gains = [0, 0];
     for (var t = 0; t < 2; t++) { gains[t] = den[t] ? Math.round(100 * ok[t] / den[t]) : 0; }
-    if (fast) { gains[pl(fast).t] += 20; }
-    S.teams[0].score += gains[0]; S.teams[1].score += gains[1];
-    S.rv = { a: P.cur.a, counts: counts, gains: gains, fast: fast ? pl(fast).n : '', fact: P.cur.f };
+    if (fast) { gains[pl(fast).t] += 20; pl(fast).pts += 20; }
+    if (!S.solo) { S.teams[0].score += gains[0]; S.teams[1].score += gains[1]; }
+    S.rv = { a: P.cur.a, counts: counts, gains: gains, nok: ok[0] + ok[1], fast: fast ? pl(fast).n : '', fact: P.cur.f };
     setPhase('vote_reveal', now, 9000);
     say('The answer is ' + P.cur.o[P.cur.a] + '. ' + (P.cur.f || ''));
     fx(ok[0] + ok[1] > 0 ? 'right' : 'wrong');
@@ -3173,10 +3249,10 @@ RC.createEngine = function (C, opts) {
     for (i = 0; i < S.order.length; i++) {
       pid = S.order[i]; var p = pl(pid); if (!p) { continue; }
       if (P.mv[pid] || present(pid, now)) { den[p.t]++; }
-      if (P.mv[pid] && tally[P.mv[pid]] === max) { ok[p.t]++; p.pts += 10; }
+      if (P.mv[pid] && tally[P.mv[pid]] === max) { ok[p.t]++; p.pts += 100; }
     }
-    for (var t = 0; t < 2; t++) { gains[t] = den[t] ? Math.round(100 * ok[t] / den[t]) : 0; S.teams[t].score += gains[t]; }
-    S.rv = { win: win, top: top.slice(0, 4), gains: gains };
+    for (var t = 0; t < 2; t++) { gains[t] = den[t] ? Math.round(100 * ok[t] / den[t]) : 0; if (!S.solo) { S.teams[t].score += gains[t]; } }
+    S.rv = { win: win, top: top.slice(0, 4), gains: gains, nok: ok[0] + ok[1] };
     setPhase('ml_reveal', now, 9000);
     say(win.length ? 'The family says: ' + win.join(' and ') + '!' : 'Nobody voted.');
     fx(win.length ? 'right' : 'wrong');
@@ -3225,6 +3301,61 @@ RC.createEngine = function (C, opts) {
     if (!S.rv.who) { fx('wrong'); }
   }
 
+  /* ---------- crillion: the most obscure correct answer wins ---------- */
+  function crNorm(t) { return String(t || '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9 ]/g, '').replace(/\b(the|a|an|lake|mount|mt|saint|st)\b/g, ' ').replace(/\s+/g, ' ').replace(/^ | $/g, ''); }
+  function crMatch(item, text) { // returns {st:'ok',name,said} | {st:'no',why} | {st:'ask'}
+    var a = crNorm(text), i, j, best = null, bd = 99;
+    if (!a) { return { st: 'no', why: 'No answer.' }; }
+    for (i = 0; i < item.no.length; i++) { if (crNorm(item.no[i][0]) === a) { return { st: 'no', why: item.no[i][1] }; } }
+    for (i = 0; i < item.a.length; i++) {
+      var names = [item.a[i][0]].concat(item.a[i][2] || []);
+      for (j = 0; j < names.length; j++) {
+        var b = crNorm(names[j]), d = lev(a, b), tol = b.length >= 9 ? 2 : (b.length >= 5 ? 1 : 0);
+        if (d <= tol && d < bd) { bd = d; best = item.a[i]; }
+      }
+    }
+    if (best) { return { st: 'ok', name: best[0], said: best[1] }; }
+    return { st: 'ask' };
+  }
+  function nextCr(now) {
+    S.ci++;
+    if (S.ci >= P.cq.length) { return roundEnd(now); }
+    var it = P.cq[S.ci];
+    S.cr = { n: S.ci + 1, of: P.cq.length, text: it.q, rows: [] };
+    P.crA = {}; S.nv = 0; S.rv = null;
+    setPhase('cr_q', now, readMs(it.q) + 40000);
+    say(it.q + ' Type one answer. The more obscure, the better.');
+  }
+  function crJudge(now) {
+    var it = P.cq[S.ci], rows = [], ask = 0;
+    for (var i = 0; i < S.order.length; i++) {
+      var pid = S.order[i], a = P.crA[pid];
+      if (!a || !pl(pid)) { continue; }
+      var r = crMatch(it, a.text);
+      if (r.st === 'ask') { ask++; }
+      rows.push({ p: pid, n: nm(pid), t: pl(pid).t, text: a.text, st: r.st, name: r.name || '', said: r.said || 0, why: r.why || '', by: '' });
+    }
+    S.cr.rows = rows;
+    if (ask) { setPhase('cr_judge', now, 45000); say('Some answers are not on my sheet. The judge decides.'); }
+    else { crReveal(now); }
+  }
+  function crReveal(now) {
+    var rows = S.cr.rows, sum = [0, 0], den = [0, 0], i, best = null;
+    for (i = 0; i < rows.length; i++) {
+      var r = rows[i]; r.pts = r.st === 'ok' ? 100 - r.said : 0;
+      if (pl(r.p)) { pl(r.p).pts += r.pts; sum[pl(r.p).t] += r.pts; }
+      if (r.st === 'ok' && (!best || r.pts > best.pts)) { best = r; }
+    }
+    for (i = 0; i < S.order.length; i++) { var p = pl(S.order[i]); if (p && (P.crA[S.order[i]] || present(S.order[i], now))) { den[p.t]++; } }
+    var gains = [0, 0];
+    for (var t = 0; t < 2; t++) { gains[t] = den[t] ? Math.round(sum[t] / den[t]) : 0; if (!S.solo) { S.teams[t].score += gains[t]; } }
+    rows.sort(function (x, y) { return y.pts - x.pts; });
+    S.rv = { gains: gains, who: best ? best.n : '', text: best ? best.name : '', pts: best ? best.pts : 0 };
+    setPhase('cr_reveal', now, 14000);
+    say(best ? 'Most obscure: ' + best.n + ' with ' + best.name + ', for ' + best.pts + ' points.' : 'Nobody scored on that one.');
+    fx(best ? 'right' : 'wrong');
+  }
+
   /* ---------- round 2: the board ---------- */
   function setupBoard(now) {
     var cats = shuffle(range(C.board.length)).slice(0, cnt(5, 3));
@@ -3234,13 +3365,13 @@ RC.createEngine = function (C, opts) {
       for (var l = 0; l < cat.levels.length; l++) { row.push(pickOne(cat.levels[l])); }
       P.board.push(row); S.board.cats.push(cat.name); S.board.used.push([0, 0, 0, 0]);
     }
-    S.ctrl = activeTeam(trailing(), now);
+    S.ctrl = activeTeam(trailing(), now); S.ctrlP = null;
   }
   function tilesLeft() { var n = 0; for (var c = 0; c < S.board.used.length; c++) { for (var l = 0; l < 4; l++) { if (!S.board.used[c][l]) { n++; } } } return n; }
   function boardPick(now) {
     if (!tilesLeft()) { return roundEnd(now); }
     S.ctrl = activeTeam(S.ctrl, now);
-    S.turn = nextPlayerAny(S.ctrl, now);
+    S.turn = (S.solo && S.ctrlP && present(S.ctrlP, now)) ? S.ctrlP : nextPlayerAny(S.ctrl, now);
     S.q = null; S.rv = null;
     setPhase('board_pick', now, 20000);
     say(nm(S.turn) + ', pick a category.');
@@ -3249,29 +3380,29 @@ RC.createEngine = function (C, opts) {
     S.board.used[c][l] = 1;
     P.cur = mc(P.board[c][l]);
     S.q = { cat: S.board.cats[c], val: (l + 1) * 100, text: P.cur.q };
-    S.locked = [false, false]; S.wrong = []; S.steal = false; S.turn = null;
+    S.locked = {}; S.wrong = []; S.steal = false; S.turn = null;
     var r = readMs(P.cur.q);
     S.openAt = now + r;
     setPhase('board_q', now, r + 12000);
     say(S.q.cat + ' for ' + S.q.val + '. ' + P.cur.q);
   }
   function optsLeft() { var out = []; for (var i = 0; i < P.cur.o.length; i++) { if (S.wrong.indexOf(i) < 0) { out.push({ i: i, text: P.cur.o[i] }); } } return out; }
-  function boardWrong(team, a, now) {
-    S.locked[team] = true;
+  function stealName(pid) { var p = pl(pid); return S.solo || !p ? 'Anyone else' : S.teams[1 - p.t].name; }
+  function boardWrong(pid, a, now) {
+    S.locked[side(pid)] = true;
     if (a >= 0) { S.wrong.push(a); }
     fx('wrong');
-    var other = 1 - team;
-    if (teamPresent(other, now) && !S.locked[other]) {
-      S.steal = true; S.turn = null; S.openAt = now + 1500;
+    if (othersLeft(S.locked, now) && optsLeft().length > 1) {
+      S.steal = true; S.stealWho = stealName(pid); S.turn = null; S.openAt = now + 1500;
       setPhase('board_q', now, 1500 + 9000);
-      say(line('wrong') + ' ' + S.teams[other].name + ', ' + line('steal'));
+      say(line('wrong') + ' ' + S.stealWho + ', ' + line('steal'));
     } else { boardReveal(null, now); }
   }
   function boardReveal(pid, now) {
     S.rv = { text: P.cur.o[P.cur.a], who: pid ? nm(pid) : '', team: pid ? pl(pid).t : -1, val: S.q.val };
     S.turn = null;
     setPhase('board_reveal', now, 6500);
-    if (pid) { say(line('right') + ' ' + S.q.val + ' points for ' + S.teams[pl(pid).t].name + '.'); fx('right'); }
+    if (pid) { say(line('right') + ' ' + S.q.val + ' points for ' + (S.solo ? nm(pid) : S.teams[pl(pid).t].name) + '.'); fx('right'); }
     else { say('The answer was ' + S.rv.text + '.'); }
   }
 
@@ -3285,7 +3416,7 @@ RC.createEngine = function (C, opts) {
     P.cur = mc({ q: '', o: z.o });
     S.z = { n: S.zi + 1, of: P.zs.length, img: z.id, mode: S.zi % 2 ? 'tiles' : 'zoom', fx: z.fx, fy: z.fy, seed: Math.floor(rnd() * 99999) };
     S.zt0 = now + 3000; S.zdur = 30000; S.zfrozen = null; S.openAt = S.zt0;
-    S.locked = [false, false]; S.wrong = []; S.rv = null; S.turn = null;
+    S.locked = {}; S.wrong = []; S.rv = null; S.turn = null;
     setPhase('zoom_q', now, 3000 + 30000 + 6000);
     say('Picture ' + S.z.n + '. What famous place is this? Buzz when you know.');
   }
@@ -3296,15 +3427,14 @@ RC.createEngine = function (C, opts) {
     if (pid) { say(line('right') + ' ' + S.rv.text + '. ' + S.zval + ' points.'); fx('right'); }
     else { say('The answer: ' + S.rv.text + '.'); }
   }
-  function zoomWrong(team, a, now) {
-    S.locked[team] = true;
+  function zoomWrong(pid, a, now) {
+    S.locked[side(pid)] = true;
     if (a >= 0) { S.wrong.push(a); }
     fx('wrong');
-    var other = 1 - team;
-    if (teamPresent(other, now) && !S.locked[other] && P.zleft > 1500) {
+    if (othersLeft(S.locked, now) && P.zleft > 1500 && optsLeft().length > 1) {
       S.zt0 = now - S.zfrozen * S.zdur; S.zfrozen = null; S.turn = null; S.openAt = now;
       setPhase('zoom_q', now, P.zleft);
-      say(line('wrong') + ' ' + S.teams[other].name + ', keep looking.');
+      say(line('wrong') + ' ' + stealName(pid) + ', keep looking.');
     } else { zoomReveal(null, now); }
   }
 
@@ -3317,14 +3447,14 @@ RC.createEngine = function (C, opts) {
     var mask = [];
     for (var i = 0; i < P.ph.length; i++) { var ch = P.ph.charAt(i); mask.push(/[A-Z]/.test(ch) ? '_' : ch); }
     S.ph = { n: S.pi + 1, of: P.ps.length, hint: ph.h, mask: mask };
-    S.used = ''; S.miss = 0; S.slock = [false, false]; S.last = null; S.rv = null; S.idle = 0;
+    S.used = ''; S.miss = 0; S.slock = {}; S.last = null; S.rv = null; S.idle = 0; P.keep = null;
     if (S.pi > 0) { S.pteam = 1 - S.pteam; }
     say('Puzzle ' + S.ph.n + '. The hint is: ' + ph.h + '.');
     phraseTurn(now);
   }
   function phraseTurn(now) {
     S.pteam = activeTeam(S.pteam, now);
-    S.turn = nextPlayerAny(S.pteam, now); S.solver = null;
+    S.turn = (S.solo && P.keep && present(P.keep, now)) ? P.keep : nextPlayerAny(S.pteam, now); S.solver = null; P.keep = null;
     setPhase('phrase_turn', now, 22000);
   }
   function phraseReveal(pid, how, now) {
@@ -3384,18 +3514,20 @@ RC.createEngine = function (C, opts) {
   function slotsOpen() { var n = 0; for (var i = 0; i < 5; i++) { if (!S.f.slots[i]) { n++; } } return n; }
   function feudPlayTurn(now) {
     S.f.mode = 'play';
-    S.f.play = activeTeam(S.f.play, now);
+    S.f.play = activeTeam(S.f.play < 0 ? 0 : S.f.play, now);
     S.turn = nextPlayerAny(S.f.play, now);
     setPhase('feud_pick', now, 18000);
   }
   function feudReveal(team, now) {
     for (var r = 0; r < 5; r++) { if (!S.f.slots[r]) { revealSlot(r, false); } }
-    S.rv = { team: team, pot: S.f.pot };
+    if (S.solo) { team = -1; }
+    S.rv = { team: team, pot: S.f.pot, solo: !!S.solo };
     if (team >= 0) { award(team, S.f.pot, null); }
     S.turn = null;
     setPhase('feud_reveal', now, 10000);
-    say(team >= 0 ? S.teams[team].name + ' take ' + S.f.pot + ' points!' : 'No points this time.');
-    fx(team >= 0 ? 'right' : 'wrong');
+    if (S.solo) { say(S.f.strikes >= 3 ? 'Three strikes. Here is the rest of the board.' : 'The board is cleared!'); }
+    else { say(team >= 0 ? S.teams[team].name + ' take ' + S.f.pot + ' points!' : 'No points this time.'); }
+    fx(team >= 0 || S.solo ? 'right' : 'wrong');
   }
   function feudPick(o, now) { // o = option index, or -1 on timeout
     var f = S.f, team = S.turn && pl(S.turn) ? pl(S.turn).t : f.play;
@@ -3404,6 +3536,11 @@ RC.createEngine = function (C, opts) {
     var hit = rank >= 0 && !f.slots[rank];
     if (hit) { revealSlot(rank, true); f.pot += slotPts(rank); if (S.turn && pl(S.turn)) { pl(S.turn).pts += slotPts(rank); } fx('ding'); say(line('survey') + ' ' + f.slots[rank].text + '!'); }
     else { f.x++; fx('strike'); say(line('strike')); }
+    if (S.solo) { // no teams: every hit scores for the player who found it, three strikes ends the board
+      if (!hit && f.mode !== 'face') { f.strikes++; }
+      if (!slotsOpen() || f.strikes >= 3) { return feudReveal(-1, now); }
+      return feudPlayTurn(now);
+    }
     if (f.mode === 'face') {
       f.play = hit ? team : activeTeam(1 - team, now);
       if (!slotsOpen()) { return feudReveal(f.play, now); }
@@ -3443,17 +3580,20 @@ RC.createEngine = function (C, opts) {
     else if (ph === 'scr_reveal') { nextWord(now); }
     else if (ph === 'board_pick') { for (var l = 0; l < 4; l++) { for (var c = 0; c < S.board.used.length; c++) { if (!S.board.used[c][l]) { return openTile(c, l, now); } } } }
     else if (ph === 'board_q') { say(line('nobuzz')); boardReveal(null, now); }
-    else if (ph === 'board_ans') { boardWrong(pl(S.turn) ? pl(S.turn).t : 0, -1, now); }
+    else if (ph === 'board_ans') { boardWrong(S.turn, -1, now); }
     else if (ph === 'board_reveal') { boardPick(now); }
     else if (ph === 'zoom_q') { zoomReveal(null, now); }
-    else if (ph === 'zoom_ans') { zoomWrong(pl(S.turn) ? pl(S.turn).t : 0, -1, now); }
+    else if (ph === 'zoom_ans') { zoomWrong(S.turn, -1, now); }
     else if (ph === 'zoom_reveal') { nextZoom(now); }
     else if (ph === 'phrase_turn') { S.idle++; if (S.idle >= 6) { phraseReveal(null, 'bust', now); } else { S.pteam = 1 - S.pteam; phraseTurn(now); } }
-    else if (ph === 'phrase_solve') { var st = pl(S.solver) ? pl(S.solver).t : 0; S.slock[st] = true; fx('wrong'); if (!phraseMiss(now)) { phraseTurn(now); } }
+    else if (ph === 'phrase_solve') { S.slock[side(S.solver)] = true; fx('wrong'); if (!phraseMiss(now)) { phraseTurn(now); } }
     else if (ph === 'phrase_reveal') { nextPhrase(now); }
     else if (ph === 'feud_face') { S.f.play = activeTeam(trailing(), now); feudPlayTurn(now); }
     else if (ph === 'feud_pick') { feudPick(-1, now); }
     else if (ph === 'feud_reveal') { nextFeud(now); }
+    else if (ph === 'cr_q') { crJudge(now); }
+    else if (ph === 'cr_judge') { for (var ri = 0; ri < S.cr.rows.length; ri++) { if (S.cr.rows[ri].st === 'ask') { S.cr.rows[ri].st = 'no'; S.cr.rows[ri].why = 'Not accepted.'; } } crReveal(now); }
+    else if (ph === 'cr_reveal') { nextCr(now); }
     else if (ph === 'round_end') { goMenu(now); }
   }
   /* ---------- showrunner commands ---------- */
@@ -3472,13 +3612,28 @@ RC.createEngine = function (C, opts) {
     }
     else if (c === 'skip') { if (S.phase !== 'lobby' && S.phase !== 'final' && S.phase !== 'round_end') { roundEnd(now); } }
     else if (c === 'adj') { var t = a.team === 1 ? 1 : 0; var d2 = Math.max(-500, Math.min(500, parseInt(a.d, 10) || 0)); S.teams[t].score += d2; }
+    else if (c === 'solo') { if (S.phase === 'lobby' || S.phase === 'menu') { S.solo = !!a.on; } }
+    else if (c === 'crj') { // the judge rules on one answer that was not on the sheet
+      if (S.phase === 'cr_judge') {
+        var left = 0;
+        for (var ji = 0; ji < S.cr.rows.length; ji++) {
+          var jr = S.cr.rows[ji];
+          if (jr.st === 'ask' && jr.p === a.p) {
+            if (a.ok) { jr.st = 'ok'; jr.said = Math.max(1, Math.min(99, parseInt(a.said, 10) || 8)); jr.name = jr.text; jr.by = clean(a.by, 20) || 'the judge'; }
+            else { jr.st = 'no'; jr.why = clean(a.why, 90) || 'Not accepted.'; }
+          }
+          if (jr.st === 'ask') { left++; }
+        }
+        if (!left) { crReveal(now); }
+      }
+    }
     else if (c === 'short') { if (S.phase === 'lobby' || S.phase === 'menu') { S.short = !!a.on; } }
     else if (c === 'boss') { if (pl(a.pid)) { S.boss = a.pid; } }
     else if (c === 'teams') { if (a.names && a.names.length === 2) { S.teams[0].name = clean(a.names[0], 14) || 'Thunder'; S.teams[1].name = clean(a.names[1], 14) || 'Lightning'; } }
     else if (c === 'kick') { if (pl(a.pid)) { delete S.players[a.pid]; S.order.splice(S.order.indexOf(a.pid), 1); if (S.boss === a.pid) { S.boss = S.order[0] || null; } } }
     else if (c === 'end') { if (S.round > 0) { if (S.paused) { cmd('pause', null, now); } finale(now); } }
     else if (c === 'again') {
-      S.teams[0].score = 0; S.teams[1].score = 0; S.round = 0; S.rot = [-1, -1]; S.played = {}; S.cur = ''; P = {};
+      S.teams[0].score = 0; S.teams[1].score = 0; S.round = 0; S.rot = [-1, -1]; S.rotA = 0; S.played = {}; S.cur = ''; P = {};
       for (var i = 0; i < S.order.length; i++) { var p = pl(S.order[i]); p.pts = 0; p.bz = 0; }
       S.q = null; S.rv = null; S.fin = null; S.turn = null;
       setPhase('lobby', now, 0);
@@ -3541,6 +3696,12 @@ RC.createEngine = function (C, opts) {
         if (allActed(now)) { endWord(now); }
       } else { S.wr[pid] = (S.wr[pid] || 0) + 1; }
     }
+    else if (m.t === 'cr' && ph === 'cr_q') {
+      var ct = clean(m.text, 40);
+      if (P.crA[pid] || !ct) { return; }
+      P.crA[pid] = { text: ct, at: now }; S.acted[pid] = true; S.nv++;
+      if (allActed(now)) { crJudge(now); }
+    }
     else if (m.t === 'pick' && ph === 'board_pick') {
       var c = parseInt(m.c, 10), l = parseInt(m.l, 10);
       if ((pid !== S.turn && pid !== S.boss) || !(c >= 0 && c < S.board.used.length) || !(l >= 0 && l < 4) || S.board.used[c][l]) { return; }
@@ -3549,13 +3710,13 @@ RC.createEngine = function (C, opts) {
     else if (m.t === 'buzz') {
       if (ph === 'board_q' || ph === 'zoom_q' || ph === 'feud_face') {
         if (now < S.openAt - 200) { return; }
-        if (ph !== 'feud_face' && S.locked[team2]) { return; }
+        if (ph !== 'feud_face' && S.locked[side(pid)]) { return; }
         S.turn = pid; p.bz++; fx('buzz');
         if (ph === 'board_q') { S.opts = optsLeft(); setPhase('board_ans', now, 11000); say(p.n + '!'); }
         else if (ph === 'zoom_q') { S.zfrozen = zfrac(now); S.zval = zvalue(S.zfrozen); P.zleft = S.deadline - now; S.opts = optsLeft(); setPhase('zoom_ans', now, 10000); say(p.n + '!'); }
         else { S.f.mode = 'face'; setPhase('feud_pick', now, 14000); say(p.n + '! What do you say?'); }
       } else if (ph === 'phrase_turn') {
-        if (S.slock[team2]) { return; }
+        if (S.slock[side(pid)]) { return; }
         S.solver = pid; p.bz++; fx('buzz');
         setPhase('phrase_solve', now, 25000);
         say(p.n + ' wants to solve!');
@@ -3566,20 +3727,21 @@ RC.createEngine = function (C, opts) {
       a = parseInt(m.a, 10);
       if (!(a >= 0 && a < P.cur.o.length) || S.wrong.indexOf(a) >= 0) { return; }
       if (a === P.cur.a) {
-        if (ph === 'board_ans') { award(team2, S.q.val, pid); S.ctrl = team2; boardReveal(pid, now); }
+        if (ph === 'board_ans') { award(team2, S.q.val, pid); S.ctrl = team2; S.ctrlP = pid; boardReveal(pid, now); }
         else { award(team2, S.zval, pid); zoomReveal(pid, now); }
-      } else if (ph === 'board_ans') { boardWrong(team2, a, now); } else { zoomWrong(team2, a, now); }
+      } else if (ph === 'board_ans') { boardWrong(pid, a, now); } else { zoomWrong(pid, a, now); }
     }
     else if (m.t === 'letter' && ph === 'phrase_turn') {
       var L = String(m.l || '').toUpperCase().charAt(0);
       if (pid !== S.turn || !/[A-Z]/.test(L) || S.used.indexOf(L) >= 0) { return; }
-      S.used += L; S.slock = [false, false]; S.idle = 0;
+      S.used += L; S.slock = {}; S.idle = 0;
       var n = 0;
       for (var x = 0; x < P.ph.length; x++) { if (P.ph.charAt(x) === L) { S.ph.mask[x] = L; n++; } }
       S.last = { l: L, n: n, who: p.n };
       if (n > 0) {
         award(team2, 20 * n, pid); fx('ding');
         if (!hiddenCount()) { award(team2, 100, pid); return phraseReveal(pid, 'letters', now); }
+        P.keep = pid; // solo play: a hit keeps your turn
         phraseTurn(now);
       } else {
         fx('wrong');
@@ -3590,7 +3752,7 @@ RC.createEngine = function (C, opts) {
       if (pid !== S.solver) { return; }
       if (phraseMatch(m.text)) { award(team2, 150 + 25 * hiddenCount(), pid); phraseReveal(pid, 'solve', now); }
       else {
-        S.slock[team2] = true; S.last = { bad: clean(m.text, 40), who: p.n }; fx('wrong'); say(line('wrong'));
+        S.slock[side(pid)] = true; S.last = { bad: clean(m.text, 40), who: p.n }; fx('wrong'); say(line('wrong'));
         if (!phraseMiss(now)) { phraseTurn(now); }
       }
     }
@@ -3697,6 +3859,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
   function hnow() { var n = Date.now() - clockOff; if (S && S.paused && S.pat) { return S.pat; } return n; }
   function tname(t) { return S.teams[t] ? S.teams[t].name : ''; }
   function gameTitle(key) { for (var i = 0; i < C.rounds.length; i++) { if (C.rounds[i].key === key) { return C.rounds[i].title; } } return key; }
+  function rankList() { var out = []; S.order.forEach(function (id) { var p = S.players[id]; if (p) { out.push({ p: id, n: p.n, pts: p.pts, t: p.t }); } }); out.sort(function (a, b) { return b.pts - a.pts; }); return out; }
   function pname(pid) { return pid && S.players[pid] ? S.players[pid].n : 'Someone'; }
   function pteam(pid) { return pid && S.players[pid] ? S.players[pid].t : 0; }
   function timerHtml(len) { return S.deadline ? '<div class="timer"><i data-dl="' + S.deadline + '" data-len="' + len + '"></i></div>' : ''; }
@@ -3801,6 +3964,30 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       if (S.order.length && now - lastIn > 15000 && now - lastKick > 15000) { lastKick = now; netKick(); }
       tickUI();
     }, 100);
+    /* Optional live judge for Crillion. Off unless content.js sets judgeUrl. The TV asks it about answers that
+       are not on the sheet; if it does not answer in time, the showrunner decides on their phone as usual. */
+    var judgedK = '';
+    function askJudge() {
+      if (!C.judgeUrl || S.phase !== 'cr_judge' || judgedK === S.k) { return; }
+      judgedK = S.k;
+      var k = S.k, asks = [];
+      S.cr.rows.forEach(function (r) { if (r.st === 'ask') { asks.push({ p: r.p, text: r.text }); } });
+      try {
+        var x = new XMLHttpRequest();
+        x.open('POST', C.judgeUrl, true); x.timeout = 20000;
+        x.setRequestHeader('Content-Type', 'application/json');
+        x.onload = function () {
+          if (S.k !== k || x.status !== 200) { return; }
+          try {
+            var res = JSON.parse(x.responseText).results || [];
+            res.forEach(function (j) { if (j && S.k === k) { E.cmd('crj', { p: j.p, ok: !!j.ok, said: j.said, why: j.why, by: 'the AI judge' }, Date.now()); } });
+            dirty = true;
+          } catch (e) { }
+        };
+        x.send(JSON.stringify({ room: ROOM, question: S.cr.text, answers: asks }));
+      } catch (e) { }
+    }
+    setInterval(askJudge, 500);
     function wake() { if (!document.hidden && Date.now() - lastIn > 6000 && S.order.length) { lastKick = Date.now(); netKick(); } }
     document.addEventListener('visibilitychange', wake);
     window.addEventListener('online', function () { lastKick = Date.now(); netKick(); });
@@ -3851,14 +4038,28 @@ if (typeof module !== 'undefined') { module.exports = RC; }
     function topHtml() {
       var sub = S.phase === 'lobby' ? 'Join on your phone' : (S.phase === 'menu' ? 'Pick a game' : (S.phase === 'final' ? 'Final score' : 'Game ' + S.round + ' &middot; ' + esc(S.rt || '')));
       function tm(t) { var ctrl = (S.turn && pteam(S.turn) === t) ? ' ctrl' : ''; return '<div class="tm t' + t + ctrl + '"><div class="tn">' + esc(tname(t)) + '</div><div class="ts">' + S.teams[t].score + '</div></div>'; }
+      if (S.solo) { // no teams: the top bar shows who is first and second
+        var rk = rankList();
+        var sp = function (i, t) { var r = rk[i]; return '<div class="tm t' + t + (r && S.turn === r.p ? ' ctrl' : '') + '"><div class="tn">' + (r ? (i + 1) + '. ' + esc(r.n) : (i ? '2nd place' : '1st place')) + '</div><div class="ts">' + (r ? r.pts : 0) + '</div></div>'; };
+        return sp(0, 0) + '<div class="mid"><div class="logo">Rain Check!</div><div class="sub">' + sub + '</div></div>' + sp(1, 1);
+      }
       return tm(0) + '<div class="mid"><div class="logo">Rain Check!</div><div class="sub">' + sub + '</div></div>' + tm(1);
     }
-    function who(pid) { return '<span class="t' + pteam(pid) + 'c">' + esc(pname(pid)) + '</span>'; }
+    function who(pid) { return '<span class="t' + (S.solo ? 0 : pteam(pid)) + 'c">' + esc(pname(pid)) + '</span>'; }
+    function gainsHtml(rv) { // what a round just paid out: per team, or a head count in solo play
+      if (S.solo) { return (rv.nok || 0) + (rv.nok === 1 ? ' player scores' : ' players score'); }
+      return '<span class="t0c">' + esc(tname(0)) + ' +' + rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + rv.gains[1] + '</span>';
+    }
+    function ranksHtml(max) { // every player's own points, best first
+      var rk = rankList(), h = '<div class="ranks">';
+      for (var i = 0; i < rk.length && i < max; i++) { h += '<div class="rk"><b>' + (i + 1) + '</b><span class="t' + (S.solo ? (i === 0 ? 0 : 1) : rk[i].t) + 'c">' + esc(rk[i].n) + '</span><i>' + rk[i].pts + '</i></div>'; }
+      return h + '</div>';
+    }
     function lobbyHtml() {
-      var cols = ['', ''];
-      S.order.forEach(function (pid) { var p = S.players[pid]; if (!p) { return; } cols[p.t] += '<div class="chip' + ((Date.now() - p.seen) > 30000 ? ' off' : '') + '">' + esc(p.n) + (pid === S.boss ? ' <small>RUNS THE SHOW</small>' : '') + '</div>'; });
+      var cols = ['', ''], nth = 0;
+      S.order.forEach(function (pid) { var p = S.players[pid]; if (!p) { return; } cols[S.solo ? (nth++ % 2) : p.t] += '<div class="chip' + ((Date.now() - p.seen) > 30000 ? ' off' : '') + '">' + esc(p.n) + (pid === S.boss ? ' <small>RUNS THE SHOW</small>' : '') + '</div>'; });
       return '<div class="lobby"><div class="qr">' + qrSvg + '<div class="url">' + esc(SHORT) + '</div><div class="code">' + ROOM + '</div></div>' +
-        '<div class="teams"><div class="col t0"><h3>' + esc(tname(0)) + '</h3>' + cols[0] + '</div><div class="col t1"><h3>' + esc(tname(1)) + '</h3>' + cols[1] + '</div></div></div><div class="lineup">' + (S.boss ? '<b>' + esc(pname(S.boss)) + '</b> runs the show. Tap a game on that phone to start.' : 'The first player to join runs the show.') + '</div>';
+        '<div class="teams"><div class="col t0"><h3>' + (S.solo ? 'Players' : esc(tname(0))) + '</h3>' + cols[0] + '</div><div class="col t1"><h3>' + (S.solo ? 'No teams' : esc(tname(1))) + '</h3>' + cols[1] + '</div></div></div><div class="lineup">' + (S.boss ? '<b>' + esc(pname(S.boss)) + '</b> runs the show. Tap a game on that phone to start.' : 'The first player to join runs the show.') + '</div>';
     }
     function gmenuHtml() {
       var h = '<div class="h2">Pick a game</div><div class="gmenu">';
@@ -3874,7 +4075,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       var q = S.q, rv = S.phase === 'vote_reveal' ? S.rv : null, h = '<div class="tag">Question ' + q.n + ' of ' + q.of + '</div><div class="h2">' + esc(q.text) + '</div><div class="opts">';
       for (var i = 0; i < q.o.length; i++) { h += '<div class="opt o' + i + (rv ? (rv.a === i ? ' win' : ' dim') : '') + '"><span class="l">' + 'ABCD'.charAt(i) + '</span>' + esc(q.o[i]) + (rv ? '<span class="n">' + rv.counts[i] + '</span>' : '') + '</div>'; }
       h += '</div>';
-      if (rv) { h += '<div class="status"><span class="t0c">' + esc(tname(0)) + ' +' + rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + rv.gains[1] + '</span>' + (rv.fast ? ' &nbsp; Fastest: ' + esc(rv.fast) : '') + '</div>'; }
+      if (rv) { h += '<div class="status">' + gainsHtml(rv) + (rv.fast ? ' &nbsp; Fastest: ' + esc(rv.fast) : '') + '</div>'; }
       else { h += '<div class="status">' + waitHtml() + '</div>' + timerHtml(q.kind === 'tf' ? 16000 : 26000); }
       return h;
     }
@@ -3890,7 +4091,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
     function clueHtml() {
       var q = S.q, h = '<div class="tag">' + esc(q.cat) + ' &middot; ' + q.val + '</div><div class="clue">' + esc(q.text) + '</div>';
       if (S.phase === 'board_q') {
-        var who2 = S.steal ? esc(tname(S.locked[0] ? 1 : 0)) + ' can steal. BUZZ!' : 'BUZZ NOW!';
+        var who2 = S.steal ? esc(S.stealWho || 'Anyone else') + ' can steal. BUZZ!' : 'BUZZ NOW!';
         h += '<div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="' + who2 + '" data-off="Get ready...">Get ready...</div>' + timerHtml(12000);
       } else if (S.phase === 'board_ans') { h += '<div class="status">' + who(S.turn) + ' is answering</div>' + timerHtml(11000); }
       else { h += '<div class="answer">' + esc(S.rv.text) + '</div><div class="status">' + (S.rv.who ? '<span class="t' + S.rv.team + 'c">' + esc(S.rv.who) + '</span> +' + S.rv.val : 'No points') + '</div>'; }
@@ -3944,7 +4145,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       h += '</div><div class="tag yel">Pot</div><div class="pot">' + f.pot + '</div>';
       if (S.phase === 'feud_face') { h += '<div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="BUZZ NOW!" data-off="Get ready...">Get ready...</div>'; }
       else if (S.phase === 'feud_pick') { h += '<div class="status">' + (f.mode === 'steal' ? 'STEAL: ' : '') + who(S.turn) + ' is choosing</div>'; }
-      else { h += '<div class="status">' + (S.rv.team >= 0 ? '<span class="t' + S.rv.team + 'c">' + esc(tname(S.rv.team)) + '</span> +' + S.rv.pot : 'No points') + '</div>'; }
+      else { h += '<div class="status">' + (S.rv.solo ? 'Board finished' : (S.rv.team >= 0 ? '<span class="t' + S.rv.team + 'c">' + esc(tname(S.rv.team)) + '</span> +' + S.rv.pot : 'No points')) + '</div>'; }
       return h + '</div></div>' + (S.phase === 'feud_pick' ? timerHtml(f.mode === 'steal' ? 25000 : (f.mode === 'face' ? 14000 : 18000)) : '');
     }
     function barsHtml() {
@@ -3962,7 +4163,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       if (ph === 'ml_reveal') {
         var tl = ''; S.rv.top.forEach(function (x) { tl += (tl ? ', ' : '') + esc(x.n) + ' ' + x.c; });
         return '<div class="h2">' + esc(S.ml.text) + '</div><div class="answer">' + (S.rv.win.length ? esc(S.rv.win.join(' and ')) : 'No votes') + '</div><div class="tally">' + tl + '</div>' +
-          '<div class="status"><span class="t0c">' + esc(tname(0)) + ' +' + S.rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + S.rv.gains[1] + '</span></div>';
+          '<div class="status">' + gainsHtml(S.rv) + '</div>';
       }
       if (ph === 'num_q') { return '<div class="tag">Question ' + S.nm.n + ' of ' + S.nm.of + '</div><div class="h2">' + esc(S.nm.text) + '</div><div class="status">Type your best guess. ' + waitHtml() + '</div>' + timerHtml(30000); }
       if (ph === 'num_reveal') {
@@ -3981,13 +4182,29 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       if (ph === 'zoom_q' || ph === 'zoom_ans' || ph === 'zoom_reveal') { return zoomHtml(); }
       if (ph === 'phrase_turn' || ph === 'phrase_solve' || ph === 'phrase_reveal') { return phraseHtml(); }
       if (ph === 'feud_face' || ph === 'feud_pick' || ph === 'feud_reveal') { return feudHtml(); }
-      if (ph === 'round_end') { return '<div class="tag">Scores after</div><div class="h1">' + esc(S.re.title) + '</div>' + barsHtml(); }
+      if (ph === 'cr_q') { return '<div class="tag">Question ' + S.cr.n + ' of ' + S.cr.of + '</div><div class="h2">' + esc(S.cr.text) + '</div><div class="status">Type one answer. Obscure is good. ' + waitHtml() + '</div>' + timerHtml(46000); }
+      if (ph === 'cr_judge' || ph === 'cr_reveal') {
+        var rows = S.cr.rows, two = rows.length > 6, ch = '<div class="h2">' + esc(S.cr.text) + '</div><div class="crl' + (two ? ' two' : '') + '">';
+        for (var ci = 0; ci < rows.length && ci < 12; ci++) {
+          var r = rows[ci], right;
+          if (r.st === 'ask') { right = '<i class="ask">judge?</i>'; }
+          else if (ph === 'cr_judge') { right = '<i class="ask">...</i>'; }
+          else if (r.st === 'ok') { right = '<small>' + r.said + ' of 100</small><i>' + r.pts + '</i>'; }
+          else { right = '<small>' + esc(r.why || 'not accepted') + '</small><i class="bad">0</i>'; }
+          ch += '<div class="crr' + (ph === 'cr_reveal' && r.st !== 'ok' ? ' out' : '') + '"><span class="t' + (S.solo ? 1 : r.t) + 'c">' + esc(r.n) + '</span><b>' + esc(ph === 'cr_reveal' && r.st === 'ok' ? r.name : r.text) + '</b>' + right + '</div>';
+        }
+        ch += '</div>';
+        if (ph === 'cr_judge') { return ch + '<div class="status go">The judge is deciding</div>' + timerHtml(45000); }
+        return ch + '<div class="status">' + (S.rv.who ? 'Most obscure: ' + esc(S.rv.who) + '. ' : '') + (S.solo ? '' : '<span class="t0c">' + esc(tname(0)) + ' +' + S.rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + S.rv.gains[1] + '</span>') + '</div>';
+      }
+      if (ph === 'round_end') { return '<div class="tag">Scores after</div><div class="h2">' + esc(S.re.title) + '</div>' + (S.solo ? '' : barsHtml()) + ranksHtml(S.solo ? 12 : 6); }
       if (ph === 'final') {
         var conf = '', cols = ['#C4520F', '#17696B', '#F2B705', '#FBF0D9'];
         for (var i = 0; i < 28; i++) { conf += '<div class="conf" style="left:' + ((i * 37) % 100) + '%;background:' + cols[i % 4] + ';-webkit-animation-delay:' + ((i * 0.23) % 3.4) + 's;animation-delay:' + ((i * 0.23) % 3.4) + 's"></div>'; }
         var f = S.fin;
-        return conf + '<div class="h1">' + (f.winner < 0 ? 'It is a tie!' : '<span class="t' + f.winner + 'c">' + esc(tname(f.winner)) + '</span> win!') + '</div>' + barsHtml() +
-          '<div class="status">' + (f.mvp ? 'Top scorer: ' + esc(f.mvp) + ' (' + f.mvpPts + ')' : '') + (f.king ? ' &nbsp; Fastest buzzer: ' + esc(f.king) + ' (' + f.kingN + ')' : '') + '</div>';
+        if (f.solo) { return conf + '<div class="h1">' + (f.tie ? 'A tie at the top!' : '<span class="t0c">' + esc(f.champ) + '</span> wins!') + '</div>' + ranksHtml(12) + '<div class="status">' + (f.king ? 'Fastest buzzer: ' + esc(f.king) + ' (' + f.kingN + ')' : '') + '</div>'; }
+        return conf + '<div class="h1">' + (f.winner < 0 ? 'It is a tie!' : '<span class="t' + f.winner + 'c">' + esc(tname(f.winner)) + '</span> win!') + '</div>' + barsHtml() + ranksHtml(6) +
+          '<div class="status">' + (f.king ? 'Fastest buzzer: ' + esc(f.king) + ' (' + f.kingN + ')' : '') + '</div>';
       }
       return '';
     }
@@ -4105,6 +4322,11 @@ if (typeof module !== 'undefined') { module.exports = RC; }
 
     function joinHtml() {
       var n0 = S ? tname(0) : 'Thunder', n1 = S ? tname(1) : 'Lightning';
+      if (S && S.solo) { // no teams in this show: a name is all we need
+        return '<h2>Join Rain Check!</h2><p>Room ' + ROOM + '</p>' +
+          '<input class="field" id="nm" maxlength="14" placeholder="Your first name" value="' + esc(ui.name) + '" autocomplete="off">' +
+          '<button class="pbtn go" data-a="join">I am in</button>';
+      }
       return '<h2>Join Rain Check!</h2><p>Room ' + ROOM + '</p>' +
         '<input class="field" id="nm" maxlength="14" placeholder="Your first name" value="' + esc(ui.name) + '" autocomplete="off">' +
         '<p>Pick your team</p>' +
@@ -4112,10 +4334,19 @@ if (typeof module !== 'undefined') { module.exports = RC; }
         '<button class="pbtn c o1' + (ui.team === 1 ? ' sel' : '') + '" data-a="team" data-v="1">' + esc(n1) + '</button>' +
         '<button class="pbtn go" data-a="join"' + (ui.team < 0 ? ' disabled' : '') + '>I am in</button>';
     }
+    function modeHtml() {
+      return '<h3>How do you want to play?</h3><div class="half"><button class="pbtn plain c' + (S.solo ? '' : ' sel') + '" data-a="c_solo" data-v="0">Two teams</button><button class="pbtn plain c' + (S.solo ? ' sel' : '') + '" data-a="c_solo" data-v="1">Every player for themselves</button></div>';
+    }
+    function myRank() { var rk = rankList(); for (var i = 0; i < rk.length; i++) { if (rk[i].p === pid) { return i + 1; } } return 0; }
+    function standing() { // one line of score, for whichever way the show is being played
+      if (S.solo) { var rk = rankList(); return '<p>' + (rk.length ? esc(rk[0].n) + ' leads with ' + rk[0].pts + '. ' : '') + 'You are number ' + myRank() + ' with ' + (me() ? me().pts : 0) + '.</p>'; }
+      return '<p>' + esc(tname(0)) + ' ' + S.teams[0].score + ' &middot; ' + esc(tname(1)) + ' ' + S.teams[1].score + '</p>';
+    }
     function pickerHtml() {
       var h = '<div class="half">';
       for (var i = 0; i < C.order.length; i++) { var k = C.order[i], n = S.played[k] || 0; h += '<button class="pbtn game c' + (n ? ' done' : '') + '" data-a="c_play" data-v="' + k + '">' + esc(gameTitle(k)) + (n ? '<small>played</small>' : '') + '</button>'; }
       h += '</div><button class="pbtn plain c' + (S.short ? ' sel' : '') + '" data-a="c_short">Short rounds: ' + (S.short ? 'on' : 'off') + '</button>';
+      h += modeHtml();
       if (S.round > 0) { h += '<button class="pbtn plain c" data-a="c_end">Finish the show and see the winner</button>'; }
       return h;
     }
@@ -4129,12 +4360,13 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       var m = me(), lists = ['', ''];
       S.order.forEach(function (id) { var p = S.players[id]; if (p) { lists[p.t] += esc(p.n) + (id === S.boss ? ' (showrunner)' : '') + '<br>'; } });
       var h = '<h2>You are in, ' + esc(m.n) + '!</h2>' + (S.boss === pid ? '' : '<p>' + esc(pname(S.boss)) + ' will start the show.</p>') +
+        (S.solo ? '<div class="plist"><b class="t0c">Players</b>' + lists[0] + lists[1] + '</div>' :
         '<div class="plist"><b class="t0c">' + esc(tname(0)) + '</b>' + (lists[0] || '<span class="small">nobody yet</span>') + '<b class="t1c">' + esc(tname(1)) + '</b>' + (lists[1] || '<span class="small">nobody yet</span>') + '</div>' +
-        '<button class="pbtn plain c" data-a="switch">Switch my team</button>';
+        '<button class="pbtn plain c" data-a="switch">Switch my team</button>');
       if (S.boss === pid) {
         h += '<h2>You run the show</h2><p>When everyone is in, tap a game to start it. After each game you come back here and pick the next one.</p>' + pickerHtml() +
-          '<h3>Team names</h3><input class="field" id="tn0" maxlength="14" value="' + esc(tname(0)) + '" style="font-size:19px;margin:4px 0"><input class="field" id="tn1" maxlength="14" value="' + esc(tname(1)) + '" style="font-size:19px;margin:4px 0">' +
-          '<div class="half" style="margin-top:8px"><button class="pbtn plain c" data-a="c_names">Save names</button><button class="pbtn plain c" data-a="c_preset">Kids vs Adults</button></div>';
+          (S.solo ? '' : '<h3>Team names</h3><input class="field" id="tn0" maxlength="14" value="' + esc(tname(0)) + '" style="font-size:19px;margin:4px 0"><input class="field" id="tn1" maxlength="14" value="' + esc(tname(1)) + '" style="font-size:19px;margin:4px 0">' +
+          '<div class="half" style="margin-top:8px"><button class="pbtn plain c" data-a="c_names">Save names</button><button class="pbtn plain c" data-a="c_preset">Kids vs Adults</button></div>');
       }
       return h;
     }
@@ -4146,7 +4378,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       var ph = S.phase, mine = S.turn === pid, s = sentHere(), h = '';
       if (ph === 'lobby') { return lobbyHtml(); }
       if (ph === 'menu') {
-        var sc = '<p>' + esc(tname(0)) + ' ' + S.teams[0].score + ' &middot; ' + esc(tname(1)) + ' ' + S.teams[1].score + '</p>';
+        var sc = standing();
         if (S.boss === pid) { return '<h2>Pick the next game</h2>' + sc + pickerHtml(); }
         return '<h2>' + esc(pname(S.boss)) + ' is picking the next game</h2>' + sc + watch();
       }
@@ -4188,7 +4420,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
         return h + '</div>';
       }
       if (ph === 'board_q' || ph === 'zoom_q') {
-        if (S.locked[m.t]) { return '<h2>Your team is locked out</h2>' + watch('The other team gets a try.'); }
+        if (S.locked[S.solo ? pid : m.t]) { return '<h2>' + (S.solo ? 'You are locked out' : 'Your team is locked out') + '</h2>' + watch(S.solo ? 'The others get a try.' : 'The other team gets a try.'); }
         return (ph === 'board_q' ? '<div class="q">' + esc(S.q.text) + '</div>' : '<h2>What place is this?</h2>') + buzzBtn('BUZZ') + '<p class="small">Buzz only if you know it. You answer on this phone.</p>';
       }
       if (ph === 'board_ans' || ph === 'zoom_ans') {
@@ -4204,7 +4436,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
           for (var k = 0; k < 26; k++) { var L = LETTERS.charAt(k); h += '<button data-a="letter" data-v="' + L + '"' + (S.used.indexOf(L) >= 0 ? ' disabled' : '') + '>' + L + '</button>'; }
           h += '</div>';
         } else { h = '<h2>' + (mine ? 'Sent' : esc(pname(S.turn)) + ' picks a letter') + '</h2>' + mask; }
-        if (S.slock[m.t]) { h += '<p class="small">Your team guessed wrong. Wait for the next letter to solve.</p>'; }
+        if (S.slock[S.solo ? pid : m.t]) { h += '<p class="small">' + (S.solo ? 'You' : 'Your team') + ' guessed wrong. Wait for the next letter to solve.</p>'; }
         else if (!s) { h += '<button class="pbtn go" data-a="buzz">I CAN SOLVE IT</button>'; }
         return h;
       }
@@ -4222,8 +4454,27 @@ if (typeof module !== 'undefined') { module.exports = RC; }
         for (var o = 0; o < S.f.o.length; o++) { if (S.f.tried.indexOf(o) < 0) { h += '<button class="pbtn plain c" data-a="fpick" data-v="' + o + '">' + esc(S.f.o[o]) + '</button>'; } }
         return h;
       }
-      if (ph === 'feud_reveal' || ph === 'round_end') { return '<h2>' + esc(tname(0)) + ' ' + S.teams[0].score + ' &middot; ' + esc(tname(1)) + ' ' + S.teams[1].score + '</h2>' + watch(); }
-      if (ph === 'final') { return '<h2>' + (S.fin.winner < 0 ? 'A tie!' : esc(tname(S.fin.winner)) + ' win!') + '</h2><p>You scored ' + m.pts + ' points for your team.</p>' + (S.boss === pid ? '<button class="pbtn go" data-a="c_again">New show, same players</button>' : ''); }
+      if (ph === 'feud_reveal' || ph === 'round_end') { return '<h2>Scores</h2>' + standing() + (S.solo ? '' : '<p>You have ' + m.pts + ' points of your own, number ' + myRank() + ' of ' + S.order.length + '.</p>') + watch(); }
+      if (ph === 'cr_q') {
+        lk = locked('Answer locked in'); if (lk) { return lk; }
+        return '<div class="q">' + esc(S.cr.text) + '</div><p class="small">One answer. The fewer people who would say it, the more you score.</p><input class="field" id="crin" maxlength="40" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Your answer"><button class="pbtn go" data-a="cr">Lock it in</button>';
+      }
+      if (ph === 'cr_judge') {
+        if (S.boss !== pid) { return '<h2>The judge is deciding</h2>' + watch(); }
+        h = '<h2>You are the judge</h2><p>These answers are not on the answer sheet. Is each one correct?</p><div class="q">' + esc(S.cr.text) + '</div>';
+        S.cr.rows.forEach(function (r) { if (r.st === 'ask') { h += '<p><b>' + esc(r.text) + '</b> <span class="small">from ' + esc(r.n) + '</span></p><div class="half"><button class="pbtn dark" data-a="c_crj" data-v="' + esc(r.p) + ',1">Correct</button><button class="pbtn plain c" data-a="c_crj" data-v="' + esc(r.p) + ',0">Wrong</button></div>'; } });
+        return h;
+      }
+      if (ph === 'cr_reveal') {
+        var mineR = null; S.cr.rows.forEach(function (r) { if (r.p === pid) { mineR = r; } });
+        if (!mineR) { return '<h2>No answer from you</h2>' + watch(); }
+        return '<h2>' + (mineR.st === 'ok' ? mineR.pts + ' points' : '0 points') + '</h2><p>' + (mineR.st === 'ok' ? esc(mineR.name) + ': about ' + mineR.said + ' of 100 people would say it.' : esc(mineR.text) + ': ' + esc(mineR.why || 'not accepted.')) + '</p>' + watch();
+      }
+      if (ph === 'final') {
+        var endBtn = S.boss === pid ? '<button class="pbtn go" data-a="c_again">New show, same players</button>' : '';
+        if (S.fin.solo) { return '<h2>' + (S.fin.tie ? 'A tie at the top!' : esc(S.fin.champ) + ' wins!') + '</h2><p>You finished number ' + myRank() + ' with ' + m.pts + ' points.</p>' + endBtn; }
+        return '<h2>' + (S.fin.winner < 0 ? 'A tie!' : esc(tname(S.fin.winner)) + ' win!') + '</h2><p>You scored ' + m.pts + ' points. That makes you number ' + myRank() + ' of ' + S.order.length + '.</p>' + endBtn;
+      }
       return watch();
     }
     function render() {
@@ -4235,7 +4486,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       else if (stale) { ban = '<div class="banner">Reconnecting to the TV...</div>'; }
       else if (ui.rtt > 2500) { ban = '<div class="banner">This phone has a slow connection. Move closer to the Wi-Fi.</div>'; }
       put('pbanner', ban);
-      put('ptop', m ? '<div class="ptop t' + m.t + '"><span class="pill">' + esc(m.n) + ', ' + esc(tname(m.t)) + '</span><span class="sc">' + S.teams[0].score + ' to ' + S.teams[1].score + '</span></div>' : '<div class="ptop tn"><span class="sc">Rain Check!</span><span>Room ' + ROOM + '</span></div>');
+      put('ptop', m ? '<div class="ptop t' + (S.solo ? 1 : m.t) + '"><span class="pill">' + esc(m.n) + (S.solo ? '' : ', ' + esc(tname(m.t))) + '</span><span class="sc">' + (S.solo ? m.pts + ' pts' : S.teams[0].score + ' to ' + S.teams[1].score) + '</span></div>' : '<div class="ptop tn"><span class="sc">Rain Check!</span><span>Room ' + ROOM + '</span></div>');
       // do not redraw a screen with a text box while someone is typing in it
       var wr = S && S.phase === 'scr_q' && S.wr ? (S.wr[pid] || 0) : 0;
       put('pnote', S && ui.failK && ui.failK === S.k ? '<div class="pnote bad">That did not reach the TV. Tap again.</div>' : (wr && !(S.acted && S.acted[pid]) ? '<div class="pnote bad">Not it. Try again. (' + wr + (wr === 1 ? ' try' : ' tries') + ')</div>' : ''));
@@ -4243,7 +4494,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       if (ae && ae.tagName === 'INPUT' && cache.pbody && cache.pbody.replace(/value="[^"]*"/g, '') === html.replace(/value="[^"]*"/g, '')) { /* keep */ }
       else if (ae && ae.tagName === 'INPUT' && ae.id === 'nm' && !ui.joined) { /* typing a name: wait */ }
       else if (ae && ae.tagName === 'INPUT' && (ae.id === 'tn0' || ae.id === 'tn1') && S && S.phase === 'lobby') { /* typing team names: wait */ }
-      else if (ae && ae.tagName === 'INPUT' && (ae.id === 'wordin' || ae.id === 'numin') && S && cache.pbodyK === S.k && !(S.acted && S.acted[pid]) && !sentHere()) { /* typing an answer: wait */ }
+      else if (ae && ae.tagName === 'INPUT' && (ae.id === 'wordin' || ae.id === 'numin' || ae.id === 'crin') && S && cache.pbodyK === S.k && !(S.acted && S.acted[pid]) && !sentHere()) { /* typing an answer: wait */ }
       else { if (put('pbody', html)) { cache.pbodyK = S ? S.k : ''; } }
       var boss = S && m && S.boss === pid && S.phase !== 'lobby' && S.phase !== 'menu' && S.phase !== 'final';
       var passive = S && /^intro$|_reveal$|^round_end$/.test(S.phase);
@@ -4253,8 +4504,8 @@ if (typeof module !== 'undefined') { module.exports = RC; }
         var conn = '', tnow = S.now || Date.now();
         S.order.forEach(function (id) { var p = S.players[id]; if (p) { conn += esc(p.n) + ': ' + (tnow - p.seen > 10000 ? 'no signal' : (p.rtt ? (p.rtt < 700 ? 'good' : (p.rtt < 2000 ? 'slow' : 'very slow')) + ' (' + p.rtt + ' ms)' : 'checking')) + (p.late ? ', ' + p.late + ' late taps' : '') + '<br>'; } });
         sheet = '<div class="sheet"><button class="pbtn go" data-a="c_tomenu">Back to the game menu</button>' +
-          '<div class="r2"><button class="pbtn plain c" data-a="c_adj" data-v="0,50">' + esc(tname(0)) + ' +50</button><button class="pbtn plain c" data-a="c_adj" data-v="0,-50">' + esc(tname(0)) + ' -50</button></div>' +
-          '<div class="r2"><button class="pbtn plain c" data-a="c_adj" data-v="1,50">' + esc(tname(1)) + ' +50</button><button class="pbtn plain c" data-a="c_adj" data-v="1,-50">' + esc(tname(1)) + ' -50</button></div>' +
+          (S.solo ? '' : '<div class="r2"><button class="pbtn plain c" data-a="c_adj" data-v="0,50">' + esc(tname(0)) + ' +50</button><button class="pbtn plain c" data-a="c_adj" data-v="0,-50">' + esc(tname(0)) + ' -50</button></div>' +
+          '<div class="r2"><button class="pbtn plain c" data-a="c_adj" data-v="1,50">' + esc(tname(1)) + ' +50</button><button class="pbtn plain c" data-a="c_adj" data-v="1,-50">' + esc(tname(1)) + ' -50</button></div>') +
           '<h3>Phone connections</h3><div class="plist">' + conn + '</div>' +
           '<button class="pbtn plain c" data-a="c_end">Finish the show and see the winner</button><button class="pbtn dark" data-a="c_menu">Close</button></div>';
       }
@@ -4267,7 +4518,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       if (a === 'join') {
         el = document.getElementById('nm'); var name = (el ? el.value : ui.name).replace(/[<>]/g, '').replace(/^\s+|\s+$/g, '').substring(0, 14);
         if (!name) { if (el) { el.focus(); } return; }
-        if (ui.team < 0) { return; }
+        if (ui.team < 0) { if (S && S.solo) { ui.team = 0; } else { return; } }
         ui.name = name; ui.joined = true; lsSet('rc_name', name); lsSet('rc_room', ROOM); lsSet('rc_team', String(ui.team));
         wakeLock();
         if (el) { el.blur(); }
@@ -4282,6 +4533,9 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       else if (a === 'word') { el = document.getElementById('wordin'); if (!el || !el.value) { if (el) { el.focus(); } return; } send({ t: 'word', k: S.k, n: 1, text: el.value }); el.value = ''; return; }
       else if (a === 'c_play') { ctl('play', { key: v }); try { window.scrollTo(0, 0); } catch (e) { } }
       else if (a === 'c_short') { ctl('short', { on: !S.short }); }
+      else if (a === 'c_solo') { ctl('solo', { on: v === '1' }); }
+      else if (a === 'c_crj') { var cj = v.split(','); ctl('crj', { p: cj[0], ok: cj[1] === '1', said: 8, by: 'the showrunner' }); }
+      else if (a === 'cr') { el = document.getElementById('crin'); if (!el || !el.value.replace(/\s/g, '')) { if (el) { el.focus(); } return; } var ctxt = el.value; el.blur(); doAct({ t: 'cr', text: ctxt }, ctxt); }
       else if (a === 'c_tomenu') { ctl('menu'); ui.menu = false; }
       else if (a === 'tile') { var cl = v.split(','); doAct({ t: 'pick', c: +cl[0], l: +cl[1] }, 'Picked'); }
       else if (a === 'buzz') { if (S.phase !== 'phrase_turn' && hnow() < (S.openAt || 0) - 150) { return; } if (sentHere()) { return; } try { if (navigator.vibrate) { navigator.vibrate(60); } } catch (e) { } doAct({ t: 'buzz' }, 'Buzzed'); }
