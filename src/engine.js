@@ -74,7 +74,7 @@ RC.createEngine = function (C, opts) {
   function init(room, now) {
     kc = 0;
     S = {
-      v: 2, room: room, boot: Math.floor(rnd() * 1e9), phase: 'lobby', k: 'lobby:0', paused: false, pleft: 0,
+      v: 3, room: room, boot: Math.floor(rnd() * 1e9), phase: 'lobby', k: 'lobby:0', paused: false, pleft: 0,
       teams: [{ name: 'Thunder', score: 0 }, { name: 'Lightning', score: 0 }],
       players: {}, order: [], boss: null, round: 0, rot: [-1, -1],
       say: { id: 0, text: '' }, fx: { id: 0, name: '' }, gain: null,
@@ -572,7 +572,7 @@ RC.createEngine = function (C, opts) {
         for (var ji = 0; ji < S.cr.rows.length; ji++) {
           var jr = S.cr.rows[ji];
           if (jr.st === 'ask' && jr.p === a.p) {
-            if (a.ok) { jr.st = 'ok'; jr.said = Math.max(1, Math.min(99, parseInt(a.said, 10) || 8)); jr.name = jr.text; jr.by = clean(a.by, 20) || 'the judge'; }
+            if (a.ok) { jr.st = 'ok'; jr.said = Math.max(2, Math.min(40, parseInt(a.said, 10) || 8)); /* a judge can rate an off-sheet answer, within limits */ jr.name = jr.text; jr.by = clean(a.by, 20) || 'the judge'; }
             else { jr.st = 'no'; jr.why = clean(a.why, 90) || 'Not accepted.'; }
           }
           if (jr.st === 'ask') { left++; }

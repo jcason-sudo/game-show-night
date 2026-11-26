@@ -75,7 +75,7 @@
   function dotsHtml() { var s = '<span class="dots">'; net.conns.forEach(function (c) { s += '<i class="' + (c.up ? 'on' : '') + '"></i>'; }); return s + '</span>'; }
 
   /* ---------------- shared ---------------- */
-  var VERSION = 2;         // must match the engine's state version
+  var VERSION = 3;         // must match the engine's state version
   var S = null;            // latest public state
   var clockOff = 0;        // my clock minus the TV's clock
   function hnow() { var n = Date.now() - clockOff; if (S && S.paused && S.pat) { return S.pat; } return n; }
