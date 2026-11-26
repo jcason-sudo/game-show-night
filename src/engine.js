@@ -1,4 +1,4 @@
-/* Game Night engine. Pure state machine: no DOM, no network.
+/* Game Show Night engine. Pure state machine: no DOM, no network.
    The TV screen runs one engine; phones only send small messages. */
 var RC = (typeof RC !== 'undefined') ? RC : {};
 RC.createEngine = function (C, opts) {
@@ -473,16 +473,17 @@ RC.createEngine = function (C, opts) {
     if (S.zi >= P.zs.length) { return roundEnd(now); }
     var z = P.zs[S.zi];
     P.cur = mc({ q: '', o: z.o });
-    S.z = { n: S.zi + 1, of: P.zs.length, img: z.id, mode: S.zi % 2 ? 'tiles' : 'zoom', fx: z.fx, fy: z.fy, seed: Math.floor(rnd() * 99999) };
-    S.zt0 = now + 3000; S.zdur = 30000; S.zfrozen = null; S.openAt = S.zt0 + 1500 + Math.floor(rnd() * 2500);
+    var zd = C.zoomMs || 60000;
+    S.z = { n: S.zi + 1, of: P.zs.length, img: z.id, fx: z.fx, fy: z.fy, w: z.w, h: z.h, by: z.by || '', lic: z.lic || '' };
+    S.zt0 = now + 3000; S.zdur = zd; S.zfrozen = null; S.openAt = S.zt0 + 1500 + Math.floor(rnd() * 2500);
     S.locked = {}; S.early = {}; S.bzr = []; S.wrong = []; S.rv = null; S.turn = null;
-    setPhase('zoom_q', now, 3000 + 30000 + 6000);
-    say('Picture ' + S.z.n + '. What famous place is this? Wait for go, then buzz when you know.');
+    setPhase('zoom_q', now, 3000 + zd + 6000);
+    say('Picture ' + S.z.n + '. It starts close up and out of focus, then slowly pulls back. Wait for go, then buzz when you know the place.');
   }
   function zoomReveal(pid, now) {
     S.rv = { text: P.cur.o[P.cur.a], who: pid ? nm(pid) : '', team: pid ? pl(pid).t : -1, val: pid ? S.zval : 0 };
-    S.zfrozen = 1; S.turn = null;
-    setPhase('zoom_reveal', now, 7500);
+    S.zfrom = zfrac(now); S.zfrozen = 1; S.turn = null;
+    setPhase('zoom_reveal', now, 9000);
     if (pid) { say(line('right') + ' ' + S.rv.text + '. ' + S.zval + ' points.'); fx('right'); }
     else { say('The answer: ' + S.rv.text + '.'); }
   }

@@ -102,7 +102,13 @@ need.forEach(function (p) { assert.ok(phases[p], 'phase never reached: ' + p); }
 var C = RC.content;
 C.votes.forEach(function (q) { assert.strictEqual(q.o.length, 4, q.q); assert.strictEqual(new Set(q.o).size, 4, q.q); });
 C.board.forEach(function (c) { assert.strictEqual(c.levels.length, 4); c.levels.forEach(function (l) { l.forEach(function (q) { assert.strictEqual(q.o.length, 4, q.q); assert.strictEqual(new Set(q.o).size, 4, q.q); }); }); });
-C.zoom.forEach(function (z) { assert.strictEqual(z.o.length, 4); });
+C.zoom.forEach(function (z) {
+  assert.strictEqual(z.o.length, 4);
+  assert.ok(z.w > 500 && z.h > 500 && z.by, 'photo size and credit for ' + z.id);
+  assert.ok(z.fx >= 5 && z.fx <= 95 && z.fy >= 5 && z.fy <= 95, 'zoom starting point inside the picture: ' + z.id);
+  ['.jpg', '_s.jpg'].forEach(function (e) { assert.ok(require('fs').existsSync(require('path').join(__dirname, '../img/zoom/' + z.id + e)), 'photo file for ' + z.id + e); });
+});
+assert.ok(C.zoom.length >= 20, 'at least 20 photographs');
 C.decades.forEach(function (q) { assert.strictEqual(new Set(q.o).size, 4, q.q); });
 C.words.forEach(function (w) { assert.ok(/^[A-Z]+$/.test(w.w), w.w); });
 C.numbers.forEach(function (n) { assert.ok(typeof n.a === 'number', n.q); });

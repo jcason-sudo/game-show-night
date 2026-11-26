@@ -128,15 +128,15 @@ var RC = (typeof RC !== 'undefined') ? RC : {};
   /* The host: Ace, a game-show host in a bow tie. */
   art.host = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220" width="100%" height="100%">' +
     '<g class="hostbob">' +
-    '<rect x="42" y="34" width="150" height="100" rx="30" fill="#F2B705" stroke="#3A2214" stroke-width="6"/>' +
-    '<ellipse cx="92" cy="88" rx="8" ry="11" fill="#3A2214" class="hosteye"/><ellipse cx="140" cy="88" rx="8" ry="11" fill="#3A2214" class="hosteye"/>' +
-    '<path d="M80,70 q12,-10 24,-2 M128,68 q12,-8 24,2" stroke="#3A2214" stroke-width="5" fill="none" stroke-linecap="round"/>' +
-    '<path class="hostmouth" d="M96,106 Q116,124 138,106 Z" fill="#3A2214"/>' +
+    '<rect x="42" y="34" width="150" height="100" rx="30" fill="#F9D648" stroke="#0A2C39" stroke-width="6"/>' +
+    '<ellipse cx="92" cy="88" rx="8" ry="11" fill="#0A2C39" class="hosteye"/><ellipse cx="140" cy="88" rx="8" ry="11" fill="#0A2C39" class="hosteye"/>' +
+    '<path d="M80,70 q12,-10 24,-2 M128,68 q12,-8 24,2" stroke="#0A2C39" stroke-width="5" fill="none" stroke-linecap="round"/>' +
+    '<path class="hostmouth" d="M96,106 Q116,124 138,106 Z" fill="#0A2C39"/>' +
     '<circle cx="72" cy="104" r="8" fill="#F5B7A8"/><circle cx="162" cy="104" r="8" fill="#F5B7A8"/>' +
-    '<polygon points="116,138 86,124 86,156" fill="#C4520F"/><polygon points="116,138 146,124 146,156" fill="#C4520F"/><circle cx="116" cy="139" r="8" fill="#9C3F0A"/>' +
-    '<path d="M86,150 L72,206 L160,206 L146,150 Z" fill="#17696B"/>' +
-    '<path d="M150,160 q40,6 46,-26" stroke="#17696B" stroke-width="10" fill="none" stroke-linecap="round"/>' +
-    '<rect x="188" y="96" width="14" height="40" rx="7" fill="#8A8F93"/><circle cx="195" cy="92" r="13" fill="#3A2214"/>' +
+    '<polygon points="116,138 86,124 86,156" fill="#F0643A"/><polygon points="116,138 146,124 146,156" fill="#F0643A"/><circle cx="116" cy="139" r="8" fill="#9C3F0A"/>' +
+    '<path d="M86,150 L72,206 L160,206 L146,150 Z" fill="#5BC0EB"/>' +
+    '<path d="M150,160 q40,6 46,-26" stroke="#5BC0EB" stroke-width="10" fill="none" stroke-linecap="round"/>' +
+    '<rect x="188" y="96" width="14" height="40" rx="7" fill="#35596A"/><circle cx="195" cy="92" r="13" fill="#0A2C39"/>' +
     '</g></svg>';
 
   RC.art = art;

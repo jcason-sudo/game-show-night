@@ -1,4 +1,4 @@
-/* Game Night page logic: relay connection, TV screen, phone controller. */
+/* Game Show Night page logic: relay connection, TV screen, phone controller. */
 (function () {
   var qs = {};
   location.search.replace(/^\?/, '').split('&').forEach(function (kv) { var i = kv.indexOf('='); if (i > 0) { qs[kv.substring(0, i)] = decodeURIComponent(kv.substring(i + 1)); } });
@@ -90,6 +90,52 @@
   function secs(ms) { return (Math.max(0, ms) / 1000).toFixed(2) + ' s'; }
   function timerHtml(len) { return S.deadline ? '<div class="timer"><i data-dl="' + S.deadline + '" data-len="' + len + '"></i></div>' : ''; }
 
+  /* Zoom In: a real photograph that starts close up and soft, then pulls back very slowly and comes into focus.
+     Two layers move together: a small soft copy underneath and the sharp photo fading in on top, so only
+     transform and opacity change from frame to frame (smooth even on a slow TV browser). */
+  var zrev = { key: '', t0: 0 };
+  function zoomF(now) {
+    var t = S.paused && S.pat ? S.pat : now;
+    return S.zfrozen != null ? S.zfrozen : Math.max(0, Math.min(1, (t - S.zt0) / S.zdur));
+  }
+  function zoomDraw() {
+    var el = document.getElementById('zimg');
+    if (!el || !S || !S.z) { return; }
+    var now = Date.now(), z = S.z, f = zoomF(now), fr = el.parentNode;
+    if (S.phase === 'zoom_reveal') {
+      // pull back to the whole picture over two seconds instead of jumping
+      var from = S.zfrom != null ? S.zfrom : 1;
+      if (zrev.key !== S.k) { zrev.key = S.k; zrev.t0 = now; }
+      var u = Math.min(1, (now - zrev.t0) / 2000); u = 1 - (1 - u) * (1 - u) * (1 - u);
+      f = from + (1 - from) * u;
+    }
+    var FW = fr.clientWidth, FH = fr.clientHeight;
+    if (!FW || !FH) { return; }
+    var a = z.w / z.h, F = FW / FH, Z = 9 * Math.max(F / a, a / F);
+    var sc = Math.pow(Z, 1 - f), g = (sc - 1) / (Z - 1);
+    var tx = (FW / 2 - (el.offsetLeft + el.offsetWidth * z.fx / 100)) * g, ty = (FH / 2 - (el.offsetTop + el.offsetHeight * z.fy / 100)) * g;
+    var tr = 'translate3d(' + tx.toFixed(2) + 'px,' + ty.toFixed(2) + 'px,0) scale(' + sc.toFixed(4) + ')';
+    el.style.webkitTransformOrigin = el.style.transformOrigin = z.fx + '% ' + z.fy + '%';
+    el.style.webkitTransform = el.style.transform = tr;
+    var sh = document.getElementById('zsharp');
+    if (sh) {
+      var o = Math.max(0, Math.min(1, (f - 0.2) / 0.6)); o = o * o * (3 - 2 * o);
+      if (!(sh.complete && sh.naturalWidth > 0)) { o = 0; }
+      sh.style.opacity = o.toFixed(3);
+      var ld = document.getElementById('zload');
+      if (ld) { ld.style.display = (sh.complete && sh.naturalWidth === 0) ? '' : 'none'; }
+    }
+  }
+  function zoomPreload(list) {
+    var i; RC._zpre = RC._zpre || {};
+    for (i = 0; i < list.length; i++) {
+      if (!RC._zpre[list[i].id]) { var a = new Image(), b = new Image(); a.src = 'img/zoom/' + list[i].id + '_s.jpg'; b.src = 'img/zoom/' + list[i].id + '.jpg'; RC._zpre[list[i].id] = [a, b]; }
+    }
+  }
+  (function zoomLoop() {
+    try { zoomDraw(); } catch (e) {}
+    if (window.requestAnimationFrame) { window.requestAnimationFrame(zoomLoop); } else { setTimeout(zoomLoop, 40); }
+  })();
   function tickUI() {
     if (!S) { return; }
     window.RCS = S;
@@ -103,22 +149,10 @@
       if (open && el.className.indexOf('isopen') < 0) { el.className = el.className.replace(' wait', '') + ' isopen' + (el.getAttribute('data-go') ? ' go' : ''); if (on) { el.innerHTML = on; } }
       else if (!open && off && el.innerHTML !== off) { el.innerHTML = off; }
     }
-    el = document.getElementById('zimg');
-    if (el && S.z) {
-      var f = S.zfrozen != null ? S.zfrozen : Math.max(0, Math.min(1, (now - S.zt0) / S.zdur));
-      if (S.phase === 'zoom_reveal') { f = 1; }
-      if (S.z.mode === 'zoom') {
-        var sc = Math.pow(11, 1 - f);
-        var tr = 'scale(' + sc.toFixed(3) + ')';
-        el.style.webkitTransformOrigin = el.style.transformOrigin = S.z.fx + '% ' + S.z.fy + '%';
-        el.style.webkitTransform = el.style.transform = tr;
-      } else {
-        var total = 40, showN = S.phase === 'zoom_reveal' ? total : Math.floor(f * total * 0.8);
-        var tiles = document.querySelectorAll('.zt');
-        for (i = 0; i < tiles.length; i++) { tiles[i].style.display = (+tiles[i].getAttribute('data-ord') < showN) ? 'none' : 'block'; }
-      }
-      var zv = document.getElementById('zval');
-      if (zv) { zv.innerHTML = String(S.phase === 'zoom_q' ? Math.max(100, Math.round((500 - 400 * f) / 10) * 10) : (S.zval || '')); }
+    zoomDraw();
+    if (S.z) {
+      var zf = zoomF(now), zv = document.getElementById('zval');
+      if (zv) { zv.innerHTML = String(S.phase === 'zoom_q' ? Math.max(100, Math.round((500 - 400 * zf) / 10) * 10) : (S.zval || '')); }
     }
   }
 
@@ -126,7 +160,7 @@
   /* HOME                                                               */
   /* ================================================================== */
   function home() {
-    app.innerHTML = '<div class="home"><h1>Game Night!</h1><p>Game shows for the whole family. The TV is the stage, every phone is a controller.</p>' +
+    app.innerHTML = '<div class="home"><h1>Game Show Night</h1><p>Game shows for the whole family. The TV is the stage, every phone is a controller.</p>' +
       '<button class="big red" data-a="tv" autofocus>This is the TV screen</button>' +
       '<p style="margin-top:26px">Playing on a phone?</p>' +
       '<input class="field" id="code" maxlength="4" placeholder="ROOM CODE" autocapitalize="characters" autocomplete="off">' +
@@ -163,7 +197,7 @@
       '<div class="stripes"><i class="s0"></i><i class="s1"></i><i class="s2"></i></div>' +
       '<div class="foot"><div class="host" id="host">' + RC.art.host + '</div><div class="bubble" id="bubble"></div><div class="joinbox" id="joinbox"></div></div>' +
       '<button class="menubtn" data-a="s_menu">Menu</button><div id="menu"></div><div id="pausel"></div><div id="xl"></div><div id="toast"></div>' +
-      '<div class="overlay" id="ov"><h1>Game Night!</h1><p>Pick a game. Grab your phone. Play.</p><button data-a="s_unlock" id="ovb">Press OK to start</button></div></div>';
+      '<div class="overlay" id="ov"><h1>Game Show Night</h1><p>Pick a game. Grab your phone. Play.</p><button data-a="s_unlock" id="ovb">Press OK to start</button></div></div>';
     try { document.getElementById('ovb').focus(); } catch (e) { }
 
     function publish() {
@@ -267,7 +301,7 @@
     /* drawing */
     function topHtml() {
       var sub = S.phase === 'lobby' ? 'Join on your phone' : (S.phase === 'menu' ? 'Pick a game' : (S.phase === 'final' ? 'Final score' : 'Game ' + S.round + ' &middot; ' + esc(S.rt || '')));
-      var mid = '<div class="logo">Game Night!</div><div class="sub">' + sub + '</div>';
+      var mid = '<div class="logo">Game Show Night</div><div class="sub">' + sub + '</div>';
       function tm(t, small) { var ctrl = (S.turn && pteam(S.turn) === t) ? ' ctrl' : ''; return '<div class="tm t' + t + ctrl + (small ? ' sm' : '') + '"' + (small ? ' style="width:' + small + 'vw"' : '') + '><div class="tn">' + esc(tname(t)) + '</div><div class="ts">' + S.teams[t].score + '</div></div>'; }
       if (S.solo) { // no teams: the top bar shows who is first and second
         var rk = rankList();
@@ -340,21 +374,25 @@
       else { h += '<div class="status">Everyone answers on their phone. ' + waitHtml() + '</div>' + timerHtml(26000); }
       return h;
     }
-    function zoomHtml() {
-      var z = S.z, tiles = '';
-      if (z.mode === 'tiles') {
-        var ord = [], i, s = z.seed || 1;
-        for (i = 0; i < 40; i++) { ord.push(i); }
-        for (i = 39; i > 0; i--) { s = (s * 9301 + 49297) % 233280; var j = Math.floor(s / 233280 * (i + 1)); var t = ord[i]; ord[i] = ord[j]; ord[j] = t; }
-        for (i = 0; i < 40; i++) { var pos = ord[i]; tiles += '<div class="zt" data-ord="' + i + '" style="left:' + (pos % 8) * 12.5 + '%;top:' + Math.floor(pos / 8) * 20 + '%;width:12.5%;height:20%"></div>'; }
-      }
-      var side;
+    function zoomSide() {
+      var z = S.z, side;
       if (S.phase === 'zoom_reveal') { side = '<div class="answer">' + esc(S.rv.text) + '</div><div class="status">' + (S.rv.who ? '<span class="t' + S.rv.team + 'c">' + esc(S.rv.who) + '</span> +' + S.rv.val : 'No points') + '</div>'; }
       else if (S.phase === 'zoom_ans') { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status">' + who(S.turn) + ' is answering' + (S.bzr && S.bzr.length ? '<br><small>fastest finger: ' + secs(S.bzr[0].dt) + '</small>' : '') + '</div>'; }
       else if (S.bzw) { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status go">BUZZ!</div>'; }
       else { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="GO! Buzz when you know it" data-off="WAIT for GO...">WAIT for GO...</div><div class="pickwhy">Early buzz: out, and lose 50</div>'; }
-      return '<div class="zwrap"><div class="zf" data-img="' + z.img + z.n + '"><div class="zi" id="zimg">' + RC.art[z.img] + '</div>' + tiles + '</div><div class="zside"><div class="tag">Picture ' + z.n + ' of ' + z.of + '</div><br>' + side + '</div></div>';
+      return '<div class="tag">Picture ' + z.n + ' of ' + z.of + '</div><br>' + side;
     }
+    function zoomPic() {
+      var z = S.z, F = 1.6, a = z.w / z.h, wp = a >= F ? 100 : 100 * a / F, hp = a >= F ? 100 * F / a : 100;
+      var base = 'img/zoom/' + z.img;
+      var box = 'left:' + ((100 - wp) / 2).toFixed(3) + '%;top:' + ((100 - hp) / 2).toFixed(3) + '%;width:' + wp.toFixed(3) + '%;height:' + hp.toFixed(3) + '%';
+      return '<div class="zf"><div class="zbg" style="background-image:url(' + base + '_s.jpg)"></div>' +
+        '<div class="zi" id="zimg" style="' + box + '"><img class="zphoto" src="' + base + '_s.jpg" alt=""><img class="zphoto zsharp" id="zsharp" src="' + base + '.jpg" alt="" style="opacity:0"></div>' +
+        '<div class="zload" id="zload" style="display:none">The picture did not load. Host: tap Skip.</div></div>' +
+        '<div class="zcredit">Photo: ' + esc(z.by) + (z.lic ? ', ' + esc(z.lic) : '') + ', via Wikimedia Commons</div>';
+    }
+    // the shell stays the same for the whole picture, so the photo is never rebuilt while it zooms
+    function zoomHtml() { return '<div class="zwrap" data-img="' + S.z.img + S.z.n + '"><div class="zcol" id="zpic"></div><div class="zside" id="zsidebox"></div></div>'; }
     function phraseHtml() {
       var m = S.ph.mask, h = '<div class="tag">Puzzle ' + S.ph.n + ' of ' + S.ph.of + ' &middot; Hint: ' + esc(S.ph.hint) + '</div><div class="phrase"><span class="word">';
       for (var i = 0; i < m.length; i++) {
@@ -445,7 +483,7 @@
       }
       if (ph === 'round_end') { return '<div class="tag">Scores after</div><div class="h2">' + esc(S.re.title) + '</div>' + (S.solo ? '' : barsHtml()) + ranksHtml(S.solo ? 12 : (NT() > 3 ? 3 : 6)); }
       if (ph === 'final') {
-        var conf = '', cols = ['#C4520F', '#17696B', '#F2B705', '#FBF0D9'];
+        var conf = '', cols = ['#F0643A', '#5BC0EB', '#F9D648', '#7BD389'];
         for (var i = 0; i < 28; i++) { conf += '<div class="conf" style="left:' + ((i * 37) % 100) + '%;background:' + cols[i % 4] + ';-webkit-animation-delay:' + ((i * 0.23) % 3.4) + 's;animation-delay:' + ((i * 0.23) % 3.4) + 's"></div>'; }
         var f = S.fin;
         if (f.solo) { return conf + '<div class="h1">' + (f.tie ? 'A tie at the top!' : '<span class="t0c">' + esc(f.champ) + '</span> wins!') + '</div>' + ranksHtml(12) + '<div class="status">' + (f.king ? 'Fastest buzzer: ' + esc(f.king) + ' (' + f.kingN + ')' : '') + '</div>'; }
@@ -459,7 +497,11 @@
       put('top', topHtml());
       // zoom keeps one DOM node per picture so the image does not flicker while it zooms
       var st = stageHtml();
-      put('stage', st);
+      if (put('stage', st)) { cache.zpic = null; cache.zsidebox = null; }
+      if (S.z && (S.phase === 'zoom_q' || S.phase === 'zoom_ans' || S.phase === 'zoom_reveal')) {
+        if (E._private && E._private().zs) { zoomPreload(E._private().zs); }
+        put('zpic', zoomPic()); put('zsidebox', zoomSide());
+      }
       put('bubble', esc(S.phase === 'lobby' || !S.say.text ? (S.boss ? 'Scan the code with your phone camera to join. ' + pname(S.boss) + ' is the host.' : 'Host, scan the code with your phone camera to take control.') : S.say.text));
       if (S.fs && S.fs.id !== lastFs) { lastFs = S.fs.id; cache.toast = null; put('toast', '<div class="toast">' + esc(S.fs.n) + ' buzzed before GO. Out, and minus 50.</div>'); }
       put('joinbox', 'Join at ' + esc(SHORT) + '<br>Room <b>' + ROOM + '</b><br>Relay ' + dotsHtml() + (net.up ? '' : ' connecting...'));
@@ -583,7 +625,7 @@
     function watch(extra) { return '<div class="watch">Eyes on the TV</div>' + (extra ? '<p>' + extra + '</p>' : ''); }
 
     function joinHtml() {
-      var top = '<h2>Join Game Night</h2><p>Room ' + ROOM + (ui.h ? ' &middot; you are the host' : '') + '</p>' +
+      var top = '<h2>Join Game Show Night</h2><p>Room ' + ROOM + (ui.h ? ' &middot; you are the host' : '') + '</p>' +
         '<input class="field" id="nm" maxlength="14" placeholder="Your first name" value="' + esc(ui.name) + '" autocomplete="off">';
       var hk = (!S.boss && !ui.h) ? '<input class="field sm" id="hk" maxlength="8" placeholder="Host code (host only)" autocomplete="off" autocapitalize="none" autocorrect="off">' : '';
       if (S.solo) { return top + hk + '<button class="pbtn go" data-a="join">I am in</button>'; }   // no teams tonight: a name is all we need
@@ -765,7 +807,7 @@
       else if (stale) { ban = '<div class="banner">Reconnecting to the TV...</div>'; }
       else if (ui.rtt > 2500) { ban = '<div class="banner">This phone has a slow connection. Move closer to the Wi-Fi.</div>'; }
       put('pbanner', ban);
-      put('ptop', m ? '<div class="ptop t' + (S.solo ? 1 : m.t) + '"><span class="pill">' + esc(m.n) + (S.solo ? '' : ', ' + esc(tname(m.t))) + '</span><span class="sc">' + (S.solo ? m.pts + ' pts' : (NT() === 2 ? S.teams[0].score + ' to ' + S.teams[1].score : S.teams[m.t].score + ' &middot; ' + nth(teamRank(m.t)))) + '</span></div>' : '<div class="ptop tn"><span class="sc">Game Night!</span><span>Room ' + ROOM + '</span></div>');
+      put('ptop', m ? '<div class="ptop t' + (S.solo ? 1 : m.t) + '"><span class="pill">' + esc(m.n) + (S.solo ? '' : ', ' + esc(tname(m.t))) + '</span><span class="sc">' + (S.solo ? m.pts + ' pts' : (NT() === 2 ? S.teams[0].score + ' to ' + S.teams[1].score : S.teams[m.t].score + ' &middot; ' + nth(teamRank(m.t)))) + '</span></div>' : '<div class="ptop tn"><span class="sc">Game Show Night</span><span>Room ' + ROOM + '</span></div>');
       // do not redraw a screen with a text box while someone is typing in it
       var wr = S && S.phase === 'scr_q' && S.wr ? (S.wr[pid] || 0) : 0;
       put('pnote', S && ui.failK && ui.failK === S.k ? '<div class="pnote bad">That did not reach the TV. Tap again.</div>' : (wr && !(S.acted && S.acted[pid]) ? '<div class="pnote bad">Not it. Try again. (' + wr + (wr === 1 ? ' try' : ' tries') + ')</div>' : ''));

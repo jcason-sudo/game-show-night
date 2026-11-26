@@ -1,4 +1,4 @@
-/* Game Night! game content. In every question the FIRST option is the correct one;
+/* Game Show Night game content. In every question the FIRST option is the correct one;
    the engine shuffles options before they are shown. */
 var RC = (typeof RC !== 'undefined') ? RC : {};
 RC.content = {
@@ -224,14 +224,26 @@ RC.content = {
   ],
 
   zoom: [
-    { id: 'eiffel', o: ['Eiffel Tower', 'Tokyo Tower', 'Space Needle', 'CN Tower'], fx: 50, fy: 62 },
-    { id: 'pyramids', o: ['Pyramids of Giza', 'Chichén Itzá', 'Machu Picchu', 'Petra'], fx: 44, fy: 52 },
-    { id: 'goldengate', o: ['Golden Gate Bridge', 'Brooklyn Bridge', 'Tower Bridge', 'Sydney Harbour Bridge'], fx: 30, fy: 40 },
-    { id: 'taj', o: ['Taj Mahal', 'Hagia Sophia', 'St. Peter\'s Basilica', 'The Alhambra'], fx: 50, fy: 58 },
-    { id: 'opera', o: ['Sydney Opera House', 'Guggenheim Museum', 'Burj Al Arab', 'Lotus Temple'], fx: 55, fy: 50 },
-    { id: 'pisa', o: ['Leaning Tower of Pisa', 'Colosseum', 'Big Ben', 'Parthenon'], fx: 50, fy: 45 },
-    { id: 'bigben', o: ['Big Ben', 'Empire State Building', 'Notre-Dame', 'Kremlin'], fx: 47, fy: 30 },
-    { id: 'stonehenge', o: ['Stonehenge', 'Easter Island', 'Great Wall of China', 'Acropolis'], fx: 40, fy: 60 }
+    { id: 'eiffel', o: ['Eiffel Tower', 'Tokyo Tower', 'Blackpool Tower', 'Petrin Tower, Prague'], fx: 50, fy: 40, w: 960, h: 1777, by: 'Benh LIEU SONG', lic: '' },
+    { id: 'pyramids', o: ['Pyramids of Giza', 'Pyramids of Meroe, Sudan', 'Teotihuacan', 'Saqqara'], fx: 58, fy: 45, w: 1280, h: 851, by: 'Ricardo Liberato', lic: 'CC BY-SA 2.0' },
+    { id: 'goldengate', o: ['Golden Gate Bridge', '25 de Abril Bridge, Lisbon', 'Bay Bridge', 'Verrazzano-Narrows Bridge'], fx: 43, fy: 25, w: 1280, h: 720, by: 'Frank Schulenburg', lic: 'CC BY-SA 4.0' },
+    { id: 'taj', o: ['Taj Mahal', 'Humayun\'s Tomb', 'Bibi Ka Maqbara', 'Sheikh Zayed Mosque'], fx: 50, fy: 45, w: 1280, h: 842, by: 'Yann; edited by King of Hearts', lic: 'CC BY-SA 4.0' },
+    { id: 'opera', o: ['Sydney Opera House', 'Lotus Temple', 'Auditorio de Tenerife', 'Harpa Concert Hall'], fx: 55, fy: 35, w: 1280, h: 810, by: 'Thomas Adams', lic: 'CC BY-SA 4.0' },
+    { id: 'pisa', o: ['Leaning Tower of Pisa', 'Asinelli Tower, Bologna', 'Giotto\'s Bell Tower', 'St Mark\'s Campanile'], fx: 45, fy: 30, w: 960, h: 1868, by: 'PaestumPaestum', lic: 'CC BY 4.0' },
+    { id: 'bigben', o: ['Big Ben', 'Peace Tower, Ottawa', 'Rajabai Clock Tower', 'Zytglogge, Bern'], fx: 67, fy: 30, w: 1280, h: 866, by: 'Colin', lic: 'CC BY-SA 4.0' },
+    { id: 'stonehenge', o: ['Stonehenge', 'Avebury', 'Carnac Stones', 'Ring of Brodgar'], fx: 50, fy: 62, w: 1280, h: 853, by: 'Sumit Surai', lic: 'CC BY-SA 4.0' },
+    { id: 'colosseum', o: ['Colosseum, Rome', 'Arena of Verona', 'Arena of Nimes', 'El Jem Amphitheatre'], fx: 30, fy: 45, w: 1280, h: 751, by: 'Diliff', lic: 'CC BY-SA 2.5' },
+    { id: 'machu', o: ['Machu Picchu', 'Choquequirao', 'Ollantaytambo', 'Tikal'], fx: 50, fy: 62, w: 1280, h: 1249, by: 'Martin St-Amant (S23678)', lic: 'CC BY-SA 3.0' },
+    { id: 'neuschwanstein', o: ['Neuschwanstein Castle', 'Hohenzollern Castle', 'Lichtenstein Castle', 'Chateau de Chambord'], fx: 28, fy: 40, w: 1280, h: 957, by: 'Thomas Wolf, www.foto-tw.de', lic: 'CC BY-SA 3.0 de' },
+    { id: 'basil', o: ['St. Basil\'s Cathedral', 'Church of the Savior on Blood', 'Kizhi Church', 'Alexander Nevsky Cathedral'], fx: 40, fy: 42, w: 1280, h: 1124, by: 'Юрий Д.К.', lic: 'CC BY 4.0' },
+    { id: 'towerbridge', o: ['Tower Bridge', 'London Bridge', 'Brooklyn Bridge', 'Chain Bridge, Budapest'], fx: 68, fy: 30, w: 1280, h: 640, by: 'Diliff', lic: 'CC BY-SA 3.0' },
+    { id: 'chichen', o: ['Chichen Itza', 'Tikal', 'Uxmal', 'Teotihuacan'], fx: 50, fy: 30, w: 1280, h: 681, by: 'Daniel Schwen', lic: 'CC BY-SA 4.0' },
+    { id: 'angkor', o: ['Angkor Wat', 'Borobudur', 'Bagan', 'Wat Arun'], fx: 50, fy: 35, w: 1280, h: 645, by: 'Satdeep Gill', lic: 'CC BY-SA 4.0' },
+    { id: 'hollywood', o: ['Hollywood, Los Angeles', 'Beverly Hills', 'Malibu', 'Griffith Observatory'], fx: 45, fy: 68, w: 1280, h: 871, by: 'Thomas Wolf, www.foto-tw.de', lic: 'CC BY-SA 3.0' },
+    { id: 'brandenburg', o: ['Brandenburg Gate', 'Arc de Triomphe', 'Siegestor, Munich', 'Propylaea, Athens'], fx: 50, fy: 28, w: 1280, h: 644, by: 'Thomas Wolf, www.foto-tw.de', lic: 'CC BY-SA 3.0' },
+    { id: 'capitol', o: ['U.S. Capitol', 'St. Paul\'s Cathedral', 'Texas State Capitol', 'Les Invalides'], fx: 50, fy: 45, w: 1280, h: 662, by: 'Martin Falbisoner', lic: 'CC BY-SA 3.0' },
+    { id: 'michel', o: ['Mont-Saint-Michel', 'St Michael\'s Mount', 'Edinburgh Castle', 'Sacra di San Michele'], fx: 50, fy: 35, w: 1280, h: 908, by: 'Diliff', lic: '' },
+    { id: 'greatwall', o: ['Great Wall of China', 'Hadrian\'s Wall', 'Kumbhalgarh Fort', 'Walls of Ston'], fx: 92, fy: 48, w: 1280, h: 820, by: 'CEphoto, Uwe Aranas', lic: 'CC BY-SA 3.0' }
   ],
 
   phrases: [
@@ -593,7 +605,7 @@ RC.content = {
   judgeUrl: '',
 
   lines: {
-    welcome: ['Welcome to Game Night! I am your host, Ace.'],
+    welcome: ['Welcome to Game Show Night I am your host, Ace.'],
     right: ['Correct!', 'Yes! Nailed it.', 'That is right!', 'Boom. Correct.', 'You got it!'],
     wrong: ['Ooh, no.', 'Not this time.', 'Sorry, that is wrong.', 'Nope!'],
     steal: ['Chance to steal!', 'The other team can steal it!'],

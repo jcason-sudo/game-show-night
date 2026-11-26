@@ -1,4 +1,4 @@
-# Game Night!
+# Game Show Night
 
 Game shows for the whole family. The TV is the stage, every phone is a controller. No app, no accounts.
 
@@ -50,7 +50,7 @@ Zoom In and the Survey Says face-off use a buzzer. The button says **WAIT** and 
 | Most Likely To | Vote for the person in the room who fits best. You score when you vote with the biggest group. |
 | The Board | The TV names whose turn it is to pick a category and value. Then everyone answers on their own phone, 20 seconds. Every right answer scores; the fastest right answer earns a bonus and picks next. |
 | True or False Blitz | A statement, 12 seconds. |
-| Zoom In | A famous place comes into view. Wait for GO, then buzz. |
+| Zoom In | A real photograph of a famous place starts close up and out of focus, then pulls back over a full minute. Wait for GO, then buzz. The earlier you get it, the more it is worth (500 down to 100). |
 | Closest Call | Every answer is a number. Closest guess wins. |
 | Phrase Fever | Take turns picking letters. Anyone can try to solve. Close spelling counts. |
 | Name That Decade | Something happened. In which decade? |
@@ -66,7 +66,8 @@ Questions do not repeat until a game's whole pool has been used. The TV remember
 - Close and sound-alike spelling is accepted in Crillion, Phrase Fever and Word Scramble. Words of three letters or fewer must be exact.
 - Crillion is judged by a built-in answer sheet for each question (`crillion` in `src/content.js`; the "how many people would say it" numbers are estimates written by hand, not a poll). An answer that is not on the sheet goes to the host's phone as Correct or Wrong. `judgeUrl` in `src/content.js` is a hook for a private AI judge; it is empty by default, so no AI is called.
 - The host character (Ace) talks using the TV browser's built-in voice. Some TV browsers have no voice; the words still show in the speech bubble.
-- Zoom In has only eight pictures, so it repeats sooner than the other games.
+- Zoom In has 20 photographs (in `img/zoom/`). A game shows five, so it takes four games before one repeats. The photographers and licences are in [CREDITS.md](CREDITS.md), and each credit shows under the picture on the TV.
+- The address still ends in `raincheck`. That is only the repository name; nothing on the screens says it.
 - The page is plain ES5 with flexbox so it also runs on older TV browsers.
 
 ## Files
@@ -82,3 +83,4 @@ Questions do not repeat until a game's whole pool has been used. The TV remember
 - `node test/fuzzy.test.js` checks spelling tolerance.
 - `python3 test/e2e.py [2|3|4|5|solo]` plays a full night in real browsers against a local relay (`node test/serve.js`).
 - `python3 test/host_tour.py` plays the host: it taps every host control once and checks the result.
+- `python3 test/zoom_shots.py` plays two Zoom In pictures at TV size and saves screenshots through the minute-long pull-back.
