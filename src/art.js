@@ -125,10 +125,10 @@ var RC = (typeof RC !== 'undefined') ? RC : {};
     rep(8, function (i) { return '<path d="M' + (40 + i * 100) + ',470 l6,-16 l6,16" stroke="#4F8F4A" stroke-width="3" fill="none"/>'; })
   );
 
-  /* The host: Drizzle McCloud, a cloud in a bow tie. */
+  /* The host: Ace, a game-show host in a bow tie. */
   art.host = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 220" width="100%" height="100%">' +
     '<g class="hostbob">' +
-    '<path d="M52,128 C20,128 14,88 46,82 C44,50 86,36 104,58 C118,30 172,36 174,72 C210,66 226,112 194,126 Z" fill="#FFFFFF" stroke="#3A2214" stroke-width="6" stroke-linejoin="round"/>' +
+    '<rect x="42" y="34" width="150" height="100" rx="30" fill="#F2B705" stroke="#3A2214" stroke-width="6"/>' +
     '<ellipse cx="92" cy="88" rx="8" ry="11" fill="#3A2214" class="hosteye"/><ellipse cx="140" cy="88" rx="8" ry="11" fill="#3A2214" class="hosteye"/>' +
     '<path d="M80,70 q12,-10 24,-2 M128,68 q12,-8 24,2" stroke="#3A2214" stroke-width="5" fill="none" stroke-linecap="round"/>' +
     '<path class="hostmouth" d="M96,106 Q116,124 138,106 Z" fill="#3A2214"/>' +

@@ -13,7 +13,13 @@ function play(seed, nPlayers, teamSplit, skill) {
   var now = 1000000;
   var S = E.init('TEST', now);
   var pids = [];
-  for (var i = 0; i < nPlayers; i++) { pids.push('p' + i); E.handle({ p: 'p' + i, t: 'hello', name: 'Bot<' + i + '>', team: teamSplit(i) }, now); }
+  var nT = 2 + (seed % 4);   // 2, 3, 4 or 5 teams
+  function hi(i) { var m = { p: 'p' + i, t: 'hello', name: 'Bot<' + i + '>', team: teamSplit(i) % nT, ep: 1 }; if (i === 0) { m.h = E.hostKey(); } return m; }
+  pids.push('p0'); E.handle(hi(0), now);
+  assert.strictEqual(E.state().boss, 'p0', 'the phone with the host key is the host');
+  E.handle({ p: 'p0', t: 'ctl', c: 'nteams', a: { n: nT } }, now);
+  assert.strictEqual(E.state().teams.length, nT);
+  for (var i = 1; i < nPlayers; i++) { pids.push('p' + i); E.handle(hi(i), now); }
   assert.strictEqual(E.state().boss, 'p0');
   var orders = { classic: ['vote', 'board', 'zoom', 'phrase', 'feud'], all: RC.content.order.slice(), quick: ['likely', 'tf', 'zoom', 'feud'] };
   var todo = orders[['classic', 'all', 'quick'][seed % 3]].slice();
@@ -39,7 +45,7 @@ function play(seed, nPlayers, teamSplit, skill) {
     }
     S = E.state(); var P = E._private();
     seen[S.phase] = (seen[S.phase] || 0) + 1;
-    for (i = 0; i < nPlayers; i++) { if (rnd() < 0.3) { E.handle({ p: pids[i], t: 'hello', name: 'Bot<' + i + '>', team: teamSplit(i) }, now); } }
+    for (i = 0; i < nPlayers; i++) { if (rnd() < 0.3) { E.handle(hi(i), now); } }
     var pid = pids[Math.floor(rnd() * nPlayers)];
     var k = S.k, ph = S.phase;
     var good = rnd() < skill;
@@ -57,7 +63,7 @@ function play(seed, nPlayers, teamSplit, skill) {
     else if (ph === 'scr_q' && rnd() < 0.5) { E.handle({ p: pid, t: 'word', k: k, text: good ? P.word.toLowerCase() : 'zzz' }, now); }
     else if (ph === 'board_pick' && rnd() < 0.5) { E.handle({ p: S.turn, t: 'pick', k: k, c: Math.floor(rnd() * 5), l: Math.floor(rnd() * 4) }, now); }
     else if (ph === 'board_q' && rnd() < 0.5) { E.handle({ p: pid, t: 'ans', k: k, a: good ? P.cur.a : Math.floor(rnd() * 4) }, now); }
-    else if ((ph === 'zoom_q' || ph === 'feud_face') && rnd() < 0.25) { E.handle({ p: pid, t: 'buzz', k: k }, now); }
+    else if ((ph === 'zoom_q' || ph === 'feud_face') && rnd() < 0.35) { if (rnd() < 0.2) { E.handle({ p: pid, t: 'buzz', k: k, early: 1 }, now); } else if (now >= S.openAt) { E.handle({ p: pid, t: 'buzz', k: k, dt: Math.floor(rnd() * 900) }, now); } }
     else if (ph === 'zoom_ans' && rnd() < 0.6) { E.handle({ p: S.turn, t: 'ans', k: k, a: good ? P.cur.a : Math.floor(rnd() * 4) }, now); }
     else if (ph === 'phrase_turn') {
       if (rnd() < 0.08) { E.handle({ p: pid, t: 'buzz', k: k }, now); }
@@ -74,17 +80,17 @@ function play(seed, nPlayers, teamSplit, skill) {
   }
   S = E.state();
   assert.strictEqual(S.phase, 'final', 'game did not finish, stuck in ' + S.phase);
-  assert.ok(S.teams[0].score >= 0 && S.teams[1].score >= 0);
   assert.strictEqual(S.round, total, 'did not play every picked game');
-  if (solo) { assert.strictEqual(S.teams[0].score + S.teams[1].score, 0, 'solo play must not move team scores'); assert.ok(S.fin.solo); }
-  return { seen: seen, scores: [S.teams[0].score, S.teams[1].score], minutes: Math.round((now - 1000000) / 60000), fin: S.fin };
+  var sc = S.teams.map(function (t) { return t.score; });
+  if (solo) { assert.strictEqual(sc.reduce(function (a, b) { return a + Math.abs(b); }, 0), 0, 'solo play must not move team scores'); assert.ok(S.fin.solo); }
+  return { seen: seen, scores: sc, minutes: Math.round((now - 1000000) / 60000), fin: S.fin };
 }
 
 var phases = {};
 var out = [];
 for (var seed = 1; seed <= 300; seed++) {
   var n = 1 + (seed % 12);
-  var split = seed % 5 === 0 ? function () { return 0; } : function (i) { return i % 2; }; // every 5th game: everyone on one team
+  var split = seed % 5 === 0 ? function () { return 0; } : function (i) { return i; }; // every 5th game: everyone on one team
   var r = play(seed, n, split, 0.3 + (seed % 7) / 10);
   for (var k in r.seen) { phases[k] = 1; }
   if (seed <= 4) { out.push('seed ' + seed + ' players ' + n + ' scores ' + r.scores.join('-') + ' game minutes ' + r.minutes); }
@@ -112,7 +118,7 @@ assert.ok(C.board.length >= 5 && C.zoom.length >= 5 && C.phrases.length >= 4 && 
   function play(ans, rulings) {
     var E = RC.createEngine(C2, { rand: lcg(5) }), now = 5000000, names = Object.keys(ans);
     E.init('CRIL', now);
-    names.forEach(function (n, i) { E.handle({ p: n, t: 'hello', name: n.toUpperCase(), team: i % 2 }, now); });
+    names.forEach(function (n, i) { E.handle({ p: n, t: 'hello', name: n.toUpperCase(), team: i % 2, ep: 1, h: i === 0 ? E.hostKey() : '' }, now); });
     E.handle({ p: names[0], t: 'ctl', c: 'play', a: { key: 'crillion' } }, now); now += 2000;
     E.handle({ p: names[0], t: 'ctl', c: 'next' }, now); now += 2000;
     assert.strictEqual(E.state().phase, 'cr_q');
@@ -136,31 +142,31 @@ assert.ok(C.board.length >= 5 && C.zoom.length >= 5 && C.phrases.length >= 4 && 
   r.E.handle({ p: 'a', t: 'ctl', c: 'crj', a: { p: 'd', ok: false, why: 'Atlantis is a legend.' } }, r.now);
   var S = r.E.state();
   assert.strictEqual(S.phase, 'cr_reveal');
-  assert.strictEqual(S.cr.rows[0].p, 'a'); assert.strictEqual(S.cr.rows[0].pts, 86);
+  assert.strictEqual(S.cr.rows[0].p, 'a'); assert.strictEqual(S.cr.rows[0].pts, 60 + 50, 'a rare answer, plus the crown for most obscure'); assert.strictEqual(S.cr.rows[0].tier, 'Rare');
   assert.strictEqual(S.rv.who, 'A');
-  assert.strictEqual(S.teams[0].score, Math.round((86 + 0 + 12) / 3), 'team score is the team average');
-  assert.strictEqual(S.teams[1].score, Math.round((51 + 0 + 82) / 3));
+  assert.strictEqual(S.teams[0].score, Math.round((110 + 0 + 10) / 3), 'team score is the team average');
+  assert.strictEqual(S.teams[1].score, Math.round((10 + 0 + 30) / 3));
   // the same answer twice in the room splits the points, so the lone rare answer wins
   r = play({ a: 'Suriname', b: 'suriname', c: 'Paraguay', d: 'Brazil', e: 'Brazil', f: 'brasil' });
   S = r.S; assert.strictEqual(S.phase, 'cr_reveal');
-  assert.strictEqual(r.by.a.pts, Math.round(97 / 2)); assert.strictEqual(r.by.a.dup, 2);
-  assert.strictEqual(r.by.c.pts, 86); assert.strictEqual(r.by.c.dup, 1);
-  assert.strictEqual(r.by.d.pts, 4, 'three people said Brazil');
+  assert.strictEqual(r.by.a.pts, Math.round(85 / 2)); assert.strictEqual(r.by.a.dup, 2);
+  assert.strictEqual(r.by.c.pts, 60 + 50); assert.strictEqual(r.by.c.dup, 1); assert.strictEqual(r.by.c.crown, 1);
+  assert.strictEqual(r.by.d.pts, 3, 'three people said Brazil, and everybody says Brazil');
   assert.strictEqual(S.rv.who, 'C', 'the answer nobody else gave wins');
   // everybody types the same thing
   r = play({ a: 'Brazil', b: 'Brazil', c: 'brazil' });
-  assert.ok(r.S.rv.allSame); assert.strictEqual(r.by.a.pts, 4);
+  assert.ok(r.S.rv.allSame); assert.strictEqual(r.by.a.pts, 3); assert.ok(!r.S.rv.crown);
   // one ruling covers everyone who typed the same off-sheet answer, and it scores as a rare answer
   r = play({ a: 'Guyana', b: 'guyana ', c: 'Brazil' }, [['a', { p: 'b', ok: true, said: 5 }]]);
   assert.strictEqual(r.S.phase, 'cr_reveal'); assert.strictEqual(r.by.a.st, 'ok'); assert.strictEqual(r.by.b.st, 'ok');
-  assert.strictEqual(r.by.a.pts, Math.round(95 / 2));
+  assert.strictEqual(r.by.a.pts, Math.round(85 / 2)); assert.strictEqual(r.by.a.tier, 'Deep cut');
 })();
 
 // The Board: everyone answers, a late or doubled Next cannot skip the question
 (function () {
   var E = RC.createEngine(RC.content, { rand: lcg(9) }), now = 7000000, names = ['a', 'b', 'c', 'd'];
   E.init('BORD', now);
-  names.forEach(function (n, i) { E.handle({ p: n, t: 'hello', name: n.toUpperCase(), team: i % 2 }, now); });
+  names.forEach(function (n, i) { E.handle({ p: n, t: 'hello', name: n.toUpperCase(), team: i % 2, ep: 1, h: i === 0 ? E.hostKey() : '' }, now); });
   E.handle({ p: 'a', t: 'ctl', c: 'play', a: { key: 'board' } }, now); now += 2000;
   var kIntro = E.state().k;
   E.handle({ p: 'a', t: 'ctl', c: 'next', a: { k: kIntro } }, now);
@@ -187,6 +193,83 @@ assert.ok(C.board.length >= 5 && C.zoom.length >= 5 && C.phrases.length >= 4 && 
   assert.strictEqual(S.players.c.pts, 400 + 200); assert.strictEqual(S.players.a.pts, 400); assert.strictEqual(S.players.b.pts, 0);
   assert.strictEqual(S.teams[0].score, 400 + 200, 'both of team 0 were right, and one was fastest');
   assert.strictEqual(S.teams[1].score, 0);
+})();
+
+// The host, teams and the buzzer
+(function () {
+  var E = RC.createEngine(RC.content, { rand: lcg(11) }), now = 9000000, S;
+  E.init('HOST', now);
+  function hi(p, team, extra) { var m = { p: p, t: 'hello', name: p.toUpperCase(), team: team, ep: E.state().epoch }; for (var k in (extra || {})) { m[k] = extra[k]; } E.handle(m, now); }
+  hi('kid', 0); hi('mom', 1);
+  assert.strictEqual(E.state().boss, null, 'the first one in is NOT the host');
+  E.handle({ p: 'kid', t: 'ctl', c: 'play', a: { key: 'vote' } }, now);
+  assert.strictEqual(E.state().phase, 'lobby', 'nobody but the host can start a game');
+  hi('james', 0, { h: 'wrongkey' }); assert.strictEqual(E.state().boss, null);
+  hi('james', 0, { h: E.hostKey() }); assert.strictEqual(E.state().boss, 'james', 'the phone that scanned the host code is the host');
+  hi('dad', 1); hi('ana', 0); hi('leo', 1);
+  // teams: 2 to 5
+  E.handle({ p: 'james', t: 'ctl', c: 'nteams', a: { n: 4 } }, now);
+  S = E.state(); assert.strictEqual(S.teams.length, 4); assert.strictEqual(S.teams[3].name, 'Jacks');
+  E.handle({ p: 'james', t: 'ctl', c: 'shuffle' }, now);
+  var per = [0, 0, 0, 0]; S.order.forEach(function (id) { per[S.players[id].t]++; });
+  assert.ok(Math.max.apply(null, per) - Math.min.apply(null, per) <= 1, 'shuffle deals even teams: ' + per.join(','));
+  E.handle({ p: 'james', t: 'ctl', c: 'move', a: { p: 'leo', t: 3 } }, now); assert.strictEqual(E.state().players.leo.t, 3);
+  E.handle({ p: 'mom', t: 'ctl', c: 'move', a: { p: 'leo', t: 0 } }, now); assert.strictEqual(E.state().players.leo.t, 3, 'only the host moves players');
+  E.handle({ p: 'james', t: 'ctl', c: 'nteams', a: { n: 3 } }, now);
+  S = E.state(); assert.strictEqual(S.teams.length, 3); S.order.forEach(function (id) { assert.ok(S.players[id].t < 3, 'nobody is left on a team that no longer exists'); });
+  E.handle({ p: 'james', t: 'ctl', c: 'teams', a: { names: ['Red', 'Blue', 'Green'] } }, now); assert.strictEqual(E.state().teams[2].name, 'Green');
+  // take a player out, and let them back in
+  E.handle({ p: 'james', t: 'ctl', c: 'kick', a: { p: 'leo' } }, now);
+  assert.ok(!E.state().players.leo); hi('leo', 1); assert.ok(!E.state().players.leo, 'a removed player cannot walk back in');
+  E.handle({ p: 'james', t: 'ctl', c: 'unkick', a: { p: 'leo' } }, now); hi('leo', 1); assert.ok(E.state().players.leo);
+  E.handle({ p: 'james', t: 'ctl', c: 'kick', a: { p: 'james' } }, now); assert.ok(E.state().players.james, 'the host cannot remove himself');
+  // zoom in: early buzz is punished, the fastest reaction wins
+  E.handle({ p: 'james', t: 'ctl', c: 'play', a: { key: 'zoom' } }, now); now += 2000;
+  E.handle({ p: 'james', t: 'ctl', c: 'next', a: { k: E.state().k } }, now);
+  S = E.state(); assert.strictEqual(S.phase, 'zoom_q'); assert.ok(S.openAt > now + 4000, 'GO comes after a wait nobody can guess');
+  var k = S.k;
+  E.handle({ p: 'kid', t: 'buzz', k: k, early: 1 }, now + 1000);
+  S = E.state(); assert.ok(S.early.kid); assert.strictEqual(S.players.kid.pts, -50, 'an early buzz costs 50'); assert.strictEqual(S.phase, 'zoom_q');
+  var go = S.openAt + 100;
+  E.handle({ p: 'kid', t: 'buzz', k: k, dt: 5 }, go); assert.strictEqual(E.state().phase, 'zoom_q', 'out means out');
+  E.handle({ p: 'mom', t: 'buzz', k: k, dt: 480 }, go + 100);       // arrives first, but reacted slower
+  E.handle({ p: 'dad', t: 'buzz', k: k, dt: 310 }, go + 350);       // slower connection, faster finger
+  assert.strictEqual(E.state().phase, 'zoom_q'); E.tick(go + 450); assert.strictEqual(E.state().phase, 'zoom_q', 'the half-second window is still open');
+  E.handle({ p: 'ana', t: 'buzz', k: k, dt: 900 }, go + 900);       // too late for the window
+  E.tick(go + 900);
+  S = E.state(); assert.strictEqual(S.phase, 'zoom_ans'); assert.strictEqual(S.turn, 'dad', 'fastest reaction wins, not fastest connection'); assert.strictEqual(S.bzr[0].n, 'DAD');
+  var P = E._private(), wrong = (P.cur.a + 1) % 4, before = S.players.dad.pts;
+  E.handle({ p: 'dad', t: 'ans', k: S.k, a: wrong }, go + 3000);
+  assert.strictEqual(E.state().players.dad.pts, before - 50, 'a wrong answer after buzzing costs 50');
+  // restart the game: scores go back to where the game began
+  now = go + 10000;
+  E.handle({ p: 'james', t: 'ctl', c: 'restart' }, now);
+  S = E.state(); assert.strictEqual(S.phase, 'intro'); assert.strictEqual(S.round, 1); assert.strictEqual(S.players.kid.pts, 0); assert.strictEqual(S.players.dad.pts, 0);
+  // pick a different game mid-game, pause and resume
+  E.handle({ p: 'james', t: 'ctl', c: 'menu' }, now); assert.strictEqual(E.state().phase, 'menu');
+  E.handle({ p: 'james', t: 'ctl', c: 'play', a: { key: 'tf' } }, now); now += 2000;
+  E.handle({ p: 'james', t: 'ctl', c: 'pause' }, now); assert.ok(E.state().paused); E.handle({ p: 'james', t: 'ctl', c: 'pause' }, now + 5000); assert.ok(!E.state().paused);
+  // start the whole night over: everyone has to join again, the host keeps control
+  now += 9000; E.handle({ p: 'james', t: 'ctl', c: 'reset' }, now);
+  S = E.state(); assert.strictEqual(S.phase, 'lobby'); assert.strictEqual(S.order.length, 0); assert.strictEqual(S.epoch, 2); assert.strictEqual(S.boss, 'james');
+  E.handle({ p: 'mom', t: 'hello', name: 'MOM', team: 1, ep: 1 }, now); assert.ok(!E.state().players.mom, 'an old join does not count after a restart');
+  hi('mom', 2); assert.strictEqual(E.state().players.mom.t, 2);
+  E.handle({ p: 'james', t: 'ctl', c: 'play', a: { key: 'vote' } }, now); assert.strictEqual(E.state().phase, 'intro', 'the host still runs the night');
+  // changing the host from the TV
+  var oldKey = E.hostKey(); E.cmd('unhost', null, now); assert.strictEqual(E.state().boss, null); assert.notStrictEqual(E.hostKey(), oldKey);
+})();
+
+// Questions do not repeat until the pool has been used up
+(function () {
+  var E = RC.createEngine(RC.content, { rand: lcg(21) }), now = 11000000, seen = {}, games = Math.floor(RC.content.votes.length / 8);
+  E.init('RPT', now); E.handle({ p: 'h', t: 'hello', name: 'H', team: 0, ep: 1, h: E.hostKey() }, now);
+  for (var g = 0; g < games; g++) {
+    E.handle({ p: 'h', t: 'ctl', c: 'play', a: { key: 'vote' } }, now); now += 2000;
+    E.handle({ p: 'h', t: 'ctl', c: 'next', a: { k: E.state().k } }, now);
+    E._private().vq.forEach(function (q) { assert.ok(!seen[q.q], 'repeated before the pool ran out: ' + q.q); seen[q.q] = 1; });
+    E.handle({ p: 'h', t: 'ctl', c: 'menu' }, now);
+  }
+  assert.strictEqual(Object.keys(seen).length, games * 8);
 })();
 
 console.log(out.join('\n'));

@@ -1,13 +1,18 @@
-"""Full browser run: one TV screen + 5 phones against a local relay. Saves screenshots per phase."""
+"""Full browser run: one TV screen + phones against a local relay. Saves screenshots per phase.
+   usage: python3 test/e2e.py [2|3|4|5|solo]   (number of teams, or every player for themselves)"""
 import asyncio, random, sys, json
 from playwright.async_api import async_playwright
 
 BASE = 'http://localhost:8080/'
 RELAY = 'relay=localhost:8888'
-NAMES = [('Grandma Rose', 1), ('Leo', 0), ('Dad', 1), ('Mia', 0), ('Aunt Bea', 1)]
+MODE = sys.argv[1] if len(sys.argv) > 1 else '2'
+SOLO = MODE == 'solo'
+NT = 2 if SOLO else int(MODE)
+# Leo scans first on purpose: the first one in must NOT become the host. James holds the host code.
+NAMES = ['Leo', 'James', 'Grandma Rose', 'Dad', 'Mia', 'Aunt Bea', 'Carmen', 'Billy'][:(8 if NT >= 4 else 6)]
+HOST = 1
 random.seed(7)
-SOLO = len(sys.argv) > 1 and sys.argv[1] == 'solo'
-TAG = 'solo_' if SOLO else ''
+TAG = 'solo_' if SOLO else ('t%d_' % NT)
 
 async def main():
     errors = []
@@ -24,35 +29,44 @@ async def main():
         room = await tv.evaluate("location.search.match(/screen=([A-Z]+)/)[1]")
         await tv.screenshot(path='test/shots/' + TAG + '01_tv_overlay.png')
         await tv.keyboard.press('Enter')
+        await tv.wait_for_selector('.hoststep')
+        await tv.screenshot(path='test/shots/' + TAG + '01b_tv_host_step.png')
+        hostkey = (await tv.inner_text('.lobby .qr .url b')).strip()
         phones = []
-        for i, (name, team) in enumerate(NAMES):
+        for i, name in enumerate(NAMES):
             ctx = await br.new_context(viewport={'width': 390, 'height': 780}, has_touch=True, is_mobile=True)
             p = await ctx.new_page()
             p.on('pageerror', lambda e, n=name: errors.append(n + ': ' + str(e)))
-            await p.goto(BASE + '?r=' + room + '&' + RELAY + '&pid=bot' + str(i))
+            await p.goto(BASE + '?r=' + room + '&' + RELAY + '&pid=bot' + str(i) + ('&h=' + hostkey if i == HOST else ''))
             await p.wait_for_selector('#nm')
+            team = i % NT
             if i == 0: await p.screenshot(path='test/shots/' + TAG + '02_phone_join.png')
-            if SOLO and i == 1: await p.screenshot(path='test/shots/' + TAG + 'solo_02_phone_join.png')
+            if i == 2: await p.screenshot(path='test/shots/' + TAG + '02b_phone_join_teams.png')
             await p.fill('#nm', name)
-            if not (SOLO and i > 0): await p.click('[data-a=team][data-v="%d"]' % team)
+            if not (SOLO and i > HOST): await p.click('[data-a=team][data-v="%d"]' % (team if i > HOST else i % 2))
             await p.click('[data-a=join]')
             phones.append(p)
-            await asyncio.sleep(0.4)
-            if SOLO and i == 0:
-                await p.wait_for_selector('[data-a=c_solo][data-v="1"]')
-                await p.click('[data-a=c_solo][data-v="1"]')
+            await asyncio.sleep(0.5)
+            if i == 0:
+                boss = await tv.evaluate("window.RCS && window.RCS.boss")
+                assert boss is None, 'the first player in must not be the host'
+            if i == HOST:
+                await asyncio.sleep(0.6)
+                boss = await tv.evaluate("window.RCS && window.RCS.boss")
+                assert boss == 'bot%d' % HOST, 'the phone with the host code must be the host, got %r' % boss
+                if SOLO:
+                    await p.click('[data-a=c_solo][data-v="1"]')
+                elif NT != 2:
+                    await p.click('[data-a=c_nteams][data-v="%d"]' % NT)
                 await asyncio.sleep(0.8)
         await asyncio.sleep(2)
         await tv.screenshot(path='test/shots/' + TAG + '04_tv_lobby.png')
-        await phones[0].screenshot(path='test/shots/' + TAG + '05_phone_boss_lobby.png', full_page=True)
-        await phones[1].screenshot(path='test/shots/' + TAG + '05c_phone_player_lobby.png')
-        if not SOLO:
-            await phones[0].click('[data-a=c_preset]')
-            await asyncio.sleep(0.6)
-        await phones[0].click('[data-a=c_short]')
+        await phones[HOST].screenshot(path='test/shots/' + TAG + '05_phone_boss_lobby.png', full_page=True)
+        await phones[0].screenshot(path='test/shots/' + TAG + '05c_phone_player_lobby.png')
+        await phones[HOST].click('[data-a=c_short]')
         await asyncio.sleep(0.6)
         todo = ['vote', 'likely', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'crillion', 'feud']
-        await phones[0].click('[data-a=c_play][data-v=%s]' % todo.pop(0))
+        await phones[HOST].click('[data-a=c_play][data-v=%s]' % todo.pop(0))
         shot = {}; pshot = {}
         steps = 0
         last_phase = None; same = 0
@@ -70,19 +84,19 @@ async def main():
             if ph == 'menu' and same >= 3:
                 if 'menu_phone' not in pshot:
                     pshot['menu_phone'] = 1
-                    await phones[0].screenshot(path='test/shots/' + TAG + '06_phone_boss_menu.png', full_page=True)
-                    await phones[1].screenshot(path='test/shots/' + TAG + '06b_phone_player_menu.png')
+                    await phones[HOST].screenshot(path='test/shots/' + TAG + '06_phone_boss_menu.png', full_page=True)
+                    await phones[0].screenshot(path='test/shots/' + TAG + '06b_phone_player_menu.png')
                 if todo:
                     if len(todo) == 5:   # pick one game from the TV itself, the rest from the phone
                         await tv.click('[data-a=s_game][data-v=%s]' % todo.pop(0))
                     else:
-                        await phones[0].click('[data-a=c_play][data-v=%s]' % todo.pop(0))
+                        await phones[HOST].click('[data-a=c_play][data-v=%s]' % todo.pop(0))
                 else:
-                    await phones[0].click('[data-a=c_end]')
+                    await phones[HOST].click('#pbody [data-a=c_end]')
                 await asyncio.sleep(0.8); continue
             # showrunner moves the show along on passive screens
             if ph in ('intro', 'vote_reveal', 'board_reveal', 'zoom_reveal', 'phrase_reveal', 'feud_reveal', 'round_end', 'ml_reveal', 'num_reveal', 'scr_reveal', 'cr_reveal') and same >= 6:
-                b = await phones[0].query_selector('[data-a=c_next]')
+                b = await phones[HOST].query_selector('[data-a=c_next]')
                 if b: await b.click()
                 await asyncio.sleep(0.3); continue
             order = list(range(len(phones))); random.shuffle(order)
@@ -136,6 +150,8 @@ async def main():
                             if hidden <= 6 and random.random() < 0.3: await b.click()
                         elif 'isopen' in cls and random.random() < 0.5:
                             await b.tap()
+                        elif 'isopen' not in cls and i == 0 and random.random() < 0.15:
+                            await b.tap()   # Leo cannot wait: an early tap, which should cost him
                 except Exception as e:
                     pass
             await asyncio.sleep(0.25)
@@ -149,7 +165,7 @@ async def main():
         # reload the TV mid-state and make sure it resumes
         await tv.reload(); await asyncio.sleep(1.5)
         S2 = await tv.evaluate("window.RCS")
-        print('after TV reload phase:', S2['phase'], 'scores kept:', S2['teams'] == S['teams'])
+        print('after TV reload phase:', S2['phase'], 'scores kept:', S2['teams'] == S['teams'], 'host kept:', S2['boss'] == 'bot%d' % HOST)
         print('errors:', errors[:10])
         await br.close()
         ok = S['phase'] == 'final' and not errors and S2['phase'] == 'final'

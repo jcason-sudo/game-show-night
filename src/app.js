@@ -1,4 +1,4 @@
-/* Rain Check! page logic: relay connection, TV screen, phone controller. */
+/* Game Night page logic: relay connection, TV screen, phone controller. */
 (function () {
   var qs = {};
   location.search.replace(/^\?/, '').split('&').forEach(function (kv) { var i = kv.indexOf('='); if (i > 0) { qs[kv.substring(0, i)] = decodeURIComponent(kv.substring(i + 1)); } });
@@ -75,7 +75,7 @@
   function dotsHtml() { var s = '<span class="dots">'; net.conns.forEach(function (c) { s += '<i class="' + (c.up ? 'on' : '') + '"></i>'; }); return s + '</span>'; }
 
   /* ---------------- shared ---------------- */
-  var VERSION = 4;         // must match the engine's state version
+  var VERSION = 5;         // must match the engine's state version
   var S = null;            // latest public state
   var clockOff = 0;        // my clock minus the TV's clock
   function hnow() { var n = Date.now() - clockOff; if (S && S.paused && S.pat) { return S.pat; } return n; }
@@ -84,6 +84,10 @@
   function rankList() { var out = []; S.order.forEach(function (id) { var p = S.players[id]; if (p) { out.push({ p: id, n: p.n, pts: p.pts, t: p.t }); } }); out.sort(function (a, b) { return b.pts - a.pts; }); return out; }
   function pname(pid) { return pid && S.players[pid] ? S.players[pid].n : 'Someone'; }
   function pteam(pid) { return pid && S.players[pid] ? S.players[pid].t : 0; }
+  function NT() { return S.teams.length; }
+  function nth(n) { return n + (n === 1 ? 'st' : (n === 2 ? 'nd' : (n === 3 ? 'rd' : 'th'))); }
+  function teamRank(t) { var r = 1; for (var i = 0; i < S.teams.length; i++) { if (S.teams[i].score > S.teams[t].score) { r++; } } return r; }
+  function secs(ms) { return (Math.max(0, ms) / 1000).toFixed(2) + ' s'; }
   function timerHtml(len) { return S.deadline ? '<div class="timer"><i data-dl="' + S.deadline + '" data-len="' + len + '"></i></div>' : ''; }
 
   function tickUI() {
@@ -122,12 +126,12 @@
   /* HOME                                                               */
   /* ================================================================== */
   function home() {
-    app.innerHTML = '<div class="home"><h1>Rain Check!</h1><p>The family game show for rainy days.</p>' +
+    app.innerHTML = '<div class="home"><h1>Game Night!</h1><p>Game shows for the whole family. The TV is the stage, every phone is a controller.</p>' +
       '<button class="big red" data-a="tv" autofocus>This is the TV screen</button>' +
       '<p style="margin-top:26px">Playing on a phone?</p>' +
       '<input class="field" id="code" maxlength="4" placeholder="ROOM CODE" autocapitalize="characters" autocomplete="off">' +
       '<button class="big" data-a="joinhome">Join the game</button>' +
-      '<p class="note">Open this page on the TV first. The TV shows a QR code and a 4-letter room code for the phones.</p></div>';
+      '<p class="note">Open this page on the TV first. The TV shows one code for the host, then a code and a 4-letter room for everyone else.</p></div>';
     app.addEventListener('click', function (e) {
       var b = closest(e.target, 'data-a'); if (!b) { return; }
       var a = b.getAttribute('data-a');
@@ -141,22 +145,25 @@
   /* TV SCREEN (also runs the game engine)                              */
   /* ================================================================== */
   function screen() {
-    var E = RC.createEngine(C);
+    var usedSaved = null; try { usedSaved = JSON.parse(lsGet('gn_used') || 'null'); } catch (e) { }
+    var E = RC.createEngine(C, { used: usedSaved || {} });   // remembers which questions this TV has already shown
     var saved = lsGet('rc_host_' + ROOM);
     if (!(saved && E.load(saved) && E.state().room === ROOM && E.state().v === VERSION)) { E.init(ROOM, Date.now()); } // a room saved by an older version starts fresh
     S = E.state();
     var seen = {}, seenList = [], dirty = true, lastPub = 0, lastSeq = 0, lastIn = Date.now(), lastKick = 0;
     var unlocked = false, soundOn = true, menuOpen = false, lastSay = S.say.id, lastFx = S.fx.id, talkTimer = null, lastX = S.f ? S.f.x : 0;
-    var qrSvg = '';
-    try { var qr = qrcode(0, 'M'); qr.addData(HERE + '?r=' + ROOM + (qs.relay ? '&relay=' + qs.relay : '')); qr.make(); qrSvg = qr.createSvgTag(6, 12); } catch (e) { }
+    var qrMade = {};
+    function qrFor(url) { if (!qrMade[url]) { try { var qr = qrcode(0, 'M'); qr.addData(url); qr.make(); qrMade[url] = qr.createSvgTag(6, 12); } catch (e) { qrMade[url] = ''; } } return qrMade[url]; }
+    var JOINURL = HERE + '?r=' + ROOM + (qs.relay ? '&relay=' + qs.relay : '');
+    var lastFs = S.fs ? S.fs.id : 0;
 
     var bulbs = '<div class="bulbs">'; for (var bi = 0; bi < 24; bi++) { bulbs += '<i></i>'; } bulbs += '</div>';
     var rays = '<svg class="rays" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" preserveAspectRatio="none"><path fill="#4A2D1B" d="M640 300L-200 -40H80ZM640 300L300 -200H520ZM640 300L760 -200H980ZM640 300L1200 -40H1480ZM640 300L1500 260V480ZM640 300L1400 800H1120ZM640 300L840 900H560ZM640 300L160 800H-120ZM640 300L-220 480V260Z"/></svg>';
     app.innerHTML = '<div class="scr">' + rays + '<div class="top" id="top"></div><div class="stagewrap"><div class="frame">' + bulbs + '<div class="stage" id="stage"></div>' + bulbs + '</div></div>' +
       '<div class="stripes"><i class="s0"></i><i class="s1"></i><i class="s2"></i></div>' +
       '<div class="foot"><div class="host" id="host">' + RC.art.host + '</div><div class="bubble" id="bubble"></div><div class="joinbox" id="joinbox"></div></div>' +
-      '<button class="menubtn" data-a="s_menu">Menu</button><div id="menu"></div><div id="pausel"></div><div id="xl"></div>' +
-      '<div class="overlay" id="ov"><h1>Rain Check!</h1><p>The family game show for rainy days</p><button data-a="s_unlock" id="ovb">Press OK to open the show</button></div></div>';
+      '<button class="menubtn" data-a="s_menu">Menu</button><div id="menu"></div><div id="pausel"></div><div id="xl"></div><div id="toast"></div>' +
+      '<div class="overlay" id="ov"><h1>Game Night!</h1><p>Pick a game. Grab your phone. Play.</p><button data-a="s_unlock" id="ovb">Press OK to start</button></div></div>';
     try { document.getElementById('ovb').focus(); } catch (e) { }
 
     function publish() {
@@ -166,6 +173,7 @@
       var json = JSON.stringify(S);
       netSend('state', json, true);
       lsSet('rc_host_' + ROOM, E.dump());
+      if (S.phase === 'intro' && cache.usedK !== S.k) { cache.usedK = S.k; lsSet('gn_used', JSON.stringify(E.used())); }
       render();
     }
     netStart(ROOM, 'in', function (topic, str) {
@@ -187,7 +195,7 @@
       tickUI();
     }, 100);
     /* Optional live judge for Crillion. Off unless content.js sets judgeUrl. The TV asks it about answers that
-       are not on the sheet; if it does not answer in time, the showrunner decides on their phone as usual. */
+       are not on the sheet; if it does not answer in time, the host decides on their phone as usual. */
     var judgedK = '';
     function askJudge() {
       if (!C.judgeUrl || S.phase !== 'cr_judge' || judgedK === S.k) { return; }
@@ -259,34 +267,47 @@
     /* drawing */
     function topHtml() {
       var sub = S.phase === 'lobby' ? 'Join on your phone' : (S.phase === 'menu' ? 'Pick a game' : (S.phase === 'final' ? 'Final score' : 'Game ' + S.round + ' &middot; ' + esc(S.rt || '')));
-      function tm(t) { var ctrl = (S.turn && pteam(S.turn) === t) ? ' ctrl' : ''; return '<div class="tm t' + t + ctrl + '"><div class="tn">' + esc(tname(t)) + '</div><div class="ts">' + S.teams[t].score + '</div></div>'; }
+      var mid = '<div class="logo">Game Night!</div><div class="sub">' + sub + '</div>';
+      function tm(t, small) { var ctrl = (S.turn && pteam(S.turn) === t) ? ' ctrl' : ''; return '<div class="tm t' + t + ctrl + (small ? ' sm' : '') + '"' + (small ? ' style="width:' + small + 'vw"' : '') + '><div class="tn">' + esc(tname(t)) + '</div><div class="ts">' + S.teams[t].score + '</div></div>'; }
       if (S.solo) { // no teams: the top bar shows who is first and second
         var rk = rankList();
         var sp = function (i, t) { var r = rk[i]; return '<div class="tm t' + t + (r && S.turn === r.p ? ' ctrl' : '') + '"><div class="tn">' + (r ? (i + 1) + '. ' + esc(r.n) : (i ? '2nd place' : '1st place')) + '</div><div class="ts">' + (r ? r.pts : 0) + '</div></div>'; };
-        return sp(0, 0) + '<div class="mid"><div class="logo">Rain Check!</div><div class="sub">' + sub + '</div></div>' + sp(1, 1);
+        return sp(0, 0) + '<div class="mid">' + mid + '</div>' + sp(1, 1);
       }
-      return tm(0) + '<div class="mid"><div class="logo">Rain Check!</div><div class="sub">' + sub + '</div></div>' + tm(1);
+      if (NT() === 2) { return tm(0) + '<div class="mid">' + mid + '</div>' + tm(1); }
+      var h = '<div class="mid msm">' + mid + '</div>', w = NT() === 3 ? 22 : (NT() === 4 ? 17.5 : 14.2);
+      for (var t = 0; t < NT(); t++) { h += tm(t, w); }
+      return h;
     }
     function who(pid) { return '<span class="t' + (S.solo ? 0 : pteam(pid)) + 'c">' + esc(pname(pid)) + '</span>'; }
     function gainsHtml(rv) { // what a round just paid out: per team, or a head count in solo play
       if (S.solo) { return (rv.nok || 0) + (rv.nok === 1 ? ' player scores' : ' players score'); }
-      return '<span class="t0c">' + esc(tname(0)) + ' +' + rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + rv.gains[1] + '</span>';
+      var h = '';
+      for (var t = 0; t < NT(); t++) { h += (t ? ' &nbsp; ' : '') + '<span class="t' + t + 'c">' + esc(tname(t)) + ' +' + (rv.gains[t] || 0) + '</span>'; }
+      return h;
     }
     function ranksHtml(max) { // every player's own points, best first
       var rk = rankList(), h = '<div class="ranks">';
       for (var i = 0; i < rk.length && i < max; i++) { h += '<div class="rk"><b>' + (i + 1) + '</b><span class="t' + (S.solo ? (i === 0 ? 0 : 1) : rk[i].t) + 'c">' + esc(rk[i].n) + '</span><i>' + rk[i].pts + '</i></div>'; }
       return h + '</div>';
     }
+    function hostStepHtml() { // nobody runs the night yet: only the host code is shown
+        return '<div class="lobby"><div class="qr">' + qrFor(JOINURL + '&h=' + E.hostKey()) + '<div class="url">Host code: <b>' + esc(E.hostKey()) + '</b></div></div>' +
+          '<div class="hoststep"><div class="h2">Step 1: the host scans this code</div><p>Only the person running game night scans it. That phone picks the games, starts and stops them, and manages players and teams.</p>' +
+          '<p>Everyone else: wait. Your code comes next.</p>' + (S.order.length ? '<p>' + S.order.length + ' already in the room.</p>' : '') + '</div></div>';
+    }
     function lobbyHtml() {
-      var cols = ['', ''], nth = 0;
-      S.order.forEach(function (pid) { var p = S.players[pid]; if (!p) { return; } cols[S.solo ? (nth++ % 2) : p.t] += '<div class="chip' + ((Date.now() - p.seen) > 30000 ? ' off' : '') + '">' + esc(p.n) + (pid === S.boss ? ' <small>RUNS THE SHOW</small>' : '') + '</div>'; });
-      return '<div class="lobby"><div class="qr">' + qrSvg + '<div class="url">' + esc(SHORT) + '</div><div class="code">' + ROOM + '</div></div>' +
-        '<div class="teams"><div class="col t0"><h3>' + (S.solo ? 'Players' : esc(tname(0))) + '</h3>' + cols[0] + '</div><div class="col t1"><h3>' + (S.solo ? 'No teams' : esc(tname(1))) + '</h3>' + cols[1] + '</div></div></div><div class="lineup">' + (S.boss ? '<b>' + esc(pname(S.boss)) + '</b> runs the show. Tap a game on that phone to start.' : 'The first player to join runs the show.') + '</div>';
+      var cols = [], nth2 = 0, n = S.solo ? 2 : NT(), t;
+      for (t = 0; t < n; t++) { cols.push(''); }
+      S.order.forEach(function (pid) { var p = S.players[pid]; if (!p) { return; } cols[S.solo ? (nth2++ % 2) : (p.t < n ? p.t : 0)] += '<div class="chip' + ((Date.now() - p.seen) > 30000 ? ' off' : '') + '">' + esc(p.n) + (pid === S.boss ? ' <small>HOST</small>' : '') + '</div>'; });
+      var h = '<div class="lobby"><div class="qr">' + qrFor(JOINURL) + '<div class="url">' + esc(SHORT) + '</div><div class="code">' + ROOM + '</div></div><div class="teams">';
+      for (t = 0; t < n; t++) { h += '<div class="col t' + t + '"><h3>' + (S.solo ? (t ? 'No teams' : 'Players') : esc(tname(t))) + '</h3>' + cols[t] + '</div>'; }
+      return h + '</div></div><div class="lineup"><b>' + esc(pname(S.boss)) + '</b> is the host and starts the first game.</div>';
     }
     function gmenuHtml() {
       var h = '<div class="h2">Pick a game</div><div class="gmenu">';
       for (var i = 0; i < C.order.length; i++) { var k = C.order[i], n = S.played[k] || 0; h += '<button class="gtile' + (n ? ' done' : '') + '" data-a="s_game" data-v="' + k + '">' + esc(gameTitle(k)) + (n ? '<small>played</small>' : '') + '</button>'; }
-      return h + '</div><div class="lineup">' + (S.boss ? '<b>' + esc(pname(S.boss)) + '</b> picks on the phone' : 'Pick here') + (S.short ? ' &middot; short rounds' : '') + ' &middot; ' + S.round + ' played so far</div>';
+      return h + '</div><div class="lineup">' + (S.boss ? '<b>' + esc(pname(S.boss)) + '</b> (the host) picks the game' : 'Pick here') + (S.short ? ' &middot; short games' : '') + ' &middot; ' + S.round + ' played so far</div>';
     }
     function waitHtml() { // names of players who are here but have not answered yet
       var miss = [], now = S.now || Date.now();
@@ -308,7 +329,8 @@
         for (var l = 0; l < 4; l++) { h += '<div class="bcell' + (S.board.used[c][l] ? ' used' : '') + '">' + ((l + 1) * 100) + '</div>'; }
         h += '</div>';
       }
-      return h + '</div><div class="status">' + who(S.turn) + ' is picking</div>' + timerHtml(20000);
+      var why = S.pickWhy === 'fast' ? 'Fastest on the last question, so you pick.' : (S.pickWhy === 'first' ? 'You start us off.' : 'Your turn to pick.');
+      return h + '</div><div class="status go">' + esc(pname(S.turn)).toUpperCase() + ', IT IS YOUR TURN</div><div class="pickwhy">' + why + ' Pick a category and points on your phone.</div>' + timerHtml(25000);
     }
     function clueHtml() {
       var q = S.q, rv = S.phase === 'board_reveal' ? S.rv : null, h = '<div class="tag">' + esc(q.cat) + ' &middot; ' + q.val + '</div><div class="h2">' + esc(q.text) + '</div><div class="opts">';
@@ -328,8 +350,9 @@
       }
       var side;
       if (S.phase === 'zoom_reveal') { side = '<div class="answer">' + esc(S.rv.text) + '</div><div class="status">' + (S.rv.who ? '<span class="t' + S.rv.team + 'c">' + esc(S.rv.who) + '</span> +' + S.rv.val : 'No points') + '</div>'; }
-      else if (S.phase === 'zoom_ans') { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status">' + who(S.turn) + ' is answering</div>'; }
-      else { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="BUZZ when you know!" data-off="Get ready...">Get ready...</div>'; }
+      else if (S.phase === 'zoom_ans') { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status">' + who(S.turn) + ' is answering' + (S.bzr && S.bzr.length ? '<br><small>fastest finger: ' + secs(S.bzr[0].dt) + '</small>' : '') + '</div>'; }
+      else if (S.bzw) { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status go">BUZZ!</div>'; }
+      else { side = '<div class="tag yel">Worth</div><div class="zval" id="zval"></div><div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="GO! Buzz when you know it" data-off="WAIT for GO...">WAIT for GO...</div><div class="pickwhy">Early buzz: out, and lose 50</div>'; }
       return '<div class="zwrap"><div class="zf" data-img="' + z.img + z.n + '"><div class="zi" id="zimg">' + RC.art[z.img] + '</div>' + tiles + '</div><div class="zside"><div class="tag">Picture ' + z.n + ' of ' + z.of + '</div><br>' + side + '</div></div>';
     }
     function phraseHtml() {
@@ -364,21 +387,23 @@
       h += '</div><div class="fside"><div class="strikes">';
       for (var k = 0; k < 3; k++) { h += '<b class="' + (k < f.strikes ? 'x' : '') + '">X</b>'; }
       h += '</div><div class="tag yel">Pot</div><div class="pot">' + f.pot + '</div>';
-      if (S.phase === 'feud_face') { h += '<div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="BUZZ NOW!" data-off="Get ready...">Get ready...</div>'; }
-      else if (S.phase === 'feud_pick') { h += '<div class="status">' + (f.mode === 'steal' ? 'STEAL: ' : '') + who(S.turn) + ' is choosing</div>'; }
+      if (S.phase === 'feud_face') { h += S.bzw ? '<div class="status go">BUZZ!</div>' : '<div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="GO! BUZZ NOW!" data-off="WAIT for GO...">WAIT for GO...</div><div class="pickwhy">Early buzz: out, and lose 50</div>'; }
+      else if (S.phase === 'feud_pick') { h += '<div class="status">' + (f.mode === 'steal' ? 'STEAL: ' : '') + who(S.turn) + ' is choosing' + (f.mode === 'face' && S.bzr && S.bzr.length ? '<br><small>fastest finger: ' + secs(S.bzr[0].dt) + '</small>' : '') + '</div>'; }
       else { h += '<div class="status">' + (S.rv.solo ? 'Board finished' : (S.rv.team >= 0 ? '<span class="t' + S.rv.team + 'c">' + esc(tname(S.rv.team)) + '</span> +' + S.rv.pot : 'No points')) + '</div>'; }
       return h + '</div></div>' + (S.phase === 'feud_pick' ? timerHtml(f.mode === 'steal' ? 25000 : (f.mode === 'face' ? 14000 : 18000)) : '');
     }
     function barsHtml() {
-      var max = Math.max(1, S.teams[0].score, S.teams[1].score), h = '<div class="bars">';
-      for (var t = 0; t < 2; t++) { h += '<div class="bar"><div class="bn t' + t + 'c">' + esc(tname(t)) + '</div><div class="bt"><div class="bf t' + t + '" style="width:' + Math.max(8, Math.round(100 * S.teams[t].score / max)) + '%">' + S.teams[t].score + '</div></div></div>'; }
+      var max = 1, t, h = '<div class="bars' + (NT() > 3 ? ' many' : '') + '">';
+      for (t = 0; t < NT(); t++) { if (S.teams[t].score > max) { max = S.teams[t].score; } }
+      for (t = 0; t < NT(); t++) { h += '<div class="bar"><div class="bn t' + t + 'c">' + esc(tname(t)) + '</div><div class="bt"><div class="bf t' + t + '" style="width:' + Math.max(8, Math.round(100 * Math.max(0, S.teams[t].score) / max)) + '%">' + S.teams[t].score + '</div></div></div>'; }
       return h + '</div>';
     }
     function stageHtml() {
       var ph = S.phase;
+      if (!S.boss && (ph === 'lobby' || ph === 'menu')) { return hostStepHtml(); }
       if (ph === 'lobby') { return lobbyHtml(); }
       if (ph === 'menu') { return gmenuHtml(); }
-      if (ph === 'intro') { var how = ''; S.intro.how.forEach(function (x) { how += '<div>' + esc(x) + '</div>'; }); return '<div class="tag red">Game ' + S.intro.n + '</div><div class="h1">' + esc(S.intro.title) + '</div><div class="how">' + how + '</div>' + timerHtml(14000); }
+      if (ph === 'intro') { var how = ''; S.intro.how.forEach(function (x) { how += '<div>' + esc(x) + '</div>'; }); return '<div class="tag red">Game ' + S.intro.n + '</div><div class="h1">' + esc(S.intro.title) + '</div><div class="how">' + how + '</div>' + timerHtml(20000); }
       if (ph === 'vote_q' || ph === 'vote_reveal') { return voteHtml(); }
       if (ph === 'ml_q') { return '<div class="tag">Question ' + S.ml.n + ' of ' + S.ml.of + '</div><div class="h2">' + esc(S.ml.text) + '</div><div class="status">Vote on your phone. ' + waitHtml() + '</div>' + timerHtml(26000); }
       if (ph === 'ml_reveal') {
@@ -403,28 +428,28 @@
       if (ph === 'zoom_q' || ph === 'zoom_ans' || ph === 'zoom_reveal') { return zoomHtml(); }
       if (ph === 'phrase_turn' || ph === 'phrase_solve' || ph === 'phrase_reveal') { return phraseHtml(); }
       if (ph === 'feud_face' || ph === 'feud_pick' || ph === 'feud_reveal') { return feudHtml(); }
-      if (ph === 'cr_q') { return '<div class="tag">Question ' + S.cr.n + ' of ' + S.cr.of + '</div><div class="h2">' + esc(S.cr.text) + '</div><div class="status">Type one answer nobody else will think of. ' + waitHtml() + '</div>' + timerHtml(46000); }
+      if (ph === 'cr_q') { return '<div class="tag">Question ' + S.cr.n + ' of ' + S.cr.of + '</div><div class="h2">' + esc(S.cr.text) + '</div><div class="status">Type the most obscure right answer you can. ' + waitHtml() + '</div>' + timerHtml(46000); }
       if (ph === 'cr_judge' || ph === 'cr_reveal') {
         var rows = S.cr.rows, two = rows.length > 6, ch = '<div class="h2">' + esc(S.cr.text) + '</div><div class="crl' + (two ? ' two' : '') + '">';
         for (var ci = 0; ci < rows.length && ci < 12; ci++) {
           var r = rows[ci], right;
           if (r.st === 'ask') { right = '<i class="ask">judge?</i>'; }
           else if (ph === 'cr_judge') { right = '<i class="ask">...</i>'; }
-          else if (r.st === 'ok') { right = '<small>' + (r.dup > 1 ? r.dup + ' said it, split' : r.said + ' of 100') + '</small><i>' + r.pts + '</i>'; }
+          else if (r.st === 'ok') { right = '<small>' + esc(r.tier) + (r.dup > 1 ? ', split ' + r.dup + ' ways' : '') + (r.crown ? ' +50 crown' : '') + '</small><i>' + r.pts + '</i>'; }
           else { right = '<small>' + esc(r.why || 'not accepted') + '</small><i class="bad">0</i>'; }
           ch += '<div class="crr' + (ph === 'cr_reveal' && r.st !== 'ok' ? ' out' : '') + '"><span class="t' + (S.solo ? 1 : r.t) + 'c">' + esc(r.n) + '</span><b>' + esc(r.text) + (ph === 'cr_reveal' && r.st === 'ok' && r.name.toLowerCase() !== String(r.text).toLowerCase().replace(/^\s+|\s+$/g, '') ? ' <em>= ' + esc(r.name) + '</em>' : '') + '</b>' + right + '</div>';
         }
         ch += '</div>';
         if (ph === 'cr_judge') { return ch + '<div class="status go">The judge is deciding</div>' + timerHtml(75000); }
-        return ch + '<div class="status">' + (S.rv.allSame ? 'Everybody said the same thing. ' : (S.rv.who ? 'Most random: ' + esc(S.rv.who) + '. ' : '')) + (S.solo ? '' : '<span class="t0c">' + esc(tname(0)) + ' +' + S.rv.gains[0] + '</span> &nbsp; <span class="t1c">' + esc(tname(1)) + ' +' + S.rv.gains[1] + '</span>') + '</div>';
+        return ch + '<div class="status">' + (S.rv.allSame ? 'Everybody said the same thing. ' : (S.rv.who ? 'Most obscure: ' + esc(S.rv.who) + '. ' : '')) + (S.solo ? '' : gainsHtml(S.rv)) + '</div>';
       }
-      if (ph === 'round_end') { return '<div class="tag">Scores after</div><div class="h2">' + esc(S.re.title) + '</div>' + (S.solo ? '' : barsHtml()) + ranksHtml(S.solo ? 12 : 6); }
+      if (ph === 'round_end') { return '<div class="tag">Scores after</div><div class="h2">' + esc(S.re.title) + '</div>' + (S.solo ? '' : barsHtml()) + ranksHtml(S.solo ? 12 : (NT() > 3 ? 3 : 6)); }
       if (ph === 'final') {
         var conf = '', cols = ['#C4520F', '#17696B', '#F2B705', '#FBF0D9'];
         for (var i = 0; i < 28; i++) { conf += '<div class="conf" style="left:' + ((i * 37) % 100) + '%;background:' + cols[i % 4] + ';-webkit-animation-delay:' + ((i * 0.23) % 3.4) + 's;animation-delay:' + ((i * 0.23) % 3.4) + 's"></div>'; }
         var f = S.fin;
         if (f.solo) { return conf + '<div class="h1">' + (f.tie ? 'A tie at the top!' : '<span class="t0c">' + esc(f.champ) + '</span> wins!') + '</div>' + ranksHtml(12) + '<div class="status">' + (f.king ? 'Fastest buzzer: ' + esc(f.king) + ' (' + f.kingN + ')' : '') + '</div>'; }
-        return conf + '<div class="h1">' + (f.winner < 0 ? 'It is a tie!' : '<span class="t' + f.winner + 'c">' + esc(tname(f.winner)) + '</span> win!') + '</div>' + barsHtml() + ranksHtml(6) +
+        return conf + '<div class="h1">' + (f.winner < 0 ? 'It is a tie!' : '<span class="t' + f.winner + 'c">' + esc(tname(f.winner)) + '</span> win!') + '</div>' + barsHtml() + ranksHtml(NT() > 3 ? 3 : 6) +
           '<div class="status">' + (f.king ? 'Fastest buzzer: ' + esc(f.king) + ' (' + f.kingN + ')' : '') + '</div>';
       }
       return '';
@@ -435,13 +460,15 @@
       // zoom keeps one DOM node per picture so the image does not flicker while it zooms
       var st = stageHtml();
       put('stage', st);
-      put('bubble', esc(S.phase === 'lobby' || !S.say.text ? 'Scan the code with your phone camera to join. The first player in runs the show.' : S.say.text));
+      put('bubble', esc(S.phase === 'lobby' || !S.say.text ? (S.boss ? 'Scan the code with your phone camera to join. ' + pname(S.boss) + ' is the host.' : 'Host, scan the code with your phone camera to take control.') : S.say.text));
+      if (S.fs && S.fs.id !== lastFs) { lastFs = S.fs.id; cache.toast = null; put('toast', '<div class="toast">' + esc(S.fs.n) + ' buzzed before GO. Out, and minus 50.</div>'); }
       put('joinbox', 'Join at ' + esc(SHORT) + '<br>Room <b>' + ROOM + '</b><br>Relay ' + dotsHtml() + (net.up ? '' : ' connecting...'));
       put('pausel', S.paused ? '<div class="paused">PAUSED</div>' : '');
       put('menu', menuOpen ? '<div class="menu">' +
         '<button data-a="s_next">' + (S.phase === 'lobby' ? 'Open the game menu' : 'Next') + '</button><button data-a="s_pause">' + (S.paused ? 'Resume' : 'Pause') + '</button>' +
-        '<button data-a="s_skip">Back to the game menu</button><button data-a="s_end">Finish the show</button><button data-a="s_sound">Sound: ' + (soundOn ? 'on' : 'off') + '</button><button data-a="s_full">Full screen</button>' +
-        '<button data-a="s_again">New show, same players</button><button data-a="s_menu">Close</button></div>' : '');
+        '<button data-a="s_skip">Pick a different game</button><button data-a="s_end">Finish and show the winner</button><button data-a="s_sound">Sound: ' + (soundOn ? 'on' : 'off') + '</button><button data-a="s_full">Full screen</button>' +
+        '<button data-a="s_restart">Restart this game</button><button data-a="s_again">New night, same players</button><button data-a="s_reset">Start over: everyone joins again</button>' +
+        '<button data-a="s_unhost">Change the host (new host code)</button><button data-a="s_menu">Close</button></div>' : '');
       if (S.say.id !== lastSay) { lastSay = S.say.id; speak(S.say.text); }
       if (S.fx.id !== lastFx) { lastFx = S.fx.id; sfx(S.fx.name); }
       if (S.f && S.f.x !== lastX) { if (S.f.x > lastX && (S.phase === 'feud_pick' || S.phase === 'feud_reveal')) { cache.xl = null; put('xl', '<div class="bigx">X</div>'); } lastX = S.f.x; }
@@ -463,6 +490,9 @@
       else if (a === 's_end') { E.cmd('end', null, now); menuOpen = false; }
       else if (a === 's_game') { E.cmd('play', { key: v }, now); menuOpen = false; }
       else if (a === 's_again') { E.cmd('again', null, now); menuOpen = false; }
+      else if (a === 's_restart') { E.cmd('restart', null, now); menuOpen = false; }
+      else if (a === 's_reset') { E.cmd('reset', null, now); menuOpen = false; }
+      else if (a === 's_unhost') { E.cmd('unhost', null, now); if (S.phase !== 'lobby') { E.cmd('menu', null, now); } menuOpen = false; }
       else if (a === 's_sound') { soundOn = !soundOn; if (!soundOn) { try { window.speechSynthesis.cancel(); } catch (e) { } } }
       else if (a === 's_full') { try { var d = document.documentElement; (d.requestFullscreen || d.webkitRequestFullscreen).call(d); } catch (e) { } menuOpen = false; }
       dirty = true; render();
@@ -485,13 +515,15 @@
   function phone() {
     var pid = lsGet('rc_pid'); if (!pid) { pid = rid(8); lsSet('rc_pid', pid); }
     if (qs.pid) { pid = qs.pid; } // for tests: several players in one browser
-    var ui = { name: lsGet('rc_name') || '', team: -1, joined: false, menu: false, sent: null, failK: '', rtt: 0, lastE: 0 };
-    if (lsGet('rc_room') === ROOM && ui.name && !qs.pid) { ui.joined = true; ui.team = +lsGet('rc_team') || 0; }
+    var ui = { name: lsGet('rc_name') || '', team: -1, joined: false, menu: false, sent: null, failK: '', rtt: 0, lastE: 0, ep: 0, h: '', confirm: '' };
+    if (qs.h) { lsSet('gn_h_' + ROOM, qs.h); }
+    ui.h = qs.h || lsGet('gn_h_' + ROOM) || '';   // the host key, if this phone scanned the host code
+    if (lsGet('rc_room') === ROOM && ui.name && !qs.pid) { ui.joined = true; ui.team = +lsGet('rc_team') || 0; ui.ep = +lsGet('gn_ep') || 0; }
     var lastSeq = 0, lastBoot = 0, lastState = 0, pending = null, offCur = null, offPrev = null, offAt = 0, lastKick = Date.now();
     app.innerHTML = '<div class="ph"><div id="pbanner"></div><div id="ptop"></div><div id="pnote"></div><div class="pbody" id="pbody"></div><div id="psheet"></div><div id="pboss"></div></div>';
 
     function send(m) { m.p = pid; m.i = rid(10); netSend('in', JSON.stringify(m), false); } // a fresh id every time, so a retry is never mistaken for a duplicate
-    function hello() { if (ui.joined && ui.name) { send({ t: 'hello', name: ui.name, team: ui.team < 0 ? 0 : ui.team, ts: Date.now(), rtt: ui.rtt }); } }
+    function hello() { if (ui.joined && ui.name) { var hm = { t: 'hello', name: ui.name, team: ui.team, ep: ui.ep, ts: Date.now(), rtt: ui.rtt }; if (ui.h) { hm.h = ui.h; } send(hm); } }
     function doAct(m, label) { m.k = S.k; m.n = 0; pending = { k: S.k, m: m, tries: 0 }; ui.sent = { k: S.k, label: label }; ui.failK = ''; send(m); render(); }
     function retry() { // keep sending the last tap until the TV shows it arrived
       if (!pending || !S) { return; }
@@ -514,6 +546,9 @@
       clockOff = offPrev === null ? offCur : Math.min(offPrev, offCur);
       S = st;
       var mine = S.players[pid];
+      // The host started the night over: this phone has to join again and pick a team.
+      if (ui.joined && !mine && ui.ep !== S.epoch && !(S.out && S.out[pid])) { ui.joined = false; ui.team = -1; ui.menu = false; lsSet('rc_room', ''); }
+      if (mine && !S.solo) { ui.team = mine.t; }
       if (mine && mine.e && mine.e !== ui.lastE) { ui.lastE = mine.e; var r = Date.now() - mine.e; if (r >= 0 && r < 30000) { ui.rtt = r; } }
       render();
     });
@@ -533,43 +568,47 @@
 
     function me() { return S && S.players[pid]; }
     function sentHere() { return ui.sent && S && ui.sent.k === S.k ? ui.sent : null; }
-    function buzzBtn(label, small) {
+    function buzzBtn() {
       var s = sentHere();
-      if (s) { return '<button class="buzz sent' + (small ? ' sm' : '') + '" disabled>SENT</button>'; }
-      return '<button class="buzz wait' + (small ? ' sm' : '') + '" data-a="buzz" data-open="' + (S.openAt || 0) + '" data-on="' + label + '" data-off="WAIT">WAIT</button>';
+      if (s) { return '<button class="buzz sent" disabled>' + (s.label === 'early' ? 'TOO EARLY' : 'BUZZED') + '</button>'; }
+      return '<button class="buzz wait" data-a="buzz" data-open="' + (S.openAt || 0) + '" data-on="GO!" data-off="WAIT">WAIT</button><p class="small">Tap only after it turns green and says GO. Tap early and you are out for this one and lose 50 points.</p>';
+    }
+    function earlyHtml() { return '<h2>Too early!</h2><p>You tapped before GO. You sit this one out and lose 50 points.</p>' + watch(); }
+    function teamBtns(action, cur) {
+      var h = '';
+      for (var t = 0; t < NT(); t++) { h += '<button class="pbtn c tb' + t + (cur === t ? ' sel' : '') + '" data-a="' + action + '" data-v="' + t + '">' + esc(tname(t)) + '</button>'; }
+      return h;
     }
     function optBtns(opts, a) { var h = ''; for (var i = 0; i < opts.length; i++) { h += '<button class="pbtn dark" data-a="' + a + '" data-v="' + opts[i].i + '">' + esc(opts[i].text) + '</button>'; } return h; }
     function watch(extra) { return '<div class="watch">Eyes on the TV</div>' + (extra ? '<p>' + extra + '</p>' : ''); }
 
     function joinHtml() {
-      var n0 = S ? tname(0) : 'Thunder', n1 = S ? tname(1) : 'Lightning';
-      if (S && S.solo) { // no teams in this show: a name is all we need
-        return '<h2>Join Rain Check!</h2><p>Room ' + ROOM + '</p>' +
-          '<input class="field" id="nm" maxlength="14" placeholder="Your first name" value="' + esc(ui.name) + '" autocomplete="off">' +
-          '<button class="pbtn go" data-a="join">I am in</button>';
-      }
-      return '<h2>Join Rain Check!</h2><p>Room ' + ROOM + '</p>' +
-        '<input class="field" id="nm" maxlength="14" placeholder="Your first name" value="' + esc(ui.name) + '" autocomplete="off">' +
-        '<p>Pick your team</p>' +
-        '<button class="pbtn c o0' + (ui.team === 0 ? ' sel' : '') + '" data-a="team" data-v="0">' + esc(n0) + '</button>' +
-        '<button class="pbtn c o1' + (ui.team === 1 ? ' sel' : '') + '" data-a="team" data-v="1">' + esc(n1) + '</button>' +
-        '<button class="pbtn go" data-a="join"' + (ui.team < 0 ? ' disabled' : '') + '>I am in</button>';
+      var top = '<h2>Join Game Night</h2><p>Room ' + ROOM + (ui.h ? ' &middot; you are the host' : '') + '</p>' +
+        '<input class="field" id="nm" maxlength="14" placeholder="Your first name" value="' + esc(ui.name) + '" autocomplete="off">';
+      var hk = (!S.boss && !ui.h) ? '<input class="field sm" id="hk" maxlength="8" placeholder="Host code (host only)" autocomplete="off" autocapitalize="none" autocorrect="off">' : '';
+      if (S.solo) { return top + hk + '<button class="pbtn go" data-a="join">I am in</button>'; }   // no teams tonight: a name is all we need
+      return top + '<p>Pick your team</p>' + teamBtns('team', ui.team) + hk + '<button class="pbtn go" data-a="join"' + (ui.team < 0 ? ' disabled' : '') + '>I am in</button>';
     }
     function modeHtml() {
-      return '<h3>How do you want to play?</h3><div class="half"><button class="pbtn plain c' + (S.solo ? '' : ' sel') + '" data-a="c_solo" data-v="0">Two teams</button><button class="pbtn plain c' + (S.solo ? ' sel' : '') + '" data-a="c_solo" data-v="1">Every player for themselves</button></div>';
+      var h = '<h3>Teams tonight</h3><div class="half">';
+      h += '<button class="pbtn plain c' + (S.solo ? ' sel' : '') + '" data-a="c_solo" data-v="1">No teams: every player for themselves</button>';
+      for (var n = 2; n <= 5; n++) { h += '<button class="pbtn plain c' + (!S.solo && NT() === n ? ' sel' : '') + '" data-a="c_nteams" data-v="' + n + '">' + n + ' teams</button>'; }
+      return h + (S.solo ? '' : '<button class="pbtn plain c" data-a="c_shuffle">Shuffle everyone into even teams</button>') + '</div>';
     }
     function myRank() { var rk = rankList(); for (var i = 0; i < rk.length; i++) { if (rk[i].p === pid) { return i + 1; } } return 0; }
     function standing() { // one line of score, for whichever way the show is being played
       if (S.solo) { var rk = rankList(); return '<p>' + (rk.length ? esc(rk[0].n) + ' leads with ' + rk[0].pts + '. ' : '') + 'You are number ' + myRank() + ' with ' + (me() ? me().pts : 0) + '.</p>'; }
-      return '<p>' + esc(tname(0)) + ' ' + S.teams[0].score + ' &middot; ' + esc(tname(1)) + ' ' + S.teams[1].score + '</p>';
+      var h = '<p>';
+      for (var t = 0; t < NT(); t++) { h += (t ? ' &middot; ' : '') + esc(tname(t)) + ' ' + S.teams[t].score; }
+      return h + '</p>';
     }
     function pickerHtml() {
       var h = '<div class="half">';
       for (var i = 0; i < C.order.length; i++) { var k = C.order[i], n = S.played[k] || 0; h += '<button class="pbtn game c' + (n ? ' done' : '') + '" data-a="c_play" data-v="' + k + '">' + esc(gameTitle(k)) + (n ? '<small>played</small>' : '') + '</button>'; }
-      h += '</div><button class="pbtn plain c' + (S.short ? ' sel' : '') + '" data-a="c_short">Short rounds: ' + (S.short ? 'on' : 'off') + '</button>';
+      h += '</div><button class="pbtn plain c' + (S.short ? ' sel' : '') + '" data-a="c_short">Short games: ' + (S.short ? 'on' : 'off') + '</button>';
       h += modeHtml();
-      if (S.round > 0) { h += '<button class="pbtn plain c" data-a="c_end">Finish the show and see the winner</button>'; }
-      return h;
+      if (S.round > 0) { h += '<button class="pbtn plain c" data-a="c_end">Finish the night and show the winner</button>'; }
+      return h + '<p class="small">More controls are under the Host button at the bottom: move or remove players, team names, restart.</p>';
     }
     function locked(text) { // shared by every "everyone answers" screen
       var s = sentHere();
@@ -578,22 +617,23 @@
       return '';
     }
     function lobbyHtml() {
-      var m = me(), lists = ['', ''];
-      S.order.forEach(function (id) { var p = S.players[id]; if (p) { lists[p.t] += esc(p.n) + (id === S.boss ? ' (showrunner)' : '') + '<br>'; } });
-      var h = '<h2>You are in, ' + esc(m.n) + '!</h2>' + (S.boss === pid ? '' : '<p>' + esc(pname(S.boss)) + ' will start the show.</p>') +
-        (S.solo ? '<div class="plist"><b class="t0c">Players</b>' + lists[0] + lists[1] + '</div>' :
-        '<div class="plist"><b class="t0c">' + esc(tname(0)) + '</b>' + (lists[0] || '<span class="small">nobody yet</span>') + '<b class="t1c">' + esc(tname(1)) + '</b>' + (lists[1] || '<span class="small">nobody yet</span>') + '</div>' +
-        '<button class="pbtn plain c" data-a="switch">Switch my team</button>');
-      if (S.boss === pid) {
-        h += '<h2>You run the show</h2><p>When everyone is in, tap a game to start it. After each game you come back here and pick the next one.</p>' + pickerHtml() +
-          (S.solo ? '' : '<h3>Team names</h3><input class="field" id="tn0" maxlength="14" value="' + esc(tname(0)) + '" style="font-size:19px;margin:4px 0"><input class="field" id="tn1" maxlength="14" value="' + esc(tname(1)) + '" style="font-size:19px;margin:4px 0">' +
-          '<div class="half" style="margin-top:8px"><button class="pbtn plain c" data-a="c_names">Save names</button><button class="pbtn plain c" data-a="c_preset">Kids vs Adults</button></div>');
+      var m = me(), lists = [], t, isBoss = S.boss === pid;
+      for (t = 0; t < NT(); t++) { lists.push(''); }
+      S.order.forEach(function (id) { var p = S.players[id]; if (p) { lists[S.solo ? 0 : (p.t < NT() ? p.t : 0)] += esc(p.n) + (id === S.boss ? ' (host)' : '') + '<br>'; } });
+      var h = '<h2>You are in, ' + esc(m.n) + '!</h2>' + (isBoss ? '' : '<p>' + (S.boss ? esc(pname(S.boss)) + ' is the host and will start the first game.' : 'Waiting for the host.') + '</p>');
+      if (S.solo) { h += '<div class="plist"><b class="t0c">Players</b>' + lists[0] + '</div>'; }
+      else {
+        h += '<div class="plist">';
+        for (t = 0; t < NT(); t++) { h += '<b class="t' + t + 'c">' + esc(tname(t)) + '</b>' + (lists[t] || '<span class="small">nobody yet</span>'); }
+        h += '</div><p class="small">Want a different team? Tap it.</p>' + teamBtns('switch', m.t);
       }
+      if (isBoss) { h += '<h2>You are the host</h2><p>When everyone is in, tap a game to start it. After each game you come back to this list and pick the next one.</p>' + pickerHtml(); }
       return h;
     }
     function bodyHtml() {
-      if (!ui.joined) { return joinHtml(); }
       if (!S) { return '<h2>Looking for the TV...</h2><p>Make sure the TV shows room ' + ROOM + '.</p>'; }
+      if (S.out && S.out[pid]) { return '<h2>You are out of this game</h2><p>The host took you out. Ask the host to let you back in.</p>'; }
+      if (!ui.joined) { return joinHtml(); }
       var m = me();
       if (!m) { return '<h2>Joining...</h2><p>Hang on, ' + esc(ui.name) + '.</p>'; }
       var ph = S.phase, mine = S.turn === pid, s = sentHere(), h = '';
@@ -601,7 +641,7 @@
       if (ph === 'menu') {
         var sc = standing();
         if (S.boss === pid) { return '<h2>Pick the next game</h2>' + sc + pickerHtml(); }
-        return '<h2>' + esc(pname(S.boss)) + ' is picking the next game</h2>' + sc + watch();
+        return '<h2>' + (S.boss ? esc(pname(S.boss)) : 'The host') + ' is picking the next game</h2>' + sc + watch();
       }
       var lk;
       if (S.paused) { return '<h2>Paused</h2>' + watch(); }
@@ -631,8 +671,9 @@
       }
       if (ph === 'scr_reveal') { return '<h2>' + esc(S.rv.text) + '</h2>' + watch(); }
       if (ph === 'board_pick') {
-        if (!mine) { return '<h2>' + esc(pname(S.turn)) + ' is picking</h2>' + watch(); }
-        h = '<h2>Your pick, ' + esc(m.n) + '!</h2><div class="tiles">';
+        var whyP = S.pickWhy === 'fast' ? ' was fastest on the last question, so ' : ' ';
+        if (!mine) { return '<h2>' + esc(pname(S.turn)) + ' is picking</h2><p>' + esc(pname(S.turn)) + whyP + 'picks the next question. Then everyone answers.</p>' + watch(); }
+        h = '<h2 class="turn">YOUR TURN, ' + esc(m.n) + '!</h2><p>' + (S.pickWhy === 'fast' ? 'You were fastest on the last question. ' : '') + 'Pick a category and a point value.</p><div class="tiles">';
         for (var c = 0; c < S.board.cats.length; c++) {
           h += '<div class="tc"><div class="th">' + esc(S.board.cats[c]) + '</div>';
           for (var l = 0; l < 4; l++) { h += '<button data-a="tile" data-v="' + c + ',' + l + '"' + (S.board.used[c][l] ? ' disabled' : '') + '>' + ((l + 1) * 100) + '</button>'; }
@@ -647,12 +688,13 @@
       }
       if (ph === 'zoom_q') {
         if (S.locked[S.solo ? pid : m.t]) { return '<h2>' + (S.solo ? 'You are locked out' : 'Your team is locked out') + '</h2>' + watch(S.solo ? 'The others get a try.' : 'The other team gets a try.'); }
-        return '<h2>What place is this?</h2>' + buzzBtn('BUZZ') + '<p class="small">Buzz only if you know it. You answer on this phone.</p>';
+        if (S.early && S.early[pid]) { return earlyHtml(); }
+        return '<h2>What place is this?</h2>' + buzzBtn();
       }
       if (ph === 'zoom_ans') {
-        if (!mine) { return '<h2>' + esc(pname(S.turn)) + ' buzzed first</h2>' + watch(); }
+        if (!mine) { return '<h2>' + esc(pname(S.turn)) + ' was fastest</h2>' + watch(); }
         if (s) { return '<h2>' + esc(s.label) + '</h2>' + watch(); }
-        return '<h2>You buzzed! Now pick.</h2><div class="gap"></div>' + optBtns(S.opts, 'ans');
+        return '<h2>You were fastest! Now pick.</h2><p class="small">A wrong answer costs 50 points.</p><div class="gap"></div>' + optBtns(S.opts, 'ans');
       }
       if (ph === 'board_reveal') {
         var mineB = S.rv.fast === m.n;
@@ -676,7 +718,7 @@
         return '<h2>Type the whole phrase</h2><div class="pmask">' + esc(S.ph.mask.join('')) + '</div><input class="field" id="solve" autocomplete="off" autocapitalize="characters" placeholder="THE PHRASE" style="font-size:20px"><button class="pbtn go" data-a="solve">Solve</button><p class="small">Close spelling counts.</p>';
       }
       if (ph === 'phrase_reveal') { return '<h2>' + esc(S.rv.text) + '</h2>' + watch(); }
-      if (ph === 'feud_face') { return '<div class="q">' + esc(S.f.q) + '</div>' + buzzBtn('BUZZ') + '<p class="small">Buzz to give the first answer.</p>'; }
+      if (ph === 'feud_face') { if (S.early && S.early[pid]) { return earlyHtml(); } return '<div class="q">' + esc(S.f.q) + '</div>' + buzzBtn(); }
       if (ph === 'feud_pick') {
         if (!mine) { return '<h2>' + esc(pname(S.turn)) + ' is choosing</h2>' + watch(pteam(S.turn) === m.t ? 'Help your teammate. Shout it out!' : ''); }
         if (s) { return '<h2>' + esc(s.label) + '</h2>' + watch(); }
@@ -687,7 +729,7 @@
       if (ph === 'feud_reveal' || ph === 'round_end') { return '<h2>Scores</h2>' + standing() + (S.solo ? '' : '<p>You have ' + m.pts + ' points of your own, number ' + myRank() + ' of ' + S.order.length + '.</p>') + watch(); }
       if (ph === 'cr_q') {
         lk = locked('Answer locked in'); if (lk) { return lk; }
-        return '<div class="q">' + esc(S.cr.text) + '</div><p class="small">One answer. The fewer people who would say it, the more you score. Close spelling counts.</p><input class="field" id="crin" maxlength="40" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Your answer"><button class="pbtn go" data-a="cr">Lock it in</button>';
+        return '<div class="q">' + esc(S.cr.text) + '</div><p class="small">One answer. The most obscure right answer wins. Spelling does not matter. If someone else types the same thing, you split the points.</p><input class="field" id="crin" maxlength="40" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Your answer"><button class="pbtn go" data-a="cr">Lock it in</button>';
       }
       if (ph === 'cr_judge') {
         if (S.boss !== pid) { return '<h2>The judge is deciding</h2>' + watch(); }
@@ -705,10 +747,10 @@
       if (ph === 'cr_reveal') {
         var mineR = null; S.cr.rows.forEach(function (r) { if (r.p === pid) { mineR = r; } });
         if (!mineR) { return '<h2>No answer from you</h2>' + watch(); }
-        return '<h2>' + (mineR.st === 'ok' ? mineR.pts + ' points' : '0 points') + '</h2><p>' + (mineR.st === 'ok' ? esc(mineR.name) + ': about ' + mineR.said + ' of 100 people would say it.' + (mineR.dup > 1 ? ' ' + mineR.dup + ' of you typed it, so the points are split.' : ' Nobody else in the room typed it.') : esc(mineR.text) + ': ' + esc(mineR.why || 'not accepted.')) + '</p>' + watch();
+        return '<h2>' + (mineR.st === 'ok' ? mineR.pts + ' points' : '0 points') + '</h2><p>' + (mineR.st === 'ok' ? esc(mineR.name) + ': ' + esc(mineR.tier) + ', worth ' + mineR.base + '.' + (mineR.dup > 1 ? ' ' + mineR.dup + ' of you typed it, so the points are split.' : ' Nobody else in the room typed it.') + (mineR.crown ? ' Most obscure answer in the room: 50 extra!' : '') : esc(mineR.text) + ': ' + esc(mineR.why || 'not accepted.')) + '</p>' + watch();
       }
       if (ph === 'final') {
-        var endBtn = S.boss === pid ? '<button class="pbtn go" data-a="c_again">New show, same players</button>' : '';
+        var endBtn = S.boss === pid ? '<button class="pbtn go" data-a="c_again">New night, same players</button>' : '';
         if (S.fin.solo) { return '<h2>' + (S.fin.tie ? 'A tie at the top!' : esc(S.fin.champ) + ' wins!') + '</h2><p>You finished number ' + myRank() + ' with ' + m.pts + ' points.</p>' + endBtn; }
         return '<h2>' + (S.fin.winner < 0 ? 'A tie!' : esc(tname(S.fin.winner)) + ' win!') + '</h2><p>You scored ' + m.pts + ' points. That makes you number ' + myRank() + ' of ' + S.order.length + '.</p>' + endBtn;
       }
@@ -723,48 +765,75 @@
       else if (stale) { ban = '<div class="banner">Reconnecting to the TV...</div>'; }
       else if (ui.rtt > 2500) { ban = '<div class="banner">This phone has a slow connection. Move closer to the Wi-Fi.</div>'; }
       put('pbanner', ban);
-      put('ptop', m ? '<div class="ptop t' + (S.solo ? 1 : m.t) + '"><span class="pill">' + esc(m.n) + (S.solo ? '' : ', ' + esc(tname(m.t))) + '</span><span class="sc">' + (S.solo ? m.pts + ' pts' : S.teams[0].score + ' to ' + S.teams[1].score) + '</span></div>' : '<div class="ptop tn"><span class="sc">Rain Check!</span><span>Room ' + ROOM + '</span></div>');
+      put('ptop', m ? '<div class="ptop t' + (S.solo ? 1 : m.t) + '"><span class="pill">' + esc(m.n) + (S.solo ? '' : ', ' + esc(tname(m.t))) + '</span><span class="sc">' + (S.solo ? m.pts + ' pts' : (NT() === 2 ? S.teams[0].score + ' to ' + S.teams[1].score : S.teams[m.t].score + ' &middot; ' + nth(teamRank(m.t)))) + '</span></div>' : '<div class="ptop tn"><span class="sc">Game Night!</span><span>Room ' + ROOM + '</span></div>');
       // do not redraw a screen with a text box while someone is typing in it
       var wr = S && S.phase === 'scr_q' && S.wr ? (S.wr[pid] || 0) : 0;
       put('pnote', S && ui.failK && ui.failK === S.k ? '<div class="pnote bad">That did not reach the TV. Tap again.</div>' : (wr && !(S.acted && S.acted[pid]) ? '<div class="pnote bad">Not it. Try again. (' + wr + (wr === 1 ? ' try' : ' tries') + ')</div>' : ''));
       var ae = document.activeElement, html = bodyHtml();
       if (ae && ae.tagName === 'INPUT' && cache.pbody && cache.pbody.replace(/value="[^"]*"/g, '') === html.replace(/value="[^"]*"/g, '')) { /* keep */ }
-      else if (ae && ae.tagName === 'INPUT' && ae.id === 'nm' && !ui.joined) { /* typing a name: wait */ }
-      else if (ae && ae.tagName === 'INPUT' && (ae.id === 'tn0' || ae.id === 'tn1') && S && S.phase === 'lobby') { /* typing team names: wait */ }
+      else if (ae && ae.tagName === 'INPUT' && (ae.id === 'nm' || ae.id === 'hk') && !ui.joined && cache.pbody) { /* typing a name: wait */ }
       else if (ae && ae.tagName === 'INPUT' && (ae.id === 'wordin' || ae.id === 'numin' || ae.id === 'crin') && S && cache.pbodyK === S.k && !(S.acted && S.acted[pid]) && !sentHere()) { /* typing an answer: wait */ }
       else { var oldK = cache.pbodyK; if (put('pbody', html)) { cache.pbodyK = S ? S.k : ''; if (cache.pbodyK !== oldK) { cache.pbodyAt = Date.now(); } } }
-      var boss = S && m && S.boss === pid && S.phase !== 'lobby' && S.phase !== 'menu' && S.phase !== 'final';
+      var isBoss = S && S.boss === pid && !!m;
+      var inGame = S && S.phase !== 'lobby' && S.phase !== 'menu' && S.phase !== 'final';
       var passive = S && /^intro$|_reveal$|^round_end$/.test(S.phase);
-      put('pboss', boss ? '<div class="bossbar">' + (passive ? '<button data-a="c_next">NEXT</button>' : '<button class="alt wide" data-a="c_next">Skip this one</button>') + '<button class="alt" data-a="c_pause">' + (S.paused ? 'Go' : 'Pause') + '</button><button class="alt" data-a="c_menu">Menu</button></div>' : '');
+      put('pboss', isBoss ? '<div class="bossbar">' + (inGame ? (passive ? '<button data-a="c_next">NEXT</button>' : '<button class="alt wide" data-a="c_next">Skip this one</button>') + '<button class="alt" data-a="c_pause">' + (S.paused ? 'Go' : 'Pause') + '</button>' : '') +
+        '<button class="alt' + (inGame ? '' : ' wide') + '" data-a="c_menu">' + (ui.menu ? 'Close' : (inGame ? 'Host' : 'Host controls: players, teams, restart')) + '</button></div>' : '');
       var sheet = '';
-      if (boss && ui.menu) {
-        var conn = '', tnow = S.now || Date.now();
-        S.order.forEach(function (id) { var p = S.players[id]; if (p) { conn += esc(p.n) + ': ' + (tnow - p.seen > 10000 ? 'no signal' : (p.rtt ? (p.rtt < 700 ? 'good' : (p.rtt < 2000 ? 'slow' : 'very slow')) + ' (' + p.rtt + ' ms)' : 'checking')) + (p.late ? ', ' + p.late + ' late taps' : '') + '<br>'; } });
-        sheet = '<div class="sheet"><button class="pbtn go" data-a="c_tomenu">Back to the game menu</button>' +
-          (S.solo ? '' : '<div class="r2"><button class="pbtn plain c" data-a="c_adj" data-v="0,50">' + esc(tname(0)) + ' +50</button><button class="pbtn plain c" data-a="c_adj" data-v="0,-50">' + esc(tname(0)) + ' -50</button></div>' +
-          '<div class="r2"><button class="pbtn plain c" data-a="c_adj" data-v="1,50">' + esc(tname(1)) + ' +50</button><button class="pbtn plain c" data-a="c_adj" data-v="1,-50">' + esc(tname(1)) + ' -50</button></div>') +
-          '<h3>Phone connections</h3><div class="plist">' + conn + '</div>' +
-          '<button class="pbtn plain c" data-a="c_end">Finish the show and see the winner</button><button class="pbtn dark" data-a="c_menu">Close</button></div>';
+      if (isBoss && ui.menu) {
+        var tnow = S.now || Date.now(), between = S.phase === 'lobby' || S.phase === 'menu', t;
+        var cf = function (a, label) { return '<button class="pbtn plain c' + (ui.confirm === a ? ' warn' : '') + '" data-a="' + a + '">' + (ui.confirm === a ? 'Tap again to confirm' : label) + '</button>'; };
+        sheet = '<div class="sheet"><h3>The game</h3>';
+        if (inGame) {
+          sheet += '<div class="half"><button class="pbtn plain c" data-a="c_pause">' + (S.paused ? 'Resume the game' : 'Pause the game') + '</button><button class="pbtn plain c" data-a="c_skipq">Skip this question</button>' +
+            cf('c_restart', 'Restart this game') + '<button class="pbtn plain c" data-a="c_tomenu">Pick a different game</button></div>';
+        } else { sheet += '<p class="small">' + (S.phase === 'final' ? 'The night is over. Start a new one below.' : 'Tap a game on the main screen to start it. While a game runs, this is where you pause, skip, restart or switch games.') + '</p>'; }
+        if (S.round > 0 && S.phase !== 'final') { sheet += '<button class="pbtn plain c" data-a="c_end">Finish the night and show the winner</button>'; }
+        sheet += cf('c_again', 'New night: same players and teams, scores back to zero') + cf('c_reset', 'Start over: everyone joins and picks a team again');
+        sheet += '<h3>Players (' + S.order.length + ')</h3>';
+        S.order.forEach(function (id) {
+          var p = S.players[id]; if (!p) { return; }
+          var sig = tnow - p.seen > 10000 ? 'no signal' : (p.rtt ? (p.rtt < 700 ? 'good signal' : (p.rtt < 2000 ? 'slow' : 'very slow')) : 'checking');
+          sheet += '<div class="prow"><div class="pn"><b>' + esc(p.n) + '</b>' + (id === pid ? ' (you)' : '') + ' <small>' + p.pts + ' pts &middot; ' + sig + '</small></div><div class="pt">';
+          if (!S.solo) { for (t = 0; t < NT(); t++) { sheet += '<button class="tdot tb' + t + (p.t === t ? ' on' : '') + '" data-a="c_move" data-v="' + esc(id) + ',' + t + '">' + esc(tname(t).substring(0, 6)) + '</button>'; } }
+          sheet += (id === pid ? '' : '<button class="tdot rm' + (ui.confirm === 'k' + id ? ' on' : '') + '" data-a="c_kick" data-v="' + esc(id) + '">' + (ui.confirm === 'k' + id ? 'Sure?' : 'Remove') + '</button>') + '</div></div>';
+        });
+        if (S.out) { for (var oid in S.out) { if (S.out.hasOwnProperty(oid)) { sheet += '<div class="prow"><div class="pn"><b>' + esc(S.out[oid]) + '</b> <small>removed</small></div><div class="pt"><button class="tdot" data-a="c_unkick" data-v="' + esc(oid) + '">Let back in</button></div></div>'; } } }
+        sheet += between ? modeHtml() : '<h3>Teams</h3><p class="small">The number of teams can change between games. Moving a player works any time.</p>';
+        if (!S.solo) {
+          sheet += '<h3>Team names and scores</h3>';
+          for (t = 0; t < NT(); t++) { sheet += '<div class="trow"><input class="field sm" id="tn' + t + '" maxlength="14" value="' + esc(tname(t)) + '"><button class="tdot" data-a="c_adj" data-v="' + t + ',-50">-50</button><b>' + S.teams[t].score + '</b><button class="tdot" data-a="c_adj" data-v="' + t + ',50">+50</button></div>'; }
+          sheet += '<div class="half"><button class="pbtn plain c" data-a="c_names">Save team names</button>' + (NT() === 2 ? '<button class="pbtn plain c" data-a="c_preset">Kids vs Adults</button>' : '') + '</div>';
+        }
+        sheet += '<button class="pbtn plain c' + (S.short ? ' sel' : '') + '" data-a="c_short">Short games: ' + (S.short ? 'on' : 'off') + '</button>' + (between ? '' : '<p class="small">Short games take effect from the next game.</p>');
+        sheet += '<button class="pbtn dark" data-a="c_menu">Close</button></div>';
       }
-      put('psheet', sheet);
+      var ae2 = document.activeElement;
+      if (ae2 && ae2.tagName === 'INPUT' && /^tn\d$/.test(ae2.id) && sheet) { /* typing a team name: do not redraw */ } else {
+      put('psheet', sheet); }
       tickUI();
     }
     var GUARD = { ans: 1, vote: 1, mlv: 1, fpick: 1, tile: 1, c_next: 1, c_crj: 1 };
+    var CONFIRM = { c_restart: 1, c_again: 1, c_reset: 1, c_kick: 1 };
     function onAct(b) {
       var a = b.getAttribute('data-a'), v = b.getAttribute('data-v'), el;
+      if (CONFIRM[a]) { var ck = a === 'c_kick' ? 'k' + v : a; if (ui.confirm !== ck) { ui.confirm = ck; render(); return; } }
+      ui.confirm = '';
       // A choice that shows up under a finger that was already tapping does not count: half a second of grace.
       if (GUARD[a] && Date.now() - (cache.pbodyAt || 0) < 550) { return; }
       if (a === 'team') { el = document.getElementById('nm'); if (el) { ui.name = el.value; } ui.team = +v; cache.pbody = null; put('pbody', bodyHtml()); return; }
       if (a === 'join') {
         el = document.getElementById('nm'); var name = (el ? el.value : ui.name).replace(/[<>]/g, '').replace(/^\s+|\s+$/g, '').substring(0, 14);
         if (!name) { if (el) { el.focus(); } return; }
-        if (ui.team < 0) { if (S && S.solo) { ui.team = 0; } else { return; } }
-        ui.name = name; ui.joined = true; lsSet('rc_name', name); lsSet('rc_room', ROOM); lsSet('rc_team', String(ui.team));
+        if (!S) { return; }
+        var hkEl = document.getElementById('hk'); if (hkEl && hkEl.value) { ui.h = hkEl.value.toLowerCase().replace(/[^a-z0-9]/g, ''); lsSet('gn_h_' + ROOM, ui.h); }
+        if (ui.team < 0 || ui.team >= NT()) { if (S.solo) { ui.team = 0; } else { return; } }
+        ui.name = name; ui.joined = true; ui.ep = S.epoch; lsSet('rc_name', name); lsSet('rc_room', ROOM); lsSet('rc_team', String(ui.team)); lsSet('gn_ep', String(ui.ep));
         wakeLock();
         if (el) { el.blur(); }
         hello();
       }
-      else if (a === 'switch') { ui.team = 1 - pteam(pid); lsSet('rc_team', String(ui.team)); hello(); }
+      else if (a === 'switch') { ui.team = +v; lsSet('rc_team', String(ui.team)); send({ t: 'team', team: ui.team }); }
       else if (a === 'reload') { try { location.reload(true); } catch (e) { location.href = location.href; } return; }
       else if (!S) { return; }
       else if (a === 'vote') { doAct({ t: 'vote', a: +v }, S.q.kind === 'mix' ? 'ABCD'.charAt(+v) : S.q.o[+v]); }
@@ -774,11 +843,24 @@
       else if (a === 'c_play') { ctl('play', { key: v }); try { window.scrollTo(0, 0); } catch (e) { } }
       else if (a === 'c_short') { ctl('short', { on: !S.short }); }
       else if (a === 'c_solo') { ctl('solo', { on: v === '1' }); }
-      else if (a === 'c_crj') { var cj = v.split(','); ctl('crj', { p: cj[0], ok: cj[1] === '1', said: 5, by: 'the showrunner' }); }
+      else if (a === 'c_nteams') { ctl('nteams', { n: +v }); }
+      else if (a === 'c_shuffle') { ctl('shuffle'); }
+      else if (a === 'c_move') { var mv = v.split(','); ctl('move', { p: mv[0], t: +mv[1] }); }
+      else if (a === 'c_kick') { ctl('kick', { p: v }); }
+      else if (a === 'c_unkick') { ctl('unkick', { p: v }); }
+      else if (a === 'c_restart') { ctl('restart'); ui.menu = false; }
+      else if (a === 'c_reset') { ctl('reset'); ui.menu = false; }
+      else if (a === 'c_skipq') { ctl('next', { k: S.k }); ui.menu = false; }
+      else if (a === 'c_crj') { var cj = v.split(','); ctl('crj', { p: cj[0], ok: cj[1] === '1', said: 5, by: 'the host' }); }
       else if (a === 'cr') { el = document.getElementById('crin'); if (!el || !el.value.replace(/\s/g, '')) { if (el) { el.focus(); } return; } var ctxt = el.value; el.blur(); doAct({ t: 'cr', text: ctxt }, ctxt); }
       else if (a === 'c_tomenu') { ctl('menu'); ui.menu = false; }
       else if (a === 'tile') { var cl = v.split(','); doAct({ t: 'pick', c: +cl[0], l: +cl[1] }, 'Picked'); }
-      else if (a === 'buzz') { if (S.phase !== 'phrase_turn' && hnow() < (S.openAt || 0) - 150) { return; } if (sentHere()) { return; } try { if (navigator.vibrate) { navigator.vibrate(60); } } catch (e) { } doAct({ t: 'buzz' }, 'Buzzed'); }
+      else if (a === 'buzz') {
+        if (sentHere()) { return; }
+        try { if (navigator.vibrate) { navigator.vibrate(60); } } catch (e) { }
+        if (S.phase === 'phrase_turn') { doAct({ t: 'buzz' }, 'Buzzed'); }
+        else { var bdt = hnow() - (S.openAt || 0); if (bdt < 0) { doAct({ t: 'buzz', early: 1 }, 'early'); } else { doAct({ t: 'buzz', dt: Math.round(bdt) }, 'Buzzed'); } }   // a tap before GO is sent too: it costs points
+      }
       else if (a === 'ans') { doAct({ t: 'ans', a: +v }, S.phase === 'board_q' && S.q && S.q.o ? S.q.o[+v] : 'Answer sent'); }
       else if (a === 'letter') { doAct({ t: 'letter', l: v }, v); }
       else if (a === 'solve') { el = document.getElementById('solve'); if (!el || !el.value) { return; } var txt = el.value; el.blur(); doAct({ t: 'solve', text: txt }, 'Sent'); }
@@ -787,9 +869,9 @@
       else if (a === 'c_pause') { ctl('pause'); }
       else if (a === 'c_menu') { ui.menu = !ui.menu; }
       else if (a === 'c_end') { ctl('end'); ui.menu = false; }
-      else if (a === 'c_again') { ctl('again'); }
+      else if (a === 'c_again') { ctl('again'); ui.menu = false; }
       else if (a === 'c_adj') { var ad = v.split(','); ctl('adj', { team: +ad[0], d: +ad[1] }); }
-      else if (a === 'c_names') { var a0 = document.getElementById('tn0'), a1 = document.getElementById('tn1'); if (a0 && a1) { a0.blur(); a1.blur(); ctl('teams', { names: [a0.value, a1.value] }); } }
+      else if (a === 'c_names') { var nms = []; for (var ti = 0; ti < NT(); ti++) { var te = document.getElementById('tn' + ti); if (te) { te.blur(); nms.push(te.value); } else { nms.push(tname(ti)); } } ctl('teams', { names: nms }); }
       else if (a === 'c_preset') { ctl('teams', { names: ['Kids', 'Adults'] }); }
       render();
     }

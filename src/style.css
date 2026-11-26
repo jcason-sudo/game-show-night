@@ -1,4 +1,4 @@
-/* Rain Check! "Studio 74" look: a 1970s game-show set.
+/* Game Night "Studio 74" look: a 1970s game-show set.
    Cocoa #3A2214, orange #C4520F (team 1), teal #17696B (team 2), mustard #F2B705, cream #FBF0D9.
    Flexbox only, no grid and no CSS variables, so older TV browsers can draw it. */
 * { box-sizing: border-box; }
@@ -247,3 +247,47 @@ button.banner { display: block; width: 100%; border: 0; }
 
 .crr b em { font-style: normal; font-weight: 800; font-size: 0.8em; opacity: 0.7; }
 .gap { height: 28px; }
+
+/* ---- any number of teams ---- */
+.tm.t2 { background: #A87400; } .tm.t3 { background: #7A3E6B; } .tm.t4 { background: #4E7A2E; }
+.tm.sm { -webkit-flex-direction: row; flex-direction: row; padding: 0 0.6vh 0 1.2vw; margin-left: 0.7vw; height: 8.6vh; border-width: 0.5vh; }
+.tm.sm .tn { font-size: 2.7vh; } .tm.sm .ts { font-size: 4.2vh; padding: 0.6vh 1.6vh; }
+.mid.msm { text-align: left; } .mid.msm .logo { font-size: 4.6vh; } .mid.msm .sub { font-size: 2.2vh; }
+.t2c { color: #A87400; } .t3c { color: #7A3E6B; } .t4c { color: #4E7A2E; }
+.lobby .col.t2 h3 { background: #A87400; } .lobby .col.t3 h3 { background: #7A3E6B; } .lobby .col.t4 h3 { background: #4E7A2E; }
+.bf.t2 { background: #A87400; } .bf.t3 { background: #7A3E6B; } .bf.t4 { background: #4E7A2E; }
+.bars.many .bar { margin: 0.7vh 0; } .bars.many .bar .bt { height: 6vh; } .bars.many .bar .bf { font-size: 4.2vh; line-height: 6vh; } .bars.many .bar .bn { font-size: 3.6vh; }
+.ptop.t2 .pill { background: #A87400; } .ptop.t3 .pill { background: #7A3E6B; } .ptop.t4 .pill { background: #4E7A2E; }
+.tb0 { background: #C4520F; } .tb1 { background: #17696B; } .tb2 { background: #A87400; } .tb3 { background: #7A3E6B; } .tb4 { background: #4E7A2E; }
+.plist b.t2c, .plist b.t3c, .plist b.t4c { display: block; margin-top: 10px; font-size: 20px; font-weight: 900; }
+/* ---- host step, whose turn, early buzz ---- */
+.hoststep { -webkit-flex: 1; flex: 1; text-align: left; padding: 0 3vw; }
+.hoststep .h2 { color: #C4520F; } .hoststep p { font-size: 3.4vh; font-weight: 800; margin: 1.6vh 0; }
+.lobby .qr .url b { font-size: 3.4vh; letter-spacing: 0.3vh; }
+.pickwhy { font-size: 3vh; font-weight: 800; margin-top: 1vh; }
+.status small { font-size: 2.6vh; font-weight: 800; }
+.status.wait { display: inline-block; background: #8A8F93; color: #FFFFFF; border-radius: 99vh; padding: 1vh 4vh 1.3vh; }
+.status.wait.isopen { background: #2E8B3A; -webkit-animation: pulse 0.7s infinite; animation: pulse 0.7s infinite; }
+.toast { position: absolute; left: 50%; top: 15vh; width: 60vw; margin-left: -30vw; background: #3A2214; color: #F2B705; font-size: 4vh; font-weight: 900; text-align: center; border-radius: 99vh; padding: 1.4vh 2vw; z-index: 15; -webkit-animation: toastout 3.2s forwards; animation: toastout 3.2s forwards; }
+@-webkit-keyframes toastout { 0% { opacity: 0; } 8% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes toastout { 0% { opacity: 0; } 8% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+.buzz.wait { background: #8A8F93; color: #FFFFFF; }
+.buzz.isopen { background: #2E8B3A; color: #FFFFFF; }
+.pbody h2.turn { background: #F2B705; color: #3A2214; border-radius: 18px; padding: 12px 10px; }
+/* ---- host panel on the phone ---- */
+.sheet h3 { margin: 14px 0 6px; font-size: 19px; }
+.prow { display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; -webkit-align-items: center; align-items: center; border-top: 2px solid #D9CDB2; padding: 7px 0; text-align: left; }
+.prow .pn { width: 100%; font-size: 17px; } .prow .pn small { font-weight: 800; opacity: 0.75; }
+.prow .pt { width: 100%; display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; }
+.tdot { border: 0; border-radius: 999px; min-height: 40px; padding: 6px 12px; margin: 4px 6px 0 0; font-family: inherit; font-size: 15px; font-weight: 900; color: #FFFFFF; background: #3A2214; opacity: 0.45; }
+.tdot.on { opacity: 1; box-shadow: 0 0 0 3px #F2B705; }
+.tdot.rm { background: #FFFFFF; color: #C4520F; box-shadow: inset 0 0 0 2px #C4520F; opacity: 1; margin-left: auto; }
+.tdot.rm.on { background: #C4520F; color: #FFFFFF; }
+.prow .pt > .tdot:not([class*="tb"]):not(.rm) { opacity: 1; }
+.trow { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; margin: 4px 0; }
+.trow b { width: 64px; text-align: center; font-size: 18px; } .trow .tdot { opacity: 1; margin: 0 2px; }
+.field.sm { font-size: 18px; padding: 9px 12px; margin: 4px 6px 4px 0; -webkit-flex: 1; flex: 1; min-width: 0; }
+.pbtn.plain.warn { background: #C4520F; color: #FFFFFF; }
+.pbody { padding-bottom: 96px; }
+.tdot.tb0 { background: #C4520F; } .tdot.tb1 { background: #17696B; } .tdot.tb2 { background: #A87400; } .tdot.tb3 { background: #7A3E6B; } .tdot.tb4 { background: #4E7A2E; }
+.tdot.on { opacity: 1; }

@@ -1,4 +1,4 @@
-/* Rain Check! game engine. Pure state machine: no DOM, no network.
+/* Game Night engine. Pure state machine: no DOM, no network.
    The TV screen runs one engine; phones only send small messages. */
 var RC = (typeof RC !== 'undefined') ? RC : {};
 RC.createEngine = function (C, opts) {
@@ -6,9 +6,12 @@ RC.createEngine = function (C, opts) {
   var rnd = opts.rand || Math.random;
   var S = null;   // public state, broadcast to everyone
   var P = null;   // private data (answers), never broadcast
+  var H = null;   // host-side data that outlives a show: the host key and which questions were already used
   var kc = 0;
   var PRESENT_MS = 30000;
-  var SLOT_PTS = [150, 120, 90, 60, 30];
+  var TEAM_NAMES = ['Aces', 'Kings', 'Queens', 'Jacks', 'Jokers'];
+  var EARLY_COST = 50;   // points lost for buzzing before GO, or for a wrong answer after buzzing
+  function newKey() { var k = ''; for (var i = 0; i < 8; i++) { k += 'abcdefghjkmnpqrstuvwxyz23456789'.charAt(Math.floor(rnd() * 31)); } return k; }
 
   function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rnd() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   function range(n) { var a = []; for (var i = 0; i < n; i++) { a.push(i); } return a; }
@@ -31,17 +34,19 @@ RC.createEngine = function (C, opts) {
   function fx(name) { S.fx = { id: S.fx.id + 1, name: name }; }
   function setPhase(phase, now, dur) {
     kc++;
-    S.phase = phase; S.k = phase + ':' + kc; S.acted = {}; S.t0 = now;
+    S.phase = phase; S.k = phase + ':' + kc; S.acted = {}; S.t0 = now; S.bzw = 0; S.nag = 0; if (P) { P.bzq = null; }
     S.deadline = dur ? now + dur : 0;
   }
   function pl(pid) { return S.players[pid]; }
   function present(pid, now) { var p = pl(pid); return !!p && (now - p.seen) < PRESENT_MS; }
   function teamList(t, now) { var out = []; for (var i = 0; i < S.order.length; i++) { var p = pl(S.order[i]); if (p && p.t === t && present(S.order[i], now)) { out.push(S.order[i]); } } return out; }
   function teamPresent(t, now) { return teamList(t, now).length > 0; }
+  function NT() { return S.teams.length; }
+  function zeros() { var a = []; for (var i = 0; i < S.teams.length; i++) { a.push(0); } return a; }
   function nextPlayer(t, now) {
     var list = teamList(t, now);
     if (!list.length) { return null; }
-    S.rot[t] = (S.rot[t] + 1) % list.length;
+    S.rot[t] = ((S.rot[t] == null ? -1 : S.rot[t]) + 1) % list.length;
     return list[S.rot[t]];
   }
   function nextAll(now) { // every player for themselves: rotate through everyone who is here
@@ -51,16 +56,19 @@ RC.createEngine = function (C, opts) {
     S.rotA = ((S.rotA || 0) + 1) % list.length;
     return list[S.rotA];
   }
-  function nextPlayerAny(t, now) { if (S.solo) { return nextAll(now); } var p = nextPlayer(t, now); if (p) { return p; } return nextPlayer(1 - t, now); }
+  /* The next team after t that has someone here. With only one team here it is t itself. */
+  function nextTeam(t, now) { for (var i = 1; i <= NT(); i++) { var x = (t + i) % NT(); if (teamPresent(x, now)) { return x; } } return t; }
+  function nextPlayerAny(t, now) { if (S.solo) { return nextAll(now); } var p = nextPlayer(t, now); if (p) { return p; } return nextPlayer(nextTeam(t, now), now); }
   /* A "side" is whoever shares a lockout: a team in team play, one player in solo play. */
   function side(pid) { var p = pl(pid); if (!p) { return 'x'; } return S.solo ? pid : p.t; }
-  function othersLeft(lockMap, now) { for (var i = 0; i < S.order.length; i++) { if (present(S.order[i], now) && !lockMap[side(S.order[i])]) { return true; } } return false; }
+  function othersLeft(lockMap, now) { for (var i = 0; i < S.order.length; i++) { if (present(S.order[i], now) && !lockMap[side(S.order[i])] && !(S.early && S.early[S.order[i]])) { return true; } } return false; }
   function award(team, pts, pid) {
     if (pid && pl(pid)) { pl(pid).pts += pts; }
-    if (S.solo || (team !== 0 && team !== 1)) { return; }
+    if (S.solo || !(team >= 0 && team < NT())) { return; }
     S.teams[team].score += pts;
     S.gain = { id: (S.gain ? S.gain.id : 0) + 1, team: team, pts: pts };
   }
+  function addGains(g) { if (S.solo) { return; } for (var t = 0; t < NT(); t++) { S.teams[t].score += g[t]; } }
   function ranking() { // players, best first
     var out = [];
     for (var i = 0; i < S.order.length; i++) { var p = pl(S.order[i]); if (p) { out.push({ p: S.order[i], n: p.n, pts: p.pts, t: p.t }); } }
@@ -68,20 +76,61 @@ RC.createEngine = function (C, opts) {
     return out;
   }
   function nm(pid) { return pid && pl(pid) ? pl(pid).n : 'Nobody'; }
-  function trailing() { if (S.teams[0].score === S.teams[1].score) { return rnd() < 0.5 ? 0 : 1; } return S.teams[0].score < S.teams[1].score ? 0 : 1; }
-  function activeTeam(t, now) { return teamPresent(t, now) ? t : (teamPresent(1 - t, now) ? 1 - t : t); }
+  /* A line about who is winning, for the host to drop in every few questions. */
+  function standingLine() {
+    S.cc = (S.cc || 0) + 1;
+    if (S.cc % 3 !== 0) { return ''; }
+    if (S.solo) { var rk = ranking(); if (rk.length < 2 || !rk[0].pts) { return ''; } return rk[0].pts === rk[1].pts ? ' ' + rk[0].n + ' and ' + rk[1].n + ' are tied for first.' : ' ' + rk[0].n + ' is out in front, ' + (rk[0].pts - rk[1].pts) + ' ahead of ' + rk[1].n + '.'; }
+    var ld = leader(), second = -Infinity;
+    if (ld < 0) { return ' It is tied at the top. Anybody can take this.'; }
+    for (var t = 0; t < NT(); t++) { if (t !== ld && S.teams[t].score > second) { second = S.teams[t].score; } }
+    var gap = S.teams[ld].score - second;
+    return ' ' + S.teams[ld].name + (gap <= 100 ? ' lead by just ' + gap + '. This is close.' : ' are ' + gap + ' in front. Somebody catch them!');
+  }
+  /* Part way through a screen, the host calls out whoever everyone is waiting on. Once per screen. */
+  var WAITING = { vote_q: 1, ml_q: 1, num_q: 1, cr_q: 1, board_q: 1 }, TURNS = { board_pick: 'pick a category', phrase_turn: 'pick a letter', feud_pick: 'pick an answer', zoom_ans: 'pick your answer' };
+  function nagTick(now) {
+    if (S.nag || !S.deadline || !S.t0) { return false; }
+    var ph = S.phase, part = (now - S.t0) / (S.deadline - S.t0);
+    if (WAITING[ph] && part > 0.55) {
+      var miss = [];
+      for (var i = 0; i < S.order.length; i++) { if (present(S.order[i], now) && !S.acted[S.order[i]]) { miss.push(nm(S.order[i])); } }
+      S.nag = 1;
+      if (miss.length && miss.length <= 3) { say('Still waiting on ' + miss.join(' and ') + '. Lock it in!'); return true; }
+      if (miss.length > 3) { say(miss.length + ' of you have not answered yet. Clock is running!'); return true; }
+      return false;
+    }
+    if (TURNS[ph] && S.turn && pl(S.turn) && part > 0.4) { S.nag = 1; say(nm(S.turn) + ', we are waiting on you. Look at your phone and ' + TURNS[ph] + '.'); return true; }
+    return false;
+  }
+  function trailing() { var best = [], min = Infinity; for (var t = 0; t < NT(); t++) { if (S.teams[t].score < min) { min = S.teams[t].score; best = [t]; } else if (S.teams[t].score === min) { best.push(t); } } return pickOne(best); }
+  function leader() { var top = -1, max = -Infinity, tie = false; for (var t = 0; t < NT(); t++) { if (S.teams[t].score > max) { max = S.teams[t].score; top = t; tie = false; } else if (S.teams[t].score === max) { tie = true; } } return tie ? -1 : top; }
+  function activeTeam(t, now) { if (!(t >= 0 && t < NT())) { t = 0; } return teamPresent(t, now) ? t : nextTeam(t, now); }
+  function smallestTeam() { var n = zeros(), best = 0; for (var i = 0; i < S.order.length; i++) { var p = pl(S.order[i]); if (p && n[p.t] != null) { n[p.t]++; } } for (var t = 1; t < NT(); t++) { if (n[t] < n[best]) { best = t; } } return best; }
+  /* Take n items from a pool, using ones that have not come up yet before any repeat. */
+  function draw(key, list, n) {
+    var u = H.used[key] || (H.used[key] = {}), fresh = [], stale = [], i;
+    n = Math.min(n, list.length);
+    for (i = 0; i < list.length; i++) { (u[i] ? stale : fresh).push(i); }
+    if (fresh.length < n) { u = H.used[key] = {}; }   // the pool ran out: start it over, unused ones still first
+    var order = shuffle(fresh).concat(shuffle(stale)).slice(0, n), out = [];
+    for (i = 0; i < order.length; i++) { u[order[i]] = 1; out.push(list[order[i]]); }
+    return out;
+  }
+  function penalize(pid, n) { var p = pl(pid); if (!p) { return; } p.pts -= n; if (!S.solo && S.teams[p.t]) { S.teams[p.t].score -= n; } }
 
   function init(room, now) {
     kc = 0;
     S = {
-      v: 4, room: room, boot: Math.floor(rnd() * 1e9), phase: 'lobby', k: 'lobby:0', paused: false, pleft: 0,
-      teams: [{ name: 'Thunder', score: 0 }, { name: 'Lightning', score: 0 }],
-      players: {}, order: [], boss: null, round: 0, rot: [-1, -1],
+      v: 5, room: room, boot: Math.floor(rnd() * 1e9), phase: 'lobby', k: 'lobby:0', paused: false, pleft: 0,
+      teams: [{ name: TEAM_NAMES[0], score: 0 }, { name: TEAM_NAMES[1], score: 0 }],
+      players: {}, order: [], boss: null, round: 0, rot: [], epoch: 1, out: {}, early: {}, locked: {},
       say: { id: 0, text: '' }, fx: { id: 0, name: '' }, gain: null,
       acted: {}, deadline: 0, turn: null,
       short: false, solo: false, played: {}, cur: ''
     };
     P = {};
+    H = { key: newKey(), used: opts.used || {} };
     return S;
   }
 
@@ -89,7 +138,7 @@ RC.createEngine = function (C, opts) {
   function goMenu(now) {
     S.turn = null; S.cur = '';
     setPhase('menu', now, 0);
-    say(S.round ? 'Showrunner, pick the next game.' : 'Showrunner, pick the first game.');
+    say((S.boss && pl(S.boss) ? nm(S.boss) : 'Host') + (S.round ? ', pick the next game.' : ', pick the first game.'));
   }
   function startGame(key, now) {
     var info = CAT[key];
@@ -99,35 +148,38 @@ RC.createEngine = function (C, opts) {
     S.intro = { n: S.round, title: info.title, how: info.how };
     S.rt = info.title;
     S.turn = null; S.rv = null;
-    setPhase('intro', now, 12000);
+    // remember the scores, so the host can restart this game from the top
+    P.snap = { teams: [], pts: {}, bz: {} };
+    for (var st = 0; st < NT(); st++) { P.snap.teams.push(S.teams[st].score); }
+    for (var sp = 0; sp < S.order.length; sp++) { if (pl(S.order[sp])) { P.snap.pts[S.order[sp]] = pl(S.order[sp]).pts; P.snap.bz[S.order[sp]] = pl(S.order[sp]).bz; } }
+    setPhase('intro', now, 20000);
     say((first ? line('welcome') + ' ' : '') + info.title + '. ' + info.how.join(' '));
     fx('fanfare');
   }
   function beginRound(now) {
     var key = S.cur;
-    if (key === 'vote') { P.vq = shuffle(C.votes).slice(0, cnt(8, 5)); P.vkind = 'mix'; S.vi = -1; nextVote(now); }
-    else if (key === 'tf') { P.vq = shuffle(C.tf).slice(0, cnt(10, 6)); P.vkind = 'tf'; S.vi = -1; nextVote(now); }
-    else if (key === 'decade') { P.vq = shuffle(C.decades).slice(0, cnt(8, 5)); P.vkind = 'decade'; S.vi = -1; nextVote(now); }
-    else if (key === 'likely') { P.mq = shuffle(C.likely).slice(0, cnt(6, 4)); S.mi = -1; nextLikely(now); }
-    else if (key === 'num') { P.nq = shuffle(C.numbers).slice(0, cnt(6, 4)); S.ni = -1; nextNum(now); }
-    else if (key === 'scramble') { P.wq = shuffle(C.words).slice(0, cnt(6, 4)); S.wi = -1; nextWord(now); }
+    if (key === 'vote') { P.vq = draw('votes', C.votes, cnt(8, 5)); P.vkind = 'mix'; S.vi = -1; nextVote(now); }
+    else if (key === 'tf') { P.vq = draw('tf', C.tf, cnt(10, 6)); P.vkind = 'tf'; S.vi = -1; nextVote(now); }
+    else if (key === 'decade') { P.vq = draw('decades', C.decades, cnt(8, 5)); P.vkind = 'decade'; S.vi = -1; nextVote(now); }
+    else if (key === 'likely') { P.mq = draw('likely', C.likely, cnt(6, 4)); S.mi = -1; nextLikely(now); }
+    else if (key === 'num') { P.nq = draw('numbers', C.numbers, cnt(6, 4)); S.ni = -1; nextNum(now); }
+    else if (key === 'scramble') { P.wq = draw('words', C.words, cnt(6, 4)); S.wi = -1; nextWord(now); }
     else if (key === 'board') { setupBoard(now); boardPick(now); }
-    else if (key === 'zoom') { P.zs = shuffle(C.zoom).slice(0, cnt(5, 3)); S.zi = -1; nextZoom(now); }
-    else if (key === 'phrase') { P.ps = shuffle(C.phrases).slice(0, cnt(4, 2)); S.pi = -1; S.pteam = trailing(); nextPhrase(now); }
+    else if (key === 'zoom') { P.zs = draw('zoom', C.zoom, cnt(5, 3)); S.zi = -1; nextZoom(now); }
+    else if (key === 'phrase') { P.ps = draw('phrases', C.phrases, cnt(4, 2)); S.pi = -1; S.pteam = trailing(); nextPhrase(now); }
     else if (key === 'feud') { setupFeud(); S.fi = -1; nextFeud(now); }
-    else if (key === 'crillion') { P.cq = shuffle(C.crillion).slice(0, cnt(5, 3)); S.ci = -1; nextCr(now); }
+    else if (key === 'crillion') { P.cq = draw('crillion', C.crillion, cnt(5, 3)); S.ci = -1; nextCr(now); }
   }
   function roundEnd(now) {
     S.turn = null;
     S.re = { n: S.round, title: S.rt };
     setPhase('round_end', now, 10000);
-    var a = S.teams[0], b = S.teams[1], rk = ranking();
+    var rk = ranking(), ld = leader();
     if (S.solo) { say(rk.length ? rk[0].n + ' is in front with ' + rk[0].pts + ' points.' : 'No points yet.'); }
-    else { say(a.score === b.score ? 'It is all tied up at ' + a.score + '!' : (a.score > b.score ? a.name : b.name) + ' lead, ' + Math.max(a.score, b.score) + ' to ' + Math.min(a.score, b.score) + '.'); }
+    else { say(ld < 0 ? 'It is tied at the top!' : S.teams[ld].name + ' lead with ' + S.teams[ld].score + ' points.'); }
     fx('fanfare');
   }
   function finale(now) {
-    var a = S.teams[0].score, b = S.teams[1].score;
     var best = null, king = null;
     for (var i = 0; i < S.order.length; i++) {
       var p = pl(S.order[i]); if (!p) { continue; }
@@ -135,10 +187,11 @@ RC.createEngine = function (C, opts) {
       if (!king || p.bz > king.bz) { king = p; }
     }
     var rk = ranking();
-    S.fin = { solo: !!S.solo, winner: a === b ? -1 : (a > b ? 0 : 1), mvp: best ? best.n : '', mvpPts: best ? best.pts : 0, king: king && king.bz ? king.n : '', kingN: king ? king.bz : 0,
+    S.fin = { solo: !!S.solo, winner: leader(), mvp: best ? best.n : '', mvpPts: best ? best.pts : 0, king: king && king.bz ? king.n : '', kingN: king ? king.bz : 0,
       champ: rk.length ? rk[0].n : '', tie: rk.length > 1 && rk[0].pts === rk[1].pts };
     S.turn = null;
     setPhase('final', now, 0);
+    S.fin.best = rk.length ? rk[0].n : ''; S.fin.bestPts = rk.length ? rk[0].pts : 0;
     if (S.solo) { say((S.fin.tie ? 'It is a tie at the top! ' : S.fin.champ + ' wins! ') + line('final')); }
     else { say((S.fin.winner < 0 ? 'It is a tie! ' : S.teams[S.fin.winner].name + ' win! ') + line('final')); }
     fx('win');
@@ -159,7 +212,7 @@ RC.createEngine = function (C, opts) {
     say((P.vkind === 'tf' ? 'True or false? ' : (P.vkind === 'decade' ? 'Which decade? ' : '')) + P.cur.q);
   }
   function endVote(now) {
-    var counts = [], ok = [0, 0], den = [0, 0], fast = null, pid, v;
+    var counts = [], ok = zeros(), den = zeros(), fast = null, pid, v, nok = 0;
     for (var ci2 = 0; ci2 < P.cur.o.length; ci2++) { counts.push(0); }
     for (var i = 0; i < S.order.length; i++) {
       pid = S.order[i]; v = P.votes[pid];
@@ -167,17 +220,17 @@ RC.createEngine = function (C, opts) {
       if (v || present(pid, now)) { den[p.t]++; }
       if (v) {
         counts[v.a]++;
-        if (v.a === P.cur.a) { ok[p.t]++; p.pts += 100; if (!fast || v.at < P.votes[fast].at) { fast = pid; } }
+        if (v.a === P.cur.a) { ok[p.t]++; nok++; p.pts += 100; if (!fast || v.at < P.votes[fast].at) { fast = pid; } }
       }
     }
-    var gains = [0, 0];
-    for (var t = 0; t < 2; t++) { gains[t] = den[t] ? Math.round(100 * ok[t] / den[t]) : 0; }
+    var gains = zeros();
+    for (var t = 0; t < NT(); t++) { gains[t] = den[t] ? Math.round(100 * ok[t] / den[t]) : 0; }
     if (fast) { gains[pl(fast).t] += 20; pl(fast).pts += 20; }
-    if (!S.solo) { S.teams[0].score += gains[0]; S.teams[1].score += gains[1]; }
-    S.rv = { a: P.cur.a, counts: counts, gains: gains, nok: ok[0] + ok[1], fast: fast ? pl(fast).n : '', fact: P.cur.f };
+    addGains(gains);
+    S.rv = { a: P.cur.a, counts: counts, gains: gains, nok: nok, fast: fast ? pl(fast).n : '', fact: P.cur.f };
     setPhase('vote_reveal', now, 9000);
-    say('The answer is ' + P.cur.o[P.cur.a] + '. ' + (P.cur.f || ''));
-    fx(ok[0] + ok[1] > 0 ? 'right' : 'wrong');
+    say('The answer is ' + P.cur.o[P.cur.a] + '. ' + (P.cur.f || '') + (nok ? ' ' + nok + ' of you got it.' + (fast ? ' Fastest was ' + nm(fast) + '.' : '') : ' Nobody got it!') + standingLine());
+    fx(nok > 0 ? 'right' : 'wrong');
   }
 
   /* ---------- most likely to ---------- */
@@ -198,14 +251,15 @@ RC.createEngine = function (C, opts) {
     var top = [], win = [];
     for (i = 0; i < S.ml.who.length; i++) { var w = S.ml.who[i]; if (tally[w.p]) { top.push({ n: w.n, c: tally[w.p] }); if (tally[w.p] === max) { win.push(w.n); } } }
     top.sort(function (x, y) { return y.c - x.c; });
-    var ok = [0, 0], den = [0, 0], gains = [0, 0];
+    var ok = zeros(), den = zeros(), gains = zeros(), nok = 0;
     for (i = 0; i < S.order.length; i++) {
       pid = S.order[i]; var p = pl(pid); if (!p) { continue; }
       if (P.mv[pid] || present(pid, now)) { den[p.t]++; }
-      if (P.mv[pid] && tally[P.mv[pid]] === max) { ok[p.t]++; p.pts += 100; }
+      if (P.mv[pid] && tally[P.mv[pid]] === max) { ok[p.t]++; nok++; p.pts += 100; }
     }
-    for (var t = 0; t < 2; t++) { gains[t] = den[t] ? Math.round(100 * ok[t] / den[t]) : 0; if (!S.solo) { S.teams[t].score += gains[t]; } }
-    S.rv = { win: win, top: top.slice(0, 4), gains: gains, nok: ok[0] + ok[1] };
+    for (var t = 0; t < NT(); t++) { gains[t] = den[t] ? Math.round(100 * ok[t] / den[t]) : 0; }
+    addGains(gains);
+    S.rv = { win: win, top: top.slice(0, 4), gains: gains, nok: nok };
     setPhase('ml_reveal', now, 9000);
     say(win.length ? 'The family says: ' + win.join(' and ') + '!' : 'Nobody voted.');
     fx(win.length ? 'right' : 'wrong');
@@ -231,7 +285,7 @@ RC.createEngine = function (C, opts) {
     if (best) { award(pl(best.p).t, pts, best.p); }
     S.rv = { a: fmt(it.a, it.y), list: show, who: best ? nm(best.p) : '', team: best ? pl(best.p).t : -1, pts: pts, exact: !!best && best.d === 0 };
     setPhase('num_reveal', now, 9000);
-    say('The answer is ' + S.rv.a + '. ' + (best ? (S.rv.exact ? 'Exactly right, ' : 'Closest: ') + S.rv.who + '.' : ''));
+    say('The answer is ' + S.rv.a + '. ' + (best ? (S.rv.exact ? 'Exactly right, ' : 'Closest: ') + S.rv.who + '.' : '') + standingLine());
     fx(best ? 'right' : 'wrong');
   }
 
@@ -300,7 +354,7 @@ RC.createEngine = function (C, opts) {
     S.cr = { n: S.ci + 1, of: P.cq.length, text: it.q, rows: [] };
     P.crA = {}; S.nv = 0; S.rv = null;
     setPhase('cr_q', now, readMs(it.q) + 40000);
-    say(it.q + ' Type one answer. The more obscure, the better.');
+    say(it.q + ' Type one answer. The most obscure right answer wins.');
   }
   function crJudge(now) {
     var it = P.cq[S.ci], rows = [], ask = 0;
@@ -316,53 +370,64 @@ RC.createEngine = function (C, opts) {
     else { crReveal(now); }
   }
   function crKey(r) { return crNorm(r.st === 'ok' ? r.name : r.text).replace(/ /g, ''); }
+  /* How obscure is an answer? "said" is how many people out of 100 would give it. */
+  var TIERS = [[35, 10, 'Everybody says it'], [15, 30, 'Common'], [6, 60, 'Rare'], [3, 85, 'Deep cut'], [0, 100, 'One in a million']];
+  function crTier(said) { for (var i = 0; i < TIERS.length; i++) { if (said >= TIERS[i][0]) { return TIERS[i]; } } return TIERS[TIERS.length - 1]; }
   function crReveal(now) {
-    var rows = S.cr.rows, sum = [0, 0], den = [0, 0], i, r, same = {}, top = 0, nOk = 0;
+    var rows = S.cr.rows, sum = zeros(), den = zeros(), i, r, same = {}, top = 0, nOk = 0;
     for (i = 0; i < rows.length; i++) { if (rows[i].st === 'ok') { same[crKey(rows[i])] = (same[crKey(rows[i])] || 0) + 1; nOk++; } }
     for (i = 0; i < rows.length; i++) {
       r = rows[i];
       r.dup = r.st === 'ok' ? same[crKey(r)] : 0;
-      // rare on the sheet is good; the same answer as someone else in the room splits the points
-      r.pts = r.st === 'ok' ? Math.max(1, Math.round((100 - r.said) / r.dup)) : 0;
-      if (pl(r.p)) { pl(r.p).pts += r.pts; sum[pl(r.p).t] += r.pts; }
+      var tier = crTier(r.said);
+      r.tier = r.st === 'ok' ? tier[2] : ''; r.base = r.st === 'ok' ? tier[1] : 0;
+      // the rarer the answer the more it is worth; the same answer as someone else in the room splits the points
+      r.pts = r.st === 'ok' ? Math.max(1, Math.round(r.base / r.dup)) : 0; r.crown = 0;
       if (r.pts > top) { top = r.pts; }
     }
+    var winners = [], wtext = '', wrow = null;
+    for (i = 0; i < rows.length; i++) { if (top > 0 && rows[i].pts === top) { winners.push(rows[i].n); wtext = rows[i].name; wrow = rows[i]; } }
+    var allSame = nOk > 1 && winners.length === nOk && wrow && same[crKey(wrow)] === nOk;
+    var crown = winners.length === 1 && nOk > 1;
+    if (crown) { wrow.crown = 1; wrow.pts += 50; top += 50; }   // one clear winner: the most obscure answer in the room
+    for (i = 0; i < rows.length; i++) { r = rows[i]; if (pl(r.p)) { pl(r.p).pts += r.pts; sum[pl(r.p).t] += r.pts; } }
     for (i = 0; i < S.order.length; i++) { var p = pl(S.order[i]); if (p && (P.crA[S.order[i]] || present(S.order[i], now))) { den[p.t]++; } }
-    var gains = [0, 0];
-    for (var t = 0; t < 2; t++) { gains[t] = den[t] ? Math.round(sum[t] / den[t]) : 0; if (!S.solo) { S.teams[t].score += gains[t]; } }
+    var gains = zeros();
+    for (var t = 0; t < NT(); t++) { gains[t] = den[t] ? Math.round(sum[t] / den[t]) : 0; }
+    addGains(gains);
     rows.sort(function (x, y) { return y.pts - x.pts; });
-    var winners = [], wtext = '';
-    for (i = 0; i < rows.length; i++) { if (top > 0 && rows[i].pts === top) { winners.push(rows[i].n); wtext = rows[i].name; } }
-    var allSame = nOk > 1 && winners.length === nOk && same[crKey(rows[0])] === nOk;
     var who = winners.length > 3 ? winners.length + ' players' : winners.join(' and ');
-    S.rv = { gains: gains, who: who, text: winners.length === 1 || allSame ? wtext : '', pts: top, allSame: allSame };
+    S.rv = { gains: gains, who: who, text: winners.length === 1 || allSame ? wtext : '', pts: top, allSame: allSame, crown: crown };
     setPhase('cr_reveal', now, 14000);
     if (!top) { say('Nobody scored on that one.'); }
     else if (allSame) { say('Everybody said ' + wtext + '. The points are split ' + nOk + ' ways.'); }
-    else if (winners.length === 1) { say('Most random: ' + who + ' with ' + wtext + ', for ' + top + ' points.'); }
-    else { say('Most random: ' + who + ', with ' + top + ' points each.'); }
+    else if (winners.length === 1) { say('The most obscure answer: ' + who + ' with ' + wtext + '. ' + top + ' points.'); }
+    else { say('A tie for most obscure: ' + who + ', with ' + top + ' points each.' + standingLine()); }
     fx(top ? 'right' : 'wrong');
   }
 
   /* ---------- round 2: the board ---------- */
   function setupBoard(now) {
-    var cats = shuffle(range(C.board.length)).slice(0, cnt(5, 3));
+    var cats = draw('bcat', range(C.board.length), cnt(5, 3));
     P.board = []; S.board = { cats: [], used: [] };
     for (var i = 0; i < cats.length; i++) {
       var cat = C.board[cats[i]], row = [];
-      for (var l = 0; l < cat.levels.length; l++) { row.push(pickOne(cat.levels[l])); }
+      for (var l = 0; l < cat.levels.length; l++) { row.push(draw('b' + cats[i] + '_' + l, cat.levels[l], 1)[0]); }
       P.board.push(row); S.board.cats.push(cat.name); S.board.used.push([0, 0, 0, 0]);
     }
-    S.ctrl = activeTeam(trailing(), now); S.ctrlP = null;
+    S.ctrl = activeTeam(trailing(), now); S.ctrlP = null; S.pickN = 0;
   }
   function tilesLeft() { var n = 0; for (var c = 0; c < S.board.used.length; c++) { for (var l = 0; l < 4; l++) { if (!S.board.used[c][l]) { n++; } } } return n; }
   function boardPick(now) {
     if (!tilesLeft()) { return roundEnd(now); }
-    S.ctrl = activeTeam(S.ctrl, now);
-    S.turn = nextPlayerAny(S.ctrl, now);   // the picker rotates, so everybody gets a turn at choosing
+    var why;
+    if (S.ctrlP && present(S.ctrlP, now)) { S.turn = S.ctrlP; why = 'fast'; }       // fastest right answer on the last one picks next
+    else { S.ctrl = activeTeam(S.ctrl, now); S.turn = nextPlayerAny(S.ctrl, now); why = S.pickN ? 'next' : 'first'; }
+    S.pickWhy = why; S.pickN = (S.pickN || 0) + 1;
     S.q = null; S.rv = null;
-    setPhase('board_pick', now, 20000);
-    say(nm(S.turn) + ', pick a category.');
+    setPhase('board_pick', now, 25000);
+    say(why === 'fast' ? nm(S.turn) + ', you were fastest on the last one. It is your turn. Pick a category on your phone.' :
+      (why === 'first' ? nm(S.turn) + ', you start. Pick a category on your phone.' : 'Nobody got that one. ' + nm(S.turn) + ', it is your turn. Pick a category on your phone.'));
   }
   function openTile(c, l, now) {
     S.board.used[c][l] = 1;
@@ -373,11 +438,11 @@ RC.createEngine = function (C, opts) {
     say(S.q.cat + ' for ' + S.q.val + '. ' + P.cur.q + ' Everyone, answer on your phone.');
   }
   function optsLeft() { var out = []; for (var i = 0; i < P.cur.o.length; i++) { if (S.wrong.indexOf(i) < 0) { out.push({ i: i, text: P.cur.o[i] }); } } return out; }
-  function stealName(pid) { var p = pl(pid); return S.solo || !p ? 'Anyone else' : S.teams[1 - p.t].name; }
+  function stealName(pid) { var p = pl(pid); return S.solo || !p ? 'Anyone else' : (NT() === 2 ? S.teams[1 - p.t].name : 'Everyone else'); }
   /* Everyone has answered or the clock ran out. Each right answer scores the tile for that player; a team scores
      the tile times the share of its players who were right; the fastest right answer earns half the tile on top. */
   function boardEnd(now) {
-    var counts = [], ok = [0, 0], den = [0, 0], fast = null, i, pid, v, val = S.q.val, bonus = Math.round(val / 2);
+    var counts = [], ok = zeros(), den = zeros(), fast = null, i, pid, v, val = S.q.val, bonus = Math.round(val / 2), nok = 0;
     for (i = 0; i < P.cur.o.length; i++) { counts.push(0); }
     for (i = 0; i < S.order.length; i++) {
       pid = S.order[i]; v = P.bans[pid];
@@ -385,19 +450,18 @@ RC.createEngine = function (C, opts) {
       if (v || present(pid, now)) { den[p.t]++; }
       if (v) {
         counts[v.a]++;
-        if (v.a === P.cur.a) { ok[p.t]++; p.pts += val; if (!fast || v.at < P.bans[fast].at) { fast = pid; } }
+        if (v.a === P.cur.a) { ok[p.t]++; nok++; p.pts += val; if (!fast || v.at < P.bans[fast].at) { fast = pid; } }
       }
     }
-    var gains = [0, 0];
-    for (var t = 0; t < 2; t++) { gains[t] = den[t] ? Math.round(val * ok[t] / den[t]) : 0; }
+    var gains = zeros();
+    for (var t = 0; t < NT(); t++) { gains[t] = den[t] ? Math.round(val * ok[t] / den[t]) : 0; }
     if (fast) { gains[pl(fast).t] += bonus; pl(fast).pts += bonus; pl(fast).bz++; S.ctrl = pl(fast).t; S.ctrlP = fast; }
-    else { S.ctrl = 1 - S.ctrl; S.ctrlP = null; }
-    if (!S.solo) { S.teams[0].score += gains[0]; S.teams[1].score += gains[1]; }
-    var nok = ok[0] + ok[1];
+    else { S.ctrl = nextTeam(S.ctrl, now); S.ctrlP = null; }
+    addGains(gains);
     S.rv = { text: P.cur.o[P.cur.a], a: P.cur.a, counts: counts, gains: gains, nok: nok, fast: fast ? nm(fast) : '', who: fast ? nm(fast) : '', team: fast ? pl(fast).t : -1, val: val, bonus: bonus };
     S.turn = null;
     setPhase('board_reveal', now, 8000);
-    say('The answer is ' + S.rv.text + '. ' + (nok ? nok + (nok === 1 ? ' player' : ' players') + ' got it. Fastest: ' + nm(fast) + '.' : 'Nobody got that one.'));
+    say('The answer is ' + S.rv.text + '. ' + (nok ? nok + (nok === 1 ? ' player' : ' players') + ' got it. Fastest: ' + nm(fast) + '.' : 'Nobody got that one.') + standingLine());
     fx(nok ? 'right' : 'wrong');
   }
 
@@ -410,10 +474,10 @@ RC.createEngine = function (C, opts) {
     var z = P.zs[S.zi];
     P.cur = mc({ q: '', o: z.o });
     S.z = { n: S.zi + 1, of: P.zs.length, img: z.id, mode: S.zi % 2 ? 'tiles' : 'zoom', fx: z.fx, fy: z.fy, seed: Math.floor(rnd() * 99999) };
-    S.zt0 = now + 3000; S.zdur = 30000; S.zfrozen = null; S.openAt = S.zt0;
-    S.locked = {}; S.wrong = []; S.rv = null; S.turn = null;
+    S.zt0 = now + 3000; S.zdur = 30000; S.zfrozen = null; S.openAt = S.zt0 + 1500 + Math.floor(rnd() * 2500);
+    S.locked = {}; S.early = {}; S.bzr = []; S.wrong = []; S.rv = null; S.turn = null;
     setPhase('zoom_q', now, 3000 + 30000 + 6000);
-    say('Picture ' + S.z.n + '. What famous place is this? Buzz when you know.');
+    say('Picture ' + S.z.n + '. What famous place is this? Wait for go, then buzz when you know.');
   }
   function zoomReveal(pid, now) {
     S.rv = { text: P.cur.o[P.cur.a], who: pid ? nm(pid) : '', team: pid ? pl(pid).t : -1, val: pid ? S.zval : 0 };
@@ -424,10 +488,10 @@ RC.createEngine = function (C, opts) {
   }
   function zoomWrong(pid, a, now) {
     S.locked[side(pid)] = true;
-    if (a >= 0) { S.wrong.push(a); }
+    if (a >= 0) { S.wrong.push(a); penalize(pid, EARLY_COST); }
     fx('wrong');
     if (othersLeft(S.locked, now) && P.zleft > 1500 && optsLeft().length > 1) {
-      S.zt0 = now - S.zfrozen * S.zdur; S.zfrozen = null; S.turn = null; S.openAt = now;
+      S.zt0 = now - S.zfrozen * S.zdur; S.zfrozen = null; S.turn = null; S.openAt = now + 1200 + Math.floor(rnd() * 2000);
       setPhase('zoom_q', now, P.zleft);
       say(line('wrong') + ' ' + stealName(pid) + ', keep looking.');
     } else { zoomReveal(null, now); }
@@ -443,7 +507,7 @@ RC.createEngine = function (C, opts) {
     for (var i = 0; i < P.ph.length; i++) { var ch = P.ph.charAt(i); mask.push(/[A-Z]/.test(ch) ? '_' : ch); }
     S.ph = { n: S.pi + 1, of: P.ps.length, hint: ph.h, mask: mask };
     S.used = ''; S.miss = 0; S.slock = {}; S.last = null; S.rv = null; S.idle = 0; P.keep = null;
-    if (S.pi > 0) { S.pteam = 1 - S.pteam; }
+    if (S.pi > 0) { S.pteam = nextTeam(S.pteam, now); }
     say('Puzzle ' + S.ph.n + '. The hint is: ' + ph.h + '.');
     phraseTurn(now);
   }
@@ -509,7 +573,7 @@ RC.createEngine = function (C, opts) {
 
   /* ---------- round 5: survey says ---------- */
   function setupFeud() {
-    var pick = shuffle(C.surveys).slice(0, cnt(3, 2));
+    var pick = draw('surveys', C.surveys, cnt(3, 2));
     P.fq = [];
     for (var s = 0; s < pick.length; s++) {
       var ord = shuffle(range(pick[s].a.length)), o = [], votes = [], top = [], i;
@@ -527,9 +591,10 @@ RC.createEngine = function (C, opts) {
     S.f = { n: S.fi + 1, of: P.fq.length, q: sv.q, o: sv.o, mult: S.fi === P.fq.length - 1 ? 2 : 1, tried: [], slots: [null, null, null, null, null], strikes: 0, pot: 0, play: -1, mode: 'face', x: 0 };
     S.rv = null; S.turn = null;
     var r = readMs(sv.q);
-    S.openAt = now + r;
-    setPhase('feud_face', now, r + 12000);
-    say('We asked 1,000 people: ' + sv.q + ' Buzz in!');
+    S.openAt = now + r + 1500 + Math.floor(rnd() * 2500);
+    S.early = {}; S.bzr = [];
+    setPhase('feud_face', now, r + 4000 + 12000);
+    say('We asked 1,000 people: ' + sv.q + ' Wait for go, then buzz.');
   }
   function slotPts(rank) { var sv = P.fq[S.fi]; return Math.round(sv.votes[sv.top[rank]] / 10) * 5 * S.f.mult; }
   function revealSlot(rank, hit) {
@@ -567,7 +632,7 @@ RC.createEngine = function (C, opts) {
       return feudPlayTurn(now);
     }
     if (f.mode === 'face') {
-      f.play = hit ? team : activeTeam(1 - team, now);
+      f.play = hit ? team : nextTeam(team, now);
       if (!slotsOpen()) { return feudReveal(f.play, now); }
       return feudPlayTurn(now);
     }
@@ -575,9 +640,9 @@ RC.createEngine = function (C, opts) {
       if (hit) { if (!slotsOpen()) { return feudReveal(f.play, now); } return feudPlayTurn(now); }
       f.strikes++;
       if (f.strikes >= 3) {
-        var other = 1 - f.play;
-        if (teamPresent(other, now)) {
-          f.mode = 'steal'; S.turn = nextPlayer(other, now);
+        var other = nextTeam(f.play, now);
+        if (other !== f.play) {
+          f.mode = 'steal'; f.st = other; S.turn = nextPlayer(other, now);
           setPhase('feud_pick', now, 25000);
           say('Three strikes! ' + S.teams[other].name + ' can steal with one answer.');
           return;
@@ -587,7 +652,7 @@ RC.createEngine = function (C, opts) {
       return feudPlayTurn(now);
     }
     // steal
-    return feudReveal(hit ? 1 - f.play : f.play, now);
+    return feudReveal(hit ? f.st : f.play, now);
   }
 
   /* ---------- advance: called on deadline or when the showrunner taps Next ---------- */
@@ -609,7 +674,7 @@ RC.createEngine = function (C, opts) {
     else if (ph === 'zoom_q') { zoomReveal(null, now); }
     else if (ph === 'zoom_ans') { zoomWrong(S.turn, -1, now); }
     else if (ph === 'zoom_reveal') { nextZoom(now); }
-    else if (ph === 'phrase_turn') { S.idle++; if (S.idle >= 6) { phraseReveal(null, 'bust', now); } else { S.pteam = 1 - S.pteam; phraseTurn(now); } }
+    else if (ph === 'phrase_turn') { S.idle++; if (S.idle >= 6) { phraseReveal(null, 'bust', now); } else { S.pteam = nextTeam(S.pteam, now); phraseTurn(now); } }
     else if (ph === 'phrase_solve') { S.slock[side(S.solver)] = true; fx('wrong'); if (!phraseMiss(now)) { phraseTurn(now); } }
     else if (ph === 'phrase_reveal') { nextPhrase(now); }
     else if (ph === 'feud_face') { S.f.play = activeTeam(trailing(), now); feudPlayTurn(now); }
@@ -642,7 +707,7 @@ RC.createEngine = function (C, opts) {
       }
     }
     else if (c === 'skip') { if (S.phase !== 'lobby' && S.phase !== 'final' && S.phase !== 'round_end') { roundEnd(now); } }
-    else if (c === 'adj') { var t = a.team === 1 ? 1 : 0; var d2 = Math.max(-500, Math.min(500, parseInt(a.d, 10) || 0)); S.teams[t].score += d2; }
+    else if (c === 'adj') { var t = parseInt(a.team, 10); var d2 = Math.max(-500, Math.min(500, parseInt(a.d, 10) || 0)); if (t >= 0 && t < NT()) { S.teams[t].score += d2; } }
     else if (c === 'solo') { if (S.phase === 'lobby' || S.phase === 'menu') { S.solo = !!a.on; } }
     else if (c === 'crj') { // the judge rules on an answer that was not on the sheet; one ruling covers everyone who typed the same thing
       if (S.phase === 'cr_judge') {
@@ -651,7 +716,7 @@ RC.createEngine = function (C, opts) {
         for (ji = 0; ji < S.cr.rows.length; ji++) {
           var jr = S.cr.rows[ji];
           if (jt !== null && jr.st === 'ask' && crNorm(jr.text).replace(/ /g, '') === jt) {
-            if (a.ok) { jr.st = 'ok'; jr.said = Math.max(2, Math.min(40, parseInt(a.said, 10) || 5)); jr.name = jr.text; jr.by = clean(a.by, 20) || 'the judge'; }
+            if (a.ok) { jr.st = 'ok'; jr.said = Math.max(3, Math.min(40, parseInt(a.said, 10) || 5)); jr.name = jr.text; jr.by = clean(a.by, 20) || 'the judge'; }
             else { jr.st = 'no'; jr.why = clean(a.why, 90) || 'Not accepted.'; }
           }
           if (jr.st === 'ask') { left++; }
@@ -661,11 +726,51 @@ RC.createEngine = function (C, opts) {
     }
     else if (c === 'short') { if (S.phase === 'lobby' || S.phase === 'menu') { S.short = !!a.on; } }
     else if (c === 'boss') { if (pl(a.pid)) { S.boss = a.pid; } }
-    else if (c === 'teams') { if (a.names && a.names.length === 2) { S.teams[0].name = clean(a.names[0], 14) || 'Thunder'; S.teams[1].name = clean(a.names[1], 14) || 'Lightning'; } }
-    else if (c === 'kick') { if (pl(a.pid)) { delete S.players[a.pid]; S.order.splice(S.order.indexOf(a.pid), 1); if (S.boss === a.pid) { S.boss = S.order[0] || null; } } }
+    else if (c === 'unhost') { S.boss = null; H.key = newKey(); }   // from the TV only: show a fresh host code
+    else if (c === 'teams') { if (a.names) { for (var ti = 0; ti < NT() && ti < a.names.length; ti++) { S.teams[ti].name = clean(a.names[ti], 14) || TEAM_NAMES[ti]; } } }
+    else if (c === 'nteams') { // how many teams, 2 to 5. Between games only.
+      if (S.phase === 'lobby' || S.phase === 'menu') {
+        var nn = Math.max(2, Math.min(5, parseInt(a.n, 10) || 2));
+        S.solo = false;
+        while (S.teams.length < nn) { S.teams.push({ name: TEAM_NAMES[S.teams.length], score: 0 }); }
+        while (S.teams.length > nn) { S.teams.pop(); }
+        S.rot = [];
+        for (var ni = 0; ni < S.order.length; ni++) { var np = pl(S.order[ni]); if (np && !(np.t >= 0 && np.t < nn)) { np.t = 0; np.t = smallestTeam(); } }
+      }
+    }
+    else if (c === 'shuffle') { // deal everyone into even teams at random
+      if (S.phase === 'lobby' || S.phase === 'menu') { var deck = shuffle(S.order); for (var di = 0; di < deck.length; di++) { if (pl(deck[di])) { pl(deck[di]).t = di % NT(); } } S.rot = []; }
+    }
+    else if (c === 'move') { var mp = pl(a.p), mt = parseInt(a.t, 10); if (mp && mt >= 0 && mt < NT()) { mp.t = mt; } }
+    else if (c === 'kick') { // take a player out. Their phone cannot rejoin until the host lets them back in.
+      if (pl(a.p) && a.p !== S.boss) {
+        S.out[a.p] = pl(a.p).n;
+        delete S.players[a.p]; S.order.splice(S.order.indexOf(a.p), 1);
+        if ((S.turn === a.p || S.solver === a.p) && S.deadline) { S.deadline = now; }
+      }
+    }
+    else if (c === 'unkick') { delete S.out[clean(a.p, 12)]; }
+    else if (c === 'restart') { // play the current game again from the top, with the scores it started with
+      if (S.cur && P.snap && S.phase !== 'lobby' && S.phase !== 'menu' && S.phase !== 'final') {
+        if (S.paused) { cmd('pause', null, now); }
+        for (var ri2 = 0; ri2 < NT() && ri2 < P.snap.teams.length; ri2++) { S.teams[ri2].score = P.snap.teams[ri2]; }
+        for (var rp in P.snap.pts) { if (P.snap.pts.hasOwnProperty(rp) && pl(rp)) { pl(rp).pts = P.snap.pts[rp]; pl(rp).bz = P.snap.bz[rp] || 0; } }
+        S.round--; S.played[S.cur] = Math.max(0, (S.played[S.cur] || 1) - 1);
+        startGame(S.cur, now);
+      }
+    }
+    else if (c === 'reset') { // start the whole night over: everyone types a name and picks a team again
+      if (S.paused) { S.paused = false; }
+      S.players = {}; S.order = []; S.out = {}; S.epoch++;
+      for (var zi = 0; zi < NT(); zi++) { S.teams[zi].score = 0; }
+      S.round = 0; S.rot = []; S.rotA = 0; S.played = {}; S.cur = ''; P = {};
+      S.q = null; S.rv = null; S.fin = null; S.turn = null;
+      setPhase('lobby', now, 0);
+    }
     else if (c === 'end') { if (S.round > 0) { if (S.paused) { cmd('pause', null, now); } finale(now); } }
     else if (c === 'again') {
-      S.teams[0].score = 0; S.teams[1].score = 0; S.round = 0; S.rot = [-1, -1]; S.rotA = 0; S.played = {}; S.cur = ''; P = {};
+      for (var ai = 0; ai < NT(); ai++) { S.teams[ai].score = 0; }
+      S.round = 0; S.rot = []; S.rotA = 0; S.played = {}; S.cur = ''; P = {};
       for (var i = 0; i < S.order.length; i++) { var p = pl(S.order[i]); p.pts = 0; p.bz = 0; }
       S.q = null; S.rv = null; S.fin = null; S.turn = null;
       setPhase('lobby', now, 0);
@@ -677,16 +782,20 @@ RC.createEngine = function (C, opts) {
     if (!m || typeof m !== 'object') { return; }
     var pid = clean(m.p, 12); if (!pid) { return; }
     var p = pl(pid);
+    if (m.t === 'ctl') { if (pid === S.boss) { if (p) { p.seen = now; } cmd(clean(m.c, 10), m.a, now); } return; }
     if (m.t === 'hello') {
-      var name = clean(m.name, 14); var team = m.team === 1 ? 1 : 0;
+      if (S.out[pid]) { return; }
+      var name = clean(m.name, 14); var team = parseInt(m.team, 10);
       if (!name) { return; }
       if (!p) {
         if (S.order.length >= 30) { return; }
+        if (+m.ep !== S.epoch) { return; }   // this phone joined a night that was since started over: it must join again
+        if (!(team >= 0 && team < NT())) { team = smallestTeam(); }
         S.players[pid] = p = { n: name, t: team, seen: now, pts: 0, bz: 0, e: 0, rtt: 0, late: 0 };
         S.order.push(pid);
-        if (!S.boss) { S.boss = pid; }
-        fx('join');
-      } else { p.n = name; if (S.phase === 'lobby') { p.t = team; } }
+        fx('join'); if (S.phase === 'lobby') { say('Welcome, ' + name + '!'); }
+      } else { p.n = name; }
+      if (m.h && m.h === H.key) { S.boss = pid; }
       p.seen = now;
       if (m.ts > 0) { p.e = +m.ts; }
       if (m.rtt > 0) { p.rtt = Math.min(9999, Math.round(+m.rtt)); }
@@ -694,7 +803,9 @@ RC.createEngine = function (C, opts) {
     }
     if (!p) { return; }
     p.seen = now;
-    if (m.t === 'ctl') { if (pid === S.boss) { cmd(clean(m.c, 10), m.a, now); } return; }
+    if (m.t === 'team') { var nt2 = parseInt(m.team, 10); if (S.phase === 'lobby' && nt2 >= 0 && nt2 < NT()) { p.t = nt2; } return; }
+    if (!p) { return; }
+    p.seen = now;
     if (S.paused || m.k !== S.k) { if (!m.n && m.k !== S.k) { p.late = (p.late || 0) + 1; } return; }
     var ph = S.phase, team2 = p.t, a;
     if (m.t === 'vote' && ph === 'vote_q') {
@@ -736,17 +847,27 @@ RC.createEngine = function (C, opts) {
       if (allActed(now)) { crJudge(now); }
     }
     else if (m.t === 'pick' && ph === 'board_pick') {
+      if (S.t0 && now - S.t0 < 700) { return; }
       var c = parseInt(m.c, 10), l = parseInt(m.l, 10);
       if ((pid !== S.turn && pid !== S.boss) || !(c >= 0 && c < S.board.used.length) || !(l >= 0 && l < 4) || S.board.used[c][l]) { return; }
       openTile(c, l, now);
     }
     else if (m.t === 'buzz') {
       if (ph === 'zoom_q' || ph === 'feud_face') {
-        if (now < S.openAt - 200) { return; }
-        if (ph !== 'feud_face' && S.locked[side(pid)]) { return; }
-        S.turn = pid; p.bz++; fx('buzz');
-        if (ph === 'zoom_q') { S.zfrozen = zfrac(now); S.zval = zvalue(S.zfrozen); P.zleft = S.deadline - now; S.opts = optsLeft(); setPhase('zoom_ans', now, 10000); say(p.n + '!'); }
-        else { S.f.mode = 'face'; setPhase('feud_pick', now, 14000); say(p.n + '! What do you say?'); }
+        if (S.early[pid] || (ph === 'zoom_q' && S.locked[side(pid)]) || (P.bzq && P.bzq.got[pid])) { return; }
+        if (m.early || now < S.openAt - 600) {   // tapped before GO: out for this one, and it costs points
+          S.early[pid] = 1; S.acted[pid] = true; penalize(pid, EARLY_COST);
+          S.fs = { id: (S.fs ? S.fs.id : 0) + 1, n: p.n }; fx('wrong'); say(p.n + ' jumped the gun! Out for this one, and minus 50.');
+          return;
+        }
+        // Each phone reports how long after its own GO the tap came. Everyone who buzzes within half a second
+        // of the first arrival is compared on that reaction time, so a slow connection does not lose the race.
+        var dt = parseInt(m.dt, 10); if (!(dt >= 0 && dt < 60000)) { dt = Math.max(0, now - S.openAt); }
+        if (!P.bzq) {
+          P.bzq = { until: now + 500, list: [], got: {} }; S.bzw = 1;
+          if (ph === 'zoom_q') { S.zfrozen = zfrac(now); P.zleft = S.deadline - now; }
+        }
+        P.bzq.got[pid] = 1; P.bzq.list.push({ p: pid, dt: dt, at: now }); S.acted[pid] = true; fx('buzz');
       } else if (ph === 'phrase_turn') {
         if (S.slock[side(pid)]) { return; }
         S.solver = pid; p.bz++; fx('buzz');
@@ -781,7 +902,7 @@ RC.createEngine = function (C, opts) {
         phraseTurn(now);
       } else {
         fx('wrong');
-        if (!phraseMiss(now)) { S.pteam = 1 - team2; phraseTurn(now); }
+        if (!phraseMiss(now)) { S.pteam = nextTeam(team2, now); phraseTurn(now); }
       }
     }
     else if (m.t === 'solve' && ph === 'phrase_solve') {
@@ -799,14 +920,32 @@ RC.createEngine = function (C, opts) {
     }
   }
 
-  function tick(now) { if (S && !S.paused && S.deadline && now >= S.deadline) { advance(now, true); return true; } return false; }
+  function buzzResolve(now) {
+    var q = P.bzq, list = [], i; P.bzq = null; S.bzw = 0;
+    for (i = 0; i < q.list.length; i++) { if (pl(q.list[i].p)) { list.push(q.list[i]); } }
+    if (!list.length) { return; }
+    list.sort(function (x, y) { return (x.dt - y.dt) || (x.at - y.at); });
+    var win = list[0].p, p = pl(win);
+    S.bzr = []; for (i = 0; i < list.length && i < 4; i++) { S.bzr.push({ n: nm(list[i].p), dt: list[i].dt }); }
+    S.turn = win; p.bz++;
+    if (S.phase === 'zoom_q') { S.zval = zvalue(S.zfrozen); S.opts = optsLeft(); setPhase('zoom_ans', now, 12000); say(p.n + ' was fastest!'); }
+    else { S.f.mode = 'face'; setPhase('feud_pick', now, 15000); say(p.n + ' was fastest. What do you say?'); }
+  }
+  function tick(now) {
+    if (!S || S.paused) { return false; }
+    if (P.bzq && now >= P.bzq.until) { buzzResolve(now); return true; }
+    if (S.deadline && now >= S.deadline) { advance(now, true); return true; }
+    return nagTick(now);
+  }
 
   return {
     init: init, handle: handle, tick: tick,
     cmd: function (c, a, now) { cmd(c, a, now); },
     state: function () { return S; },
-    dump: function () { return JSON.stringify({ S: S, P: P, kc: kc }); },
-    load: function (str) { try { var d = JSON.parse(str); if (d && d.S && d.P) { S = d.S; P = d.P; kc = d.kc || 0; return true; } } catch (e) { } return false; },
+    dump: function () { return JSON.stringify({ S: S, P: P, kc: kc, H: H }); },
+    load: function (str) { try { var d = JSON.parse(str); if (d && d.S && d.P) { S = d.S; P = d.P; kc = d.kc || 0; H = d.H && d.H.key ? d.H : { key: newKey(), used: {} }; return true; } } catch (e) { } return false; },
+    hostKey: function () { return H.key; },
+    used: function () { return H.used; },
     _private: function () { return P; },
     _near: near, _soundKey: soundKey, _crMatch: crMatch
   };
