@@ -82,6 +82,9 @@ Questions do not repeat until a game's whole pool has been used. The TV remember
 
 - Crillion questions with a complete list of right answers (countries, U.S. states and capitals, presidents, NFL and NBA teams, elements) are marked `closed` in `src/content.js`. On those, an answer that is not on the list is wrong and scores nothing; it never goes to the host to judge. Open questions (fruits, birds, dog breeds...) still send an unknown answer to the host.
 
+- Know Your Family fixes the spelling of each typed fact before it goes on the TV, so a typo does not give the true one away. It runs in the page with no server: `src/spell.js` holds 22,000 common English words to correct towards and a bit filter of 50,000 rarer English, Spanish and Portuguese words that are left alone. Names with a capital, players' names and words with accents are never changed. Rebuild the data with `node tools/make_spell.js`.
+- Sound: when OK is pressed on the TV the host says a sound-check line, and the corner of the TV shows `Voice on`, `No voice in this browser` or `Voice is not working here`. Menu > Test the sound repeats the check. The voice is the browser's own; Chrome or Edge on a laptop has one, many TV browsers do not.
+
 ## Tests
 
 - `node test/engine.test.js` plays 300 simulated nights (2 to 5 teams and no teams) and checks the host, team, buzzer, Crillion and no-repeat rules.

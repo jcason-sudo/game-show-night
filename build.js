@@ -2,7 +2,7 @@
 var fs = require('fs'), path = require('path');
 function r(f) { return fs.readFileSync(path.join(__dirname, f), 'utf8'); }
 var libs = r('node_modules/paho-mqtt/paho-mqtt-min.js') + '\n' + r('node_modules/qrcode-generator/qrcode.js');
-var game = ['src/content.js', 'src/art.js', 'src/engine.js', 'src/app.js'].map(r).join('\n');
+var game = ['src/content.js', 'src/spell.js', 'src/art.js', 'src/engine.js', 'src/app.js'].map(r).join('\n');
 function safe(js) { return js.replace(/<\/script/gi, '<\\/script'); }
 var html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">\n' +
   '<meta name="robots" content="noindex">\n<title>Game Show Night</title>\n' +

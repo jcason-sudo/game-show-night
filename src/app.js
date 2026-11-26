@@ -258,7 +258,14 @@
     window.addEventListener('online', function () { lastKick = Date.now(); netKick(); });
 
     /* sound */
-    var actx = null, voice = null;
+    var actx = null, voice = null, speakTimer = null, voiceState = 'wait';   // wait | ok | fail
+    function soundLine() { // one plain line on the TV about whether this browser can make sound
+      if (!unlocked) { return ''; }
+      if (!soundOn) { return 'Sound is off (Menu)'; }
+      if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) { return 'No voice in this browser'; }
+      if (voiceState === 'fail') { return 'Voice is not working here'; }
+      return voiceState === 'ok' ? 'Voice on' : 'Checking voice...';
+    }
     function tone(freq, start, dur, type, vol) {
       if (!actx || !soundOn) { return; }
       try {
@@ -292,11 +299,22 @@
       talkTimer = setTimeout(function () { if (host) { host.className = 'host'; } }, Math.min(9000, 900 + text.length * 60));
       if (!unlocked || !soundOn || !window.speechSynthesis || !window.SpeechSynthesisUtterance) { return; }
       try {
-        window.speechSynthesis.cancel();
-        var u = new window.SpeechSynthesisUtterance(text);
-        u.rate = 1.05; u.pitch = 1.05; u.lang = 'en-US'; if (voice) { u.voice = voice; }
-        window.speechSynthesis.speak(u);
-      } catch (e) { }
+        var syn = window.speechSynthesis;
+        if (syn.speaking || syn.pending) { syn.cancel(); }
+        if (speakTimer) { clearTimeout(speakTimer); }
+        // some browsers drop a line that is queued in the same instant as a cancel, so wait a moment
+        speakTimer = setTimeout(function () {
+          try {
+            var u = new window.SpeechSynthesisUtterance(text);
+            u.rate = 1.05; u.pitch = 1.05; u.lang = 'en-US'; u.volume = 1; if (voice) { u.voice = voice; }
+            u.onstart = function () { voiceState = 'ok'; };
+            u.onerror = function (ev) { if (voiceState !== 'ok' && ev && ev.error !== 'interrupted' && ev.error !== 'canceled') { voiceState = 'fail'; } };
+            if (syn.resume) { syn.resume(); }
+            syn.speak(u);
+            if (voiceState === 'wait') { setTimeout(function () { if (voiceState === 'wait') { voiceState = 'fail'; render(); } }, 4000); }
+          } catch (e2) { voiceState = 'fail'; }
+        }, 80);
+      } catch (e) { voiceState = 'fail'; }
     }
 
     /* drawing */
@@ -519,11 +537,11 @@
       }
       put('bubble', esc(S.phase === 'lobby' || !S.say.text ? (S.boss ? 'Scan the code with your phone camera to join. ' + pname(S.boss) + ' is the host.' : 'Host, scan the code with your phone camera to take control.') : S.say.text));
       if (S.fs && S.fs.id !== lastFs) { lastFs = S.fs.id; cache.toast = null; put('toast', '<div class="toast">' + esc(S.fs.n) + ' buzzed before GO. Minus 50.</div>'); }
-      put('joinbox', 'Join at ' + esc(SHORT) + '<br>Room <b>' + ROOM + '</b><br>Relay ' + dotsHtml() + (net.up ? '' : ' connecting...'));
+      put('joinbox', 'Join at ' + esc(SHORT) + '<br>Room <b>' + ROOM + '</b><br>Relay ' + dotsHtml() + (net.up ? '' : ' connecting...') + (soundLine() ? '<br><span class="sline' + (voiceState === 'ok' && soundOn ? '' : ' bad') + '">' + soundLine() + '</span>' : ''));
       put('pausel', S.paused ? '<div class="paused">PAUSED</div>' : '');
       put('menu', menuOpen ? '<div class="menu">' +
         '<button data-a="s_next">' + (S.phase === 'lobby' ? 'Open the game menu' : 'Next') + '</button><button data-a="s_pause">' + (S.paused ? 'Resume' : 'Pause') + '</button>' +
-        '<button data-a="s_skip">Pick a different game</button><button data-a="s_end">Finish and show the winner</button><button data-a="s_sound">Sound: ' + (soundOn ? 'on' : 'off') + '</button><button data-a="s_full">Full screen</button>' +
+        '<button data-a="s_skip">Pick a different game</button><button data-a="s_end">Finish and show the winner</button><button data-a="s_sound">Sound: ' + (soundOn ? 'on' : 'off') + '</button><button data-a="s_test">Test the sound</button><button data-a="s_full">Full screen</button>' +
         '<button data-a="s_restart">Restart this game</button><button data-a="s_again">New night, same players</button><button data-a="s_reset">Start over: everyone joins again</button>' +
         '<button data-a="s_unhost">Change the host (new host code)</button><button data-a="s_menu">Close</button></div>' : '');
       if (S.say.id !== lastSay) { lastSay = S.say.id; speak(S.say.text); }
@@ -539,6 +557,7 @@
         try { if (window.speechSynthesis) { pickVoice(); window.speechSynthesis.onvoiceschanged = pickVoice; } } catch (e) { }
         var ov = document.getElementById('ov'); if (ov) { ov.className = 'overlay hide'; }
         sfx('fanfare');
+        setTimeout(function () { speak('Sound check. I am Ace, your host. If you can hear me, we are good to go.'); }, 900);
       }
       else if (a === 's_menu') { menuOpen = !menuOpen; }
       else if (a === 's_next') { E.cmd('next', null, now); menuOpen = false; }
@@ -550,6 +569,11 @@
       else if (a === 's_restart') { E.cmd('restart', null, now); menuOpen = false; }
       else if (a === 's_reset') { E.cmd('reset', null, now); menuOpen = false; }
       else if (a === 's_unhost') { E.cmd('unhost', null, now); if (S.phase !== 'lobby') { E.cmd('menu', null, now); } menuOpen = false; }
+      else if (a === 's_test') {
+        try { if (actx && actx.resume) { actx.resume(); } } catch (e3) { }
+        voiceState = voiceState === 'ok' ? 'ok' : 'wait'; sfx('win');
+        setTimeout(function () { speak('This is a sound test. If you can hear me, the sound works.'); }, 1400);
+      }
       else if (a === 's_sound') { soundOn = !soundOn; if (!soundOn) { try { window.speechSynthesis.cancel(); } catch (e) { } } }
       else if (a === 's_full') { try { var d = document.documentElement; (d.requestFullscreen || d.webkitRequestFullscreen).call(d); } catch (e) { } menuOpen = false; }
       dirty = true; render();

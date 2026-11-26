@@ -663,15 +663,75 @@ RC.createEngine = function (C, opts) {
   }
 
   /* ---------- advance: called on deadline or when the showrunner taps Next ---------- */
+  /* Spelling fixer for typed facts, so a typo does not give the true fact away. Works without a server:
+     15,000 common words to correct towards, plus a bit filter of 31,000 rarer real words to leave alone. */
+  var SP = null, spKeep = { cason: 1 };   // spKeep: names in the room, never "corrected"
+  function spInit() {
+    if (SP) { return SP; }
+    var D = (typeof RC !== 'undefined' && RC.spell) ? RC.spell : null;
+    SP = { ok: false, rank: {}, list: [], bits: null, m: 0, k: 0, fix: {}, cap: {} };
+    if (!D) { return SP; }
+    SP.list = D.words.split(','); for (var i = 0; i < SP.list.length; i++) { SP.rank[SP.list[i]] = i + 1; }
+    var A = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/', map = {}, b = [], buf = 0, n = 0;
+    for (i = 0; i < 64; i++) { map[A.charAt(i)] = i; }
+    for (i = 0; i < D.bits.length; i++) { var c = map[D.bits.charAt(i)]; if (c == null) { continue; } buf = (buf << 6) | c; n += 6; if (n >= 8) { n -= 8; b.push((buf >> n) & 255); } }
+    SP.bits = b; SP.m = D.m; SP.k = D.k; SP.fix = D.fix; SP.cap = D.cap || {}; SP.ok = true;
+    return SP;
+  }
+  function spHash(w, seed) { var h = seed >>> 0; for (var i = 0; i < w.length; i++) { h ^= w.charCodeAt(i); h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0; } return h; }
+  function spReal(w) { // a real word we should leave alone?
+    if (SP.rank[w]) { return true; }
+    var a = spHash(w, 2166136261), b = spHash(w, 3339675911) | 1;
+    for (var i = 0; i < SP.k; i++) { var x = ((a + i * b) >>> 0) % SP.m; if (!(SP.bits[x >> 3] & (1 << (x & 7)))) { return false; } }
+    return true;
+  }
+  function spWord(w) { // returns the corrected lower-case word, or the same word
+    var L = w.length, best = null, br = 1e9, i, c, t, AB = 'abcdefghijklmnopqrstuvwxyz';
+    if (SP.fix[w]) { return SP.fix[w]; }
+    if (L < 3 || spKeep[w] || spReal(w)) { return w; }
+    if (L >= 5 && /[^aeiou]ys$/.test(w) && SP.rank[w.substr(0, L - 2) + 'ies']) { return w.substr(0, L - 2) + 'ies'; }   // countrys -> countries
+    function tryIt(x) { var r = SP.rank[x]; if (r && r < br) { br = r; best = x; } }
+    for (i = 0; i < L - 1; i++) { tryIt(w.substr(0, i) + w.charAt(i + 1) + w.charAt(i) + w.substr(i + 2)); }            // two letters swapped
+    if (L >= 4) {
+      for (i = 1; i < L; i++) { if (w.charAt(i) === w.charAt(i - 1)) { tryIt(w.substr(0, i) + w.substr(i + 1)); } }           // a letter typed twice (other extra letters are left alone: too easy to wreck a foreign word)
+      for (i = 0; i <= L; i++) { for (c = 0; c < 26; c++) { tryIt(w.substr(0, i) + AB.charAt(c) + w.substr(i)); } }       // one letter missing
+      for (i = 0; i < L; i++) { for (c = 0; c < 26; c++) { tryIt(w.substr(0, i) + AB.charAt(c) + w.substr(i + 1)); } }    // one wrong letter
+    }
+    if (best) { return best; }
+    if (L >= 7) {   // two slips in a long word: same first letter, about the same length
+      var bd = 3;
+      for (i = 0; i < SP.list.length; i++) { t = SP.list[i]; if (t.charAt(0) !== w.charAt(0) || Math.abs(t.length - L) > 2) { continue; } var d = lev(w, t); if (d < bd) { bd = d; best = t; if (d === 1) { break; } } }
+      if (best && bd <= 2) { return best; }
+    }
+    return w;
+  }
+  function spellFix(text) {
+    spInit(); if (!SP.ok) { return text; }
+    var parts = String(text).split(/([A-Za-z\u00C0-\u024F]+(?:'[A-Za-z\u00C0-\u024F]+)?)/), out = '', first = true;
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      if (i % 2 === 0) { out += p; continue; }
+      var cap = /^[A-Z]/.test(p), allCap = p.length > 1 && p === p.toUpperCase();
+      // a capital in the middle of a sentence is a name or a place: leave it. Words with an apostrophe are left too.
+      if (p.indexOf("'") >= 0 || /[^A-Za-z]/.test(p) || (cap && !first && !allCap)) { out += p; first = false; continue; }   // also leaves accented (Spanish, Portuguese) words alone
+      var fixed = spWord(p.toLowerCase());
+      if (SP.cap[fixed]) { out += SP.cap[fixed]; first = false; continue; }
+      if (fixed === p.toLowerCase()) { out += p; }
+      else { out += (cap && !allCap && !/^[A-Z]/.test(fixed)) ? fixed.charAt(0).toUpperCase() + fixed.substr(1) : (allCap ? fixed.toUpperCase() : fixed); }
+      first = false;
+    }
+    return out;
+  }
   /* ---------- know your family ---------- */
   var FAM_STOP = { that: 1, this: 1, with: 1, have: 1, once: 1, when: 1, from: 1, been: 1, were: 1, never: 1, about: 1, there: 1, every: 1, whole: 1, time: 1, year: 1, years: 1, first: 1, same: 1, than: 1, more: 1, them: 1, they: 1, into: 1, still: 1, only: 1, just: 1, over: 1, used: 1 };
   function famWords(t) { var w = String(t).toLowerCase().replace(/[^a-z ]/g, ' ').split(' '), out = {}; for (var i = 0; i < w.length; i++) { if (w[i].length >= 4 && !FAM_STOP[w[i]]) { out[w[i].substr(0, 6)] = 1; } } return out; }
-  function famTidy(t) { // light clean-up, so the true fact does not stand out from the made-up ones by its typing
-    t = clean(t, 110).replace(/[\s.!]+$/, '');
-    t = t.replace(/\bi\b/g, 'I').replace(/\b[Ii]m\b/g, "I'm").replace(/\b[Ii]ve\b/g, "I've").replace(/\b[Ii] m\b/g, "I'm");
+  function famTidy(t) { // clean-up, so the true fact does not stand out from the made-up ones by its typing or spelling
+    t = clean(t, 110);
+    if (t.length > 8 && t === t.toUpperCase()) { t = t.toLowerCase(); }
+    t = spellFix(t).replace(/\s+([,.!?])/g, '$1').replace(/,(?=[^ ])/g, ', ').replace(/[\s.!]+$/, '');
+    t = t.replace(/\bi\b/g, 'I').replace(/\bI m\b/g, "I'm");
     if (!t) { return ''; }
     t = t.charAt(0).toUpperCase() + t.substr(1);
-    if (t === t.toUpperCase() && t.length > 8) { t = t.charAt(0) + t.substr(1).toLowerCase().replace(/\bi\b/g, 'I'); }
     return t + (/[?]$/.test(t) ? '' : '.');
   }
   function famFakes(text, kid) { // three made-up facts on the same topic and of about the same length
@@ -693,6 +753,9 @@ RC.createEngine = function (C, opts) {
   }
   function famStart(now) {
     P.fam = {}; P.famUsed = {}; P.famOrder = []; S.fmi = -1;
+    var keepWords = []; for (var ki = 0; ki < S.order.length; ki++) { if (pl(S.order[ki])) { keepWords.push(pl(S.order[ki]).n); } }
+    for (ki = 0; ki < S.teams.length; ki++) { keepWords.push(S.teams[ki].name); }
+    keepWords = keepWords.join(' ').toLowerCase().split(/[^a-z]+/); for (ki = 0; ki < keepWords.length; ki++) { if (keepWords[ki]) { spKeep[keepWords[ki]] = 1; } }
     S.fam = { done: [] }; S.fq = null; S.nv = 0; S.rv = null;
     setPhase('fam_in', now, 150000);
     say('Everybody, look at your phone. Type one true thing about yourself that most people in this room do not know. Start it with the word I. Keep it short, and keep it secret.');
@@ -1048,7 +1111,7 @@ RC.createEngine = function (C, opts) {
     hostKey: function () { return H.key; },
     used: function () { return H.used; },
     _private: function () { return P; },
-    _near: near, _soundKey: soundKey, _crMatch: crMatch, _famTidy: famTidy, _famFakes: function (t, kid) { P.famUsed = P.famUsed || {}; return famFakes(t, kid); }
+    _near: near, _soundKey: soundKey, _crMatch: crMatch, _famTidy: famTidy, _spellFix: spellFix, _famFakes: function (t, kid) { P.famUsed = P.famUsed || {}; return famFakes(t, kid); }
   };
 };
 if (typeof module !== 'undefined') { module.exports = RC; }

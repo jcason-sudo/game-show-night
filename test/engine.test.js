@@ -2,7 +2,7 @@
 var path = require('path');
 var FACTS = ['i lived in eight countries', 'I play football and im a famous soccer player', 'My dog once ate my passport', 'I can play the ukulele', 'i have never eaten a tomato', 'I WAS ON TV WHEN I WAS SIX', 'I am scared of clowns', 'I broke my leg skiing', 'I worked as a clown for one summer', 'I once met the pope'];
 var fs = require('fs');
-var src = ['content.js', 'engine.js'].map(function (f) { return fs.readFileSync(path.join(__dirname, '../src', f), 'utf8'); }).join('\n');
+var src = ['content.js', 'spell.js', 'engine.js'].map(function (f) { return fs.readFileSync(path.join(__dirname, '../src', f), 'utf8'); }).join('\n');
 var RC = new Function('module', src + '\nreturn RC;')(undefined);
 var assert = require('assert');
 
@@ -352,7 +352,7 @@ console.log('OK: 300 simulated games finished (team and solo play; 5-game, 4-gam
   var E3 = RC.createEngine(C, { seed: 6 }); E3.init('F', 1);
   assert.strictEqual(E3._famTidy('i lived in 8 countries'), 'I lived in 8 countries.');
   assert.strictEqual(E3._famTidy('im afraid of spiders!!'), "I'm afraid of spiders.");
-  assert.strictEqual(E3._famTidy('I WAS ON TV WHEN I WAS SIX'), 'I was on tv when I was six.');
+  assert.strictEqual(E3._famTidy('I WAS ON TV WHEN I WAS SIX'), 'I was on TV when I was six.');
   assert.ok(E3._famFakes('I am afraid of balloons.', 0).indexOf('I am afraid of balloons.') < 0, 'a made-up fact is never the same as the truth');
   console.log('OK: Know Your Family rules, scoring and made-up facts');
 })();
@@ -386,4 +386,34 @@ console.log('OK: 300 simulated games finished (team and solo play; 5-game, 4-gam
   assert.strictEqual(E._crMatch(fr, 'Zzyzx berry').st, 'ask', 'an unknown fruit still goes to the host');
   C.crillion.forEach(function (x) { if (x.closed) { x.no.forEach(function (w) { assert.strictEqual(E._crMatch(x, w[0]).st, 'no'); }); } });
   console.log('OK: no teams by default, host sets up teams; Crillion refuses wrong answers on complete lists');
+})();
+
+/* ---------- spelling fixer for typed facts ---------- */
+(function () {
+  var E = RC.createEngine(C, { seed: 12 }); E.init('SPL', 1);
+  [['i lived in eigth contries', 'I lived in eight countries.'],
+   ['I play soccor and im a famus basball player', "I play soccer and I'm a famous baseball player."],
+   ['my dog once ate my pasport', 'My dog once ate my passport.'],
+   ['i dont like brocoli or tomatoe', "I don't like broccoli or tomato."],
+   ['I recieved a medal for swiming', 'I received a medal for swimming.'],
+   ['i speak portugese and spanish', 'I speak Portuguese and Spanish.'],
+   ['i have been to forteen countrys', 'I have been to fourteen countries.'],
+   ['I flew a hellicopter once', 'I flew a helicopter once.'],
+   ['I HAVE NEVER BEEN TO EUROPE', 'I have never been to Europe.'],
+   ['i was on tv in venezuela', 'I was on TV in Venezuela.'],
+   // real words, names, places and other languages are left alone
+   ['I went caving in Mexico', 'I went caving in Mexico.'],
+   ['i have a ukulele from Hawaii', 'I have a ukulele from Hawaii.'],
+   ['I once met Shakira in Miami', 'I once met Shakira in Miami.'],
+   ['i broke my arm skiing in Bariloche', 'I broke my arm skiing in Bariloche.'],
+   ['I love badminton and skydiving', 'I love badminton and skydiving.'],
+   ['My abuela taught me to make arepas', 'My abuela taught me to make arepas.'],
+   ['I ate feijoada and pão de queijo in brazil', 'I ate feijoada and pão de queijo in Brazil.'],
+   ['My tia makes the best empanadas', 'My tia makes the best empanadas.'],
+   ['i own 3 dogs named Coco, Lulu and Max', 'I own 3 dogs named Coco, Lulu and Max.'],
+   ['i am a cason', 'I am a cason.']
+  ].forEach(function (x) { assert.strictEqual(E._famTidy(x[0]), x[1]); });
+  var t0 = Date.now(); for (var i = 0; i < 40; i++) { E._famTidy('i recieved a medle for swiming in the carribean when i was forteen'); }
+  assert.ok(Date.now() - t0 < 3000, 'spelling fix is fast enough for a TV browser');
+  console.log('OK: typed facts get their spelling fixed; names, places and Spanish or Portuguese words are left alone');
 })();

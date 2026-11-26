@@ -471,3 +471,4 @@ html, body { background: #0F3B4C; color: #EEF3F1; font-weight: 600; }
 .half.modes .pbtn.wide { width: 100%; }
 .pbody h3 { font-size: 20px; }
 .prow .pn b { font-size: 19px; } .tdot { font-size: 16px; padding: 9px 11px; }
+.sline { font-weight: 700; color: #2E7D4F; } .sline.bad { color: #C0392B; }
