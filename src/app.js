@@ -137,6 +137,26 @@
     try { zoomDraw(); } catch (e) {}
     if (window.requestAnimationFrame) { window.requestAnimationFrame(zoomLoop); } else { setTimeout(zoomLoop, 40); }
   })();
+  /* Little emoji bursts: on the TV when something good or bad happens, on a phone when that player scores */
+  var BURST = { right: ['🎉', '⭐', '👏', '✨', '🎊', '💥'], ding: ['✨', '⭐', '👍'], win: ['🏆', '🎉', '🎊', '🥳', '⭐', '👑'], wrong: ['😬', '🙈', '💨'], strike: ['❌', '😬'], buzz: ['🔔'], fanfare: ['🎺', '✨'], join: ['👋'] };
+  function burst(kind, label) {
+    try {
+      var set = BURST[kind]; if (!set) { return; }
+      var n = kind === 'win' ? 26 : (kind === 'right' ? 16 : (kind === 'wrong' || kind === 'strike' ? 5 : 6)), box = document.createElement('div'), i;
+      box.className = 'burst';
+      for (i = 0; i < n; i++) {
+        var s = document.createElement('span');
+        s.innerHTML = set[Math.floor(Math.random() * set.length)];
+        s.style.left = (6 + Math.random() * 88) + '%';
+        s.style.fontSize = (4 + Math.random() * 5) + 'vh';
+        s.style.webkitAnimationDelay = s.style.animationDelay = (Math.random() * 0.5) + 's';
+        box.appendChild(s);
+      }
+      if (label) { var b = document.createElement('b'); b.innerHTML = label; box.appendChild(b); }
+      document.body.appendChild(box);
+      setTimeout(function () { try { document.body.removeChild(box); } catch (e) { } }, 2600);
+    } catch (e2) { }
+  }
   function tickUI() {
     if (!S) { return; }
     window.RCS = S;
@@ -286,6 +306,9 @@
       else if (name === 'join') { tone(520, 0, 0.1); tone(780, 0.1, 0.12); }
       else if (name === 'fanfare') { tone(523, 0, 0.16); tone(659, 0.16, 0.16); tone(784, 0.32, 0.16); tone(1047, 0.48, 0.4); }
       else if (name === 'win') { [523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { tone(f, i * 0.17, 0.3); }); }
+      burst(name);
+      var hr = document.getElementById('host');   // Ace reacts: a hop for good news, a wobble for bad
+      if (hr && (name === 'right' || name === 'win' || name === 'wrong' || name === 'strike')) { var good = name === 'right' || name === 'win'; hr.className = 'host ' + (good ? 'yay' : 'oops'); setTimeout(function () { if (hr.className.indexOf(good ? 'yay' : 'oops') >= 0) { hr.className = 'host'; } }, 1300); }
     }
     var voiceList = [], voiceIdx = -1;
     function voiceScore(v) { // British first, and the natural-sounding ones before the robotic ones
@@ -893,6 +916,7 @@
     }
     function render() {
       var m = me();
+      if (m) { if (ui.pts0 != null && m.pts > ui.pts0) { burst('right', '+' + (m.pts - ui.pts0)); try { if (navigator.vibrate) { navigator.vibrate([40, 40, 40]); } } catch (e9) { } } ui.pts0 = m.pts; }
       var stale = S && ui.joined && (Date.now() - lastState > 5000);
       var ban = '';
       if (S && S.v !== VERSION) { ban = '<button class="banner" data-a="reload">This phone has an old copy of the game. Tap here to refresh.</button>'; }

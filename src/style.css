@@ -494,3 +494,16 @@ html, body { background: #0F3B4C; color: #EEF3F1; font-weight: 600; }
 .pbtn.dark { font-size: 28px; min-height: 76px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; }
 .pbtn.o0, .pbtn.o1, .pbtn.o2, .pbtn.o3 { font-size: 32px; min-height: 78px; }
 .pbody .q { font-size: 34px; }
+
+/* emoji bursts and host reactions */
+.burst { position: fixed; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; overflow: hidden; }
+.burst span { position: absolute; bottom: -12vh; -webkit-animation: floatup 2.1s ease-out forwards; animation: floatup 2.1s ease-out forwards; }
+.burst b { position: absolute; left: 0; right: 0; top: 34%; text-align: center; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 96px; color: #F9D648; text-shadow: 0 4px 0 #0A2C39; -webkit-animation: popin 1.6s ease-out forwards; animation: popin 1.6s ease-out forwards; }
+@-webkit-keyframes floatup { 0% { -webkit-transform: translateY(0) rotate(0deg); opacity: 0; } 12% { opacity: 1; } 100% { -webkit-transform: translateY(-112vh) rotate(40deg); opacity: 0; } }
+@keyframes floatup { 0% { transform: translateY(0) rotate(0deg); opacity: 0; } 12% { opacity: 1; } 100% { transform: translateY(-112vh) rotate(40deg); opacity: 0; } }
+@-webkit-keyframes popin { 0% { -webkit-transform: scale(0.3); opacity: 0; } 20% { -webkit-transform: scale(1.15); opacity: 1; } 75% { opacity: 1; } 100% { -webkit-transform: scale(1); opacity: 0; } }
+@keyframes popin { 0% { transform: scale(0.3); opacity: 0; } 20% { transform: scale(1.15); opacity: 1; } 75% { opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+.host.yay { -webkit-animation: hop 0.45s ease-in-out 3; animation: hop 0.45s ease-in-out 3; }
+.host.oops { -webkit-animation: wobble 0.3s ease-in-out 4; animation: wobble 0.3s ease-in-out 4; }
+@-webkit-keyframes hop { 50% { -webkit-transform: translateY(-3.5vh) scale(1.08); } } @keyframes hop { 50% { transform: translateY(-3.5vh) scale(1.08); } }
+@-webkit-keyframes wobble { 25% { -webkit-transform: rotate(-9deg); } 75% { -webkit-transform: rotate(9deg); } } @keyframes wobble { 25% { transform: rotate(-9deg); } 75% { transform: rotate(9deg); } }

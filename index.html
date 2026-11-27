@@ -504,6 +504,19 @@ html, body { background: #0F3B4C; color: #EEF3F1; font-weight: 600; }
 .pbtn.dark { font-size: 28px; min-height: 76px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; }
 .pbtn.o0, .pbtn.o1, .pbtn.o2, .pbtn.o3 { font-size: 32px; min-height: 78px; }
 .pbody .q { font-size: 34px; }
+
+/* emoji bursts and host reactions */
+.burst { position: fixed; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; overflow: hidden; }
+.burst span { position: absolute; bottom: -12vh; -webkit-animation: floatup 2.1s ease-out forwards; animation: floatup 2.1s ease-out forwards; }
+.burst b { position: absolute; left: 0; right: 0; top: 34%; text-align: center; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 96px; color: #F9D648; text-shadow: 0 4px 0 #0A2C39; -webkit-animation: popin 1.6s ease-out forwards; animation: popin 1.6s ease-out forwards; }
+@-webkit-keyframes floatup { 0% { -webkit-transform: translateY(0) rotate(0deg); opacity: 0; } 12% { opacity: 1; } 100% { -webkit-transform: translateY(-112vh) rotate(40deg); opacity: 0; } }
+@keyframes floatup { 0% { transform: translateY(0) rotate(0deg); opacity: 0; } 12% { opacity: 1; } 100% { transform: translateY(-112vh) rotate(40deg); opacity: 0; } }
+@-webkit-keyframes popin { 0% { -webkit-transform: scale(0.3); opacity: 0; } 20% { -webkit-transform: scale(1.15); opacity: 1; } 75% { opacity: 1; } 100% { -webkit-transform: scale(1); opacity: 0; } }
+@keyframes popin { 0% { transform: scale(0.3); opacity: 0; } 20% { transform: scale(1.15); opacity: 1; } 75% { opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+.host.yay { -webkit-animation: hop 0.45s ease-in-out 3; animation: hop 0.45s ease-in-out 3; }
+.host.oops { -webkit-animation: wobble 0.3s ease-in-out 4; animation: wobble 0.3s ease-in-out 4; }
+@-webkit-keyframes hop { 50% { -webkit-transform: translateY(-3.5vh) scale(1.08); } } @keyframes hop { 50% { transform: translateY(-3.5vh) scale(1.08); } }
+@-webkit-keyframes wobble { 25% { -webkit-transform: rotate(-9deg); } 75% { -webkit-transform: rotate(9deg); } } @keyframes wobble { 25% { transform: rotate(-9deg); } 75% { transform: rotate(9deg); } }
 </style>
 </head>
 <body>
@@ -5375,6 +5388,26 @@ if (typeof module !== 'undefined') { module.exports = RC; }
     try { zoomDraw(); } catch (e) {}
     if (window.requestAnimationFrame) { window.requestAnimationFrame(zoomLoop); } else { setTimeout(zoomLoop, 40); }
   })();
+  /* Little emoji bursts: on the TV when something good or bad happens, on a phone when that player scores */
+  var BURST = { right: ['🎉', '⭐', '👏', '✨', '🎊', '💥'], ding: ['✨', '⭐', '👍'], win: ['🏆', '🎉', '🎊', '🥳', '⭐', '👑'], wrong: ['😬', '🙈', '💨'], strike: ['❌', '😬'], buzz: ['🔔'], fanfare: ['🎺', '✨'], join: ['👋'] };
+  function burst(kind, label) {
+    try {
+      var set = BURST[kind]; if (!set) { return; }
+      var n = kind === 'win' ? 26 : (kind === 'right' ? 16 : (kind === 'wrong' || kind === 'strike' ? 5 : 6)), box = document.createElement('div'), i;
+      box.className = 'burst';
+      for (i = 0; i < n; i++) {
+        var s = document.createElement('span');
+        s.innerHTML = set[Math.floor(Math.random() * set.length)];
+        s.style.left = (6 + Math.random() * 88) + '%';
+        s.style.fontSize = (4 + Math.random() * 5) + 'vh';
+        s.style.webkitAnimationDelay = s.style.animationDelay = (Math.random() * 0.5) + 's';
+        box.appendChild(s);
+      }
+      if (label) { var b = document.createElement('b'); b.innerHTML = label; box.appendChild(b); }
+      document.body.appendChild(box);
+      setTimeout(function () { try { document.body.removeChild(box); } catch (e) { } }, 2600);
+    } catch (e2) { }
+  }
   function tickUI() {
     if (!S) { return; }
     window.RCS = S;
@@ -5524,6 +5557,9 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       else if (name === 'join') { tone(520, 0, 0.1); tone(780, 0.1, 0.12); }
       else if (name === 'fanfare') { tone(523, 0, 0.16); tone(659, 0.16, 0.16); tone(784, 0.32, 0.16); tone(1047, 0.48, 0.4); }
       else if (name === 'win') { [523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { tone(f, i * 0.17, 0.3); }); }
+      burst(name);
+      var hr = document.getElementById('host');   // Ace reacts: a hop for good news, a wobble for bad
+      if (hr && (name === 'right' || name === 'win' || name === 'wrong' || name === 'strike')) { var good = name === 'right' || name === 'win'; hr.className = 'host ' + (good ? 'yay' : 'oops'); setTimeout(function () { if (hr.className.indexOf(good ? 'yay' : 'oops') >= 0) { hr.className = 'host'; } }, 1300); }
     }
     var voiceList = [], voiceIdx = -1;
     function voiceScore(v) { // British first, and the natural-sounding ones before the robotic ones
@@ -6131,6 +6167,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
     }
     function render() {
       var m = me();
+      if (m) { if (ui.pts0 != null && m.pts > ui.pts0) { burst('right', '+' + (m.pts - ui.pts0)); try { if (navigator.vibrate) { navigator.vibrate([40, 40, 40]); } } catch (e9) { } } ui.pts0 = m.pts; }
       var stale = S && ui.joined && (Date.now() - lastState > 5000);
       var ban = '';
       if (S && S.v !== VERSION) { ban = '<button class="banner" data-a="reload">This phone has an old copy of the game. Tap here to refresh.</button>'; }
