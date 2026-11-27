@@ -3802,7 +3802,7 @@ RC.content = {
     { key: 'tf', title: 'True or False Blitz', how: ['A statement appears. True or false?', 'Everyone answers. You have 12 seconds.', 'Your team scores the share of teammates who get it right.'] },
     { key: 'zoom', title: 'Zoom In', how: ['A famous place starts close up and pulls back. Wait for GO, then buzz when you know it.', 'Buzz before GO and you lose 50 points, so wait for it.', 'After GO the fastest finger answers. A wrong answer costs 50 points.'] },
     { key: 'num', title: 'Closest Call', how: ['Every answer is a number.', 'Everyone types a guess.', 'The closest guess wins 150 points for the team.'] },
-    { key: 'phrase', title: 'Phrase Fever', how: ['Take turns picking letters.', 'Anyone can hit SOLVE and type the phrase.', 'Five misses and the puzzle is lost.'] },
+    { key: 'phrase', title: 'Phrase Fever', how: ['Teams take turns. Anyone on the team whose turn it is taps a letter: first tap counts, 14 seconds.', 'A letter that is in the phrase scores and your team goes again. A miss passes the turn.', 'At any time, anyone in the room can hit SOLVE and type the whole phrase.', 'Five misses and the puzzle is lost.'] },
     { key: 'decade', title: 'Name That Decade', how: ['Something happened. In which decade?', 'Everyone answers on their own phone.', 'Grandparents, this one is yours.'] },
     { key: 'scramble', title: 'Word Scramble', how: ['The letters are mixed up. Type the word.', 'First to solve wins 150. Everyone else can still score 40.', 'Wrong tries cost nothing. Close spelling counts.'] },
     { key: 'crillion', title: 'Crillion', how: ['Everyone types one answer to the same question. Spelling does not matter.', 'The more obscure your answer, the more it scores. The most obscure answer in the room wins 50 extra.', 'If someone else types the same thing, you split the points. A wrong answer scores zero.'] },
@@ -4222,7 +4222,7 @@ RC.createEngine = function (C, opts) {
       if (miss.length > 3) { say(line('nagMany', { k: miss.length })); return true; }
       return false;
     }
-    if (TURNS[ph] && S.turn && pl(S.turn) && part > 0.4) { S.nag = 1; say(line('nagTurn', { n: nm(S.turn), 'do': TURNS[ph] })); return true; }
+    if (TURNS[ph] && S.turn && pl(S.turn) && part > 0.4) { S.nag = 1; say(line('nagTurn', { n: (ph === 'phrase_turn' && !S.solo && S.teams[S.pteam]) ? S.teams[S.pteam].name : nm(S.turn), 'do': TURNS[ph] })); return true; }
     return false;
   }
   function trailing() { var best = [], min = Infinity; for (var t = 0; t < NT(); t++) { if (S.teams[t].score < min) { min = S.teams[t].score; best = [t]; } else if (S.teams[t].score === min) { best.push(t); } } return pickOne(best); }
@@ -4643,7 +4643,7 @@ RC.createEngine = function (C, opts) {
   function phraseTurn(now) {
     S.pteam = activeTeam(S.pteam, now);
     S.turn = (S.solo && P.keep && present(P.keep, now)) ? P.keep : nextPlayerAny(S.pteam, now); S.solver = null; P.keep = null;
-    setPhase('phrase_turn', now, 22000);
+    setPhase('phrase_turn', now, 14000);
   }
   function phraseReveal(pid, how, now) {
     for (var i = 0; i < P.ph.length; i++) { S.ph.mask[i] = P.ph.charAt(i); }
@@ -5176,7 +5176,9 @@ RC.createEngine = function (C, opts) {
     }
     else if (m.t === 'letter' && ph === 'phrase_turn') {
       var L = String(m.l || '').toUpperCase().charAt(0);
-      if (pid !== S.turn || !/[A-Z]/.test(L) || S.used.indexOf(L) >= 0) { return; }
+      // team play: anyone on the team whose turn it is may pick, first tap counts (faster than waiting on one person)
+      var myGo = S.solo ? pid === S.turn : p.t === S.pteam;
+      if (!myGo || !/[A-Z]/.test(L) || S.used.indexOf(L) >= 0) { return; }
       S.used += L; S.slock = {}; S.idle = 0;
       var n = 0;
       for (var x = 0; x < P.ph.length; x++) { if (P.ph.charAt(x) === L) { S.ph.mask[x] = L; n++; } }
@@ -5689,7 +5691,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
         var lastTxt = '';
         if (S.last && S.last.l) { lastTxt = S.last.n ? esc(S.last.who) + ' found ' + S.last.n + ' ' + S.last.l + (S.last.n > 1 ? "'s" : '') + '. ' : 'No ' + S.last.l + '. '; }
         else if (S.last && S.last.who) { lastTxt = esc(S.last.who) + ' guessed wrong. '; }
-        h += '<div class="status">' + lastTxt + who(S.turn) + ', pick a letter</div>' + timerHtml(22000);
+        h += '<div class="status">' + lastTxt + (S.solo ? who(S.turn) + ', pick a letter' : '<span class="t' + S.pteam + 'c">' + esc(tname(S.pteam)) + '</span>: anyone on the team, tap a letter') + '<br><small>Anyone in the room can hit SOLVE at any time</small></div>' + timerHtml(14000);
       }
       return h;
     }
@@ -6062,11 +6064,12 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       if (ph === 'zoom_reveal') { return '<h2>' + esc(S.rv.text) + '</h2>' + watch(); }
       if (ph === 'phrase_turn') {
         var mask = '<div class="pmask">' + esc(S.ph.mask.join('')) + '</div>';
-        if (mine && !s) {
-          h = '<h2>Pick a letter</h2>' + mask + '<div class="keys">';
+        var myGo = S.solo ? mine : m.t === S.pteam;
+        if (myGo && !s) {
+          h = '<h2>' + (S.solo ? 'Pick a letter' : 'Your team picks: tap a letter') + '</h2>' + mask + '<div class="keys">';
           for (var k = 0; k < 26; k++) { var L = LETTERS.charAt(k); h += '<button data-a="letter" data-v="' + L + '"' + (S.used.indexOf(L) >= 0 ? ' disabled' : '') + '>' + L + '</button>'; }
           h += '</div>';
-        } else { h = '<h2>' + (mine ? 'Sent' : esc(pname(S.turn)) + ' picks a letter') + '</h2>' + mask; }
+        } else { h = '<h2>' + (myGo ? 'Sent' : (S.solo ? esc(pname(S.turn)) : esc(tname(S.pteam))) + ' picks a letter') + '</h2><p class="small">You can still solve it.</p>' + mask; }
         if (S.slock[S.solo ? pid : m.t]) { h += '<p class="small">' + (S.solo ? 'You' : 'Your team') + ' guessed wrong. Wait for the next letter to solve.</p>'; }
         else if (!s) { h += '<button class="pbtn go" data-a="buzz">I CAN SOLVE IT</button>'; }
         return h;

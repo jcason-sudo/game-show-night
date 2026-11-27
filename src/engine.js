@@ -104,7 +104,7 @@ RC.createEngine = function (C, opts) {
       if (miss.length > 3) { say(line('nagMany', { k: miss.length })); return true; }
       return false;
     }
-    if (TURNS[ph] && S.turn && pl(S.turn) && part > 0.4) { S.nag = 1; say(line('nagTurn', { n: nm(S.turn), 'do': TURNS[ph] })); return true; }
+    if (TURNS[ph] && S.turn && pl(S.turn) && part > 0.4) { S.nag = 1; say(line('nagTurn', { n: (ph === 'phrase_turn' && !S.solo && S.teams[S.pteam]) ? S.teams[S.pteam].name : nm(S.turn), 'do': TURNS[ph] })); return true; }
     return false;
   }
   function trailing() { var best = [], min = Infinity; for (var t = 0; t < NT(); t++) { if (S.teams[t].score < min) { min = S.teams[t].score; best = [t]; } else if (S.teams[t].score === min) { best.push(t); } } return pickOne(best); }
@@ -525,7 +525,7 @@ RC.createEngine = function (C, opts) {
   function phraseTurn(now) {
     S.pteam = activeTeam(S.pteam, now);
     S.turn = (S.solo && P.keep && present(P.keep, now)) ? P.keep : nextPlayerAny(S.pteam, now); S.solver = null; P.keep = null;
-    setPhase('phrase_turn', now, 22000);
+    setPhase('phrase_turn', now, 14000);
   }
   function phraseReveal(pid, how, now) {
     for (var i = 0; i < P.ph.length; i++) { S.ph.mask[i] = P.ph.charAt(i); }
@@ -1058,7 +1058,9 @@ RC.createEngine = function (C, opts) {
     }
     else if (m.t === 'letter' && ph === 'phrase_turn') {
       var L = String(m.l || '').toUpperCase().charAt(0);
-      if (pid !== S.turn || !/[A-Z]/.test(L) || S.used.indexOf(L) >= 0) { return; }
+      // team play: anyone on the team whose turn it is may pick, first tap counts (faster than waiting on one person)
+      var myGo = S.solo ? pid === S.turn : p.t === S.pteam;
+      if (!myGo || !/[A-Z]/.test(L) || S.used.indexOf(L) >= 0) { return; }
       S.used += L; S.slock = {}; S.idle = 0;
       var n = 0;
       for (var x = 0; x < P.ph.length; x++) { if (P.ph.charAt(x) === L) { S.ph.mask[x] = L; n++; } }

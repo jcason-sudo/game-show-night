@@ -449,7 +449,7 @@
         var lastTxt = '';
         if (S.last && S.last.l) { lastTxt = S.last.n ? esc(S.last.who) + ' found ' + S.last.n + ' ' + S.last.l + (S.last.n > 1 ? "'s" : '') + '. ' : 'No ' + S.last.l + '. '; }
         else if (S.last && S.last.who) { lastTxt = esc(S.last.who) + ' guessed wrong. '; }
-        h += '<div class="status">' + lastTxt + who(S.turn) + ', pick a letter</div>' + timerHtml(22000);
+        h += '<div class="status">' + lastTxt + (S.solo ? who(S.turn) + ', pick a letter' : '<span class="t' + S.pteam + 'c">' + esc(tname(S.pteam)) + '</span>: anyone on the team, tap a letter') + '<br><small>Anyone in the room can hit SOLVE at any time</small></div>' + timerHtml(14000);
       }
       return h;
     }
@@ -822,11 +822,12 @@
       if (ph === 'zoom_reveal') { return '<h2>' + esc(S.rv.text) + '</h2>' + watch(); }
       if (ph === 'phrase_turn') {
         var mask = '<div class="pmask">' + esc(S.ph.mask.join('')) + '</div>';
-        if (mine && !s) {
-          h = '<h2>Pick a letter</h2>' + mask + '<div class="keys">';
+        var myGo = S.solo ? mine : m.t === S.pteam;
+        if (myGo && !s) {
+          h = '<h2>' + (S.solo ? 'Pick a letter' : 'Your team picks: tap a letter') + '</h2>' + mask + '<div class="keys">';
           for (var k = 0; k < 26; k++) { var L = LETTERS.charAt(k); h += '<button data-a="letter" data-v="' + L + '"' + (S.used.indexOf(L) >= 0 ? ' disabled' : '') + '>' + L + '</button>'; }
           h += '</div>';
-        } else { h = '<h2>' + (mine ? 'Sent' : esc(pname(S.turn)) + ' picks a letter') + '</h2>' + mask; }
+        } else { h = '<h2>' + (myGo ? 'Sent' : (S.solo ? esc(pname(S.turn)) : esc(tname(S.pteam))) + ' picks a letter') + '</h2><p class="small">You can still solve it.</p>' + mask; }
         if (S.slock[S.solo ? pid : m.t]) { h += '<p class="small">' + (S.solo ? 'You' : 'Your team') + ' guessed wrong. Wait for the next letter to solve.</p>'; }
         else if (!s) { h += '<button class="pbtn go" data-a="buzz">I CAN SOLVE IT</button>'; }
         return h;
