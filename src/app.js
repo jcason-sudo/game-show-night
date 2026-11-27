@@ -157,9 +157,20 @@
       setTimeout(function () { try { document.body.removeChild(box); } catch (e) { } }, 2600);
     } catch (e2) { }
   }
+  /* Ace's face: a base mood set by what just happened, and a moving mouth while he talks */
+  var aceMood = 'happy', aceUntil = 0;
+  function setMood(m, ms) { aceMood = m; aceUntil = Date.now() + (ms || 3500); }
+  function drawMood() {
+    var now = Date.now(), h = document.getElementById('host'), b = document.getElementById('avbox'), m = now < aceUntil ? aceMood : 'happy';
+    var talking = (h && h.className.indexOf('talk') >= 0) || (b && b.className.indexOf('talk') >= 0);
+    if (talking && m !== 'shocked' && m !== 'ko') { m = Math.floor(now / 230) % 2 ? 'excited' : (m === 'sad' ? 'sad' : 'happy'); }
+    if (h && h.getAttribute('data-mood') !== m) { h.setAttribute('data-mood', m); }
+    if (b && b.getAttribute('data-mood') !== m) { b.setAttribute('data-mood', m); }
+  }
   function tickUI() {
     if (!S) { return; }
     window.RCS = S;
+    try { drawMood(); } catch (e8) { }
     try { if (RC.avatar) { RC.avatar.tick(S); } } catch (e) { }
     var now = hnow(), i, el, els;
     els = document.querySelectorAll('[data-dl]');
@@ -307,6 +318,7 @@
       else if (name === 'fanfare') { tone(523, 0, 0.16); tone(659, 0.16, 0.16); tone(784, 0.32, 0.16); tone(1047, 0.48, 0.4); }
       else if (name === 'win') { [523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { tone(f, i * 0.17, 0.3); }); }
       burst(name);
+      if (name === 'right' || name === 'ding') { setMood('blissful', 3000); } else if (name === 'win' || name === 'fanfare') { setMood('excited', 6000); } else if (name === 'wrong') { setMood('shocked', 1600); setTimeout(function () { setMood('sad', 2600); }, 1600); } else if (name === 'strike' || name === 'buzz') { setMood('shocked', 2200); }
       var hr = document.getElementById('host');   // Ace reacts: a hop for good news, a wobble for bad
       if (hr && (name === 'right' || name === 'win' || name === 'wrong' || name === 'strike')) { var good = name === 'right' || name === 'win'; hr.className = 'host ' + (good ? 'yay' : 'oops'); setTimeout(function () { if (hr.className.indexOf(good ? 'yay' : 'oops') >= 0) { hr.className = 'host'; } }, 1300); }
     }
@@ -671,6 +683,8 @@
       if (offCur === null || off < offCur) { offCur = off; }
       clockOff = offPrev === null ? offCur : Math.min(offPrev, offCur);
       S = st;
+      // optional: the host's phone speaks Ace's lines (for TVs whose browser has no voice, such as Samsung's)
+      if (ui.pvoice && S.say && S.say.id !== ui.lastSay) { ui.lastSay = S.say.id; phoneSpeak(S.say.text); }
       var mine = S.players[pid];
       // The host started the night over: this phone has to join again and pick a team.
       if (ui.joined && !mine && ui.ep !== S.epoch && !(S.out && S.out[pid])) { ui.joined = false; ui.team = -1; ui.menu = false; lsSet('rc_room', ''); }
@@ -736,6 +750,15 @@
         h += '</div></div>';
       });
       return h;
+    }
+    function phoneSpeak(text) {
+      try {
+        var syn = window.speechSynthesis; if (!syn || !window.SpeechSynthesisUtterance) { return; }
+        var vs = syn.getVoices(), best = null, bs = -1, i, sc;
+        for (i = 0; i < vs.length; i++) { sc = /en[-_]GB/i.test(vs[i].lang) ? 100 : (/^en/i.test(vs[i].lang) ? 10 : -1); if (/natural|neural|online|enhanced|premium/i.test(vs[i].name)) { sc += 50; } if (sc > bs) { bs = sc; best = vs[i]; } }
+        if (syn.speaking || syn.pending) { syn.cancel(); }
+        setTimeout(function () { try { var u = new window.SpeechSynthesisUtterance(text); u.lang = best ? best.lang : 'en-GB'; if (best) { u.voice = best; } u.rate = 1; syn.speak(u); } catch (e) { } }, 80);
+      } catch (e2) { }
     }
     function myRank() { var rk = rankList(); for (var i = 0; i < rk.length; i++) { if (rk[i].p === pid) { return i + 1; } } return 0; }
     function standing() { // one line of score, for whichever way the show is being played
@@ -964,6 +987,7 @@
           for (t = 0; t < NT(); t++) { sheet += '<div class="trow"><input class="field sm" id="tn' + t + '" maxlength="14" value="' + esc(tname(t)) + '"><button class="tdot" data-a="c_adj" data-v="' + t + ',-50">-50</button><b>' + S.teams[t].score + '</b><button class="tdot" data-a="c_adj" data-v="' + t + ',50">+50</button></div>'; }
           sheet += '<div class="half"><button class="pbtn plain c" data-a="c_names">Save team names</button>' + (NT() === 2 ? '<button class="pbtn plain c" data-a="c_preset">Kids vs Adults</button>' : '') + '</div>';
         }
+        sheet += '<button class="pbtn plain c' + (ui.pvoice ? ' sel' : '') + '" data-a="p_voice">Ace speaks from this phone: ' + (ui.pvoice ? 'on' : 'off') + '</button><p class="small">Turn this on if the TV has no voice (many TV browsers do not). Connect this phone to a speaker for the room.</p>';
         sheet += '<button class="pbtn plain c' + (S.short ? ' sel' : '') + '" data-a="c_short">Short games: ' + (S.short ? 'on' : 'off') + '</button>' + (between ? '' : '<p class="small">Short games take effect from the next game.</p>');
         sheet += '<button class="pbtn dark" data-a="c_menu">Close</button></div>';
       }
@@ -1001,6 +1025,11 @@
       else if (a === 'word') { el = document.getElementById('wordin'); if (!el || !el.value) { if (el) { el.focus(); } return; } send({ t: 'word', k: S.k, n: 1, text: el.value }); el.value = ''; return; }
       else if (a === 'c_play') { ctl('play', { key: v }); try { window.scrollTo(0, 0); } catch (e) { } }
       else if (a === 'c_short') { ctl('short', { on: !S.short }); }
+      else if (a === 'p_voice') {
+        ui.pvoice = !ui.pvoice; ui.lastSay = S.say ? S.say.id : 0;
+        if (ui.pvoice) { phoneSpeak('Hello! Ace here. I shall be speaking from this phone. Do turn me up.'); } else { try { window.speechSynthesis.cancel(); } catch (e7) { } }
+        render();
+      }
       else if (a === 'c_solo') { ctl('solo', { on: v === '1' }); }
       else if (a === 'c_nteams') { ctl('nteams', { n: +v }); }
       else if (a === 'c_shuffle') { ctl('shuffle'); }

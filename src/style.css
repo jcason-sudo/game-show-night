@@ -507,3 +507,11 @@ html, body { background: #0F3B4C; color: #EEF3F1; font-weight: 600; }
 .host.oops { -webkit-animation: wobble 0.3s ease-in-out 4; animation: wobble 0.3s ease-in-out 4; }
 @-webkit-keyframes hop { 50% { -webkit-transform: translateY(-3.5vh) scale(1.08); } } @keyframes hop { 50% { transform: translateY(-3.5vh) scale(1.08); } }
 @-webkit-keyframes wobble { 25% { -webkit-transform: rotate(-9deg); } 75% { -webkit-transform: rotate(9deg); } } @keyframes wobble { 25% { transform: rotate(-9deg); } 75% { transform: rotate(9deg); } }
+
+/* Ace's moods (react-kawaii faces): only the parts for the current mood are shown */
+.km { display: none; }
+.kawaii .km-happy { display: inline; }                                   /* no mood set: a happy face */
+[data-mood]:not([data-mood="happy"]) .km-happy { display: none; }
+[data-mood="blissful"] .kawaii .km.km-blissful, [data-mood="excited"] .kawaii .km.km-excited, [data-mood="shocked"] .kawaii .km.km-shocked, [data-mood="sad"] .kawaii .km.km-sad, [data-mood="ko"] .kawaii .km.km-ko, [data-mood="lovestruck"] .kawaii .km.km-lovestruck { display: inline; }
+.host { width: 19vh; height: 19vh; margin-top: -4vh; }
+.avbox .avdemo { top: 16%; bottom: 20%; }

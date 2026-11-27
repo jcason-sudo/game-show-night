@@ -54,3 +54,7 @@ The Zoom In photographs come from Wikimedia Commons. Each one is used under the 
 - **Arc de Triomphe**: photo by Wilfredor, CC0. [Source](https://commons.wikimedia.org/wiki/File:Arc_de_Triomphe_de_l'Étoile_at_night_vertical_fix.jpg)
 
 The pictures were resized for the game. No other changes were made.
+
+# Host character
+
+Ace is the Astronaut from react-kawaii by Elizabet "Miuki Miu", MIT licence. [Source](https://github.com/elizabetdev/react-kawaii)

@@ -92,6 +92,9 @@ Questions do not repeat until a game's whole pool has been used. The TV remember
 - Phrase Fever (teams): anyone on the team whose turn it is taps a letter (first tap counts, 14 seconds). Anyone in the room can solve at any time.
 - The host has a British, teasing script. TV Menu > Voice cycles through the voices the browser has, British ones first. Edge on a laptop has the most natural ones.
 
+- Ace, the host character, is the Astronaut from react-kawaii by Elizabet "Miuki Miu" (MIT licence, github.com/elizabetdev/react-kawaii), converted to plain SVG. His face changes with the game: happy, delighted on a right answer, shocked then sad on a wrong one, and a moving mouth while he talks.
+- If the TV's browser has no voice (Samsung's does not seem to), the host can turn on "Ace speaks from this phone" in the Host panel and connect the phone to a speaker.
+
 ## Tests
 
 - `node test/engine.test.js` plays 300 simulated nights (2 to 5 teams and no teams) and checks the host, team, buzzer, Crillion and no-repeat rules.
