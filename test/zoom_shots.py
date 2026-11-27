@@ -32,11 +32,11 @@ async def main():
         james = await phone(1, 'James', 0, host=True); mia = await phone(0, 'Mia', 1)
         await james.click('#pbody [data-a=c_play][data-v=zoom]'); await asyncio.sleep(1.5)
         await james.click('.bossbar [data-a=c_next]'); await asyncio.sleep(0.8)
-        st = await S(); ok(st['phase'] == 'zoom_q', 'Zoom In started'); ok(35000 <= st['zdur'] <= 45000, 'one picture pulls back over about 40 seconds: %d s' % (st['zdur'] / 1000))
+        st = await S(); ok(st['phase'] == 'zoom_q', 'Zoom In started'); ok(40000 <= st['zdur'] <= 50000, 'one picture pulls back over about 45 seconds: %d s' % (st['zdur'] / 1000))
         t0 = st['zt0'] / 1000.0
         await tv.evaluate("document.getElementById('zimg').setAttribute('data-keep', '1')")
         prev = None
-        for sec in [1, 5, 10, 20, 30, 39.5]:
+        for sec in [1, 5, 10, 20, 30, 44.5]:
             wait = t0 + sec - time.time()
             if wait > 0: await asyncio.sleep(wait)
             info = await tv.evaluate("(function(){var e=document.getElementById('zimg'),s=document.getElementById('zsharp');var m=/scale\\(([0-9.]+)\\)/.exec(e.style.transform);return {sc:+m[1],op:+s.style.opacity,ok:s.complete&&s.naturalWidth>0,keep:e.getAttribute('data-keep'),val:document.getElementById('zval')?document.getElementById('zval').innerHTML:''}})()")
@@ -51,7 +51,7 @@ async def main():
         # smoothness: scale steps between animation frames stay tiny
         steps = await tv.evaluate("new Promise(function(res){var a=[],n=0;function f(){var m=/scale\\(([0-9.]+)\\)/.exec(document.getElementById('zimg').style.transform);a.push(+m[1]);if(++n<40){requestAnimationFrame(f)}else{res(a)}}requestAnimationFrame(f)})")
         # second picture: Mia buzzes after GO and answers; reveal pulls back smoothly
-        await asyncio.sleep(max(0, t0 + 47.5 - time.time()))
+        await asyncio.sleep(max(0, t0 + 52.5 - time.time()))
         st = await S()
         if st['phase'] == 'zoom_reveal': await tv.screenshot(path='test/shots/zoom_reveal_timeout.png'); await james.click('.bossbar [data-a=c_next]'); await asyncio.sleep(1.2)
         st = await S(); ok(st['phase'] == 'zoom_q' and st['z']['n'] == 2, 'on picture 2')

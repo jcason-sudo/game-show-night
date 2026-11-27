@@ -52,7 +52,7 @@ Zoom In and the Survey Says face-off use a buzzer. The button says **WAIT** and 
 | The Board | The TV names whose turn it is to pick a category and value. Then everyone answers on their own phone, 20 seconds. Every right answer scores; the fastest right answer earns a bonus and picks next. |
 | True or False Blitz | A statement, 12 seconds. |
 | Know Your Family | Everyone types one true thing about themselves that most people do not know. The game hides it among three made-up facts on the same topic. Everybody else votes for the true one: 100 points for picking it, and the person scores for everyone they fool. |
-| Zoom In | A real photograph of a famous place starts close up and slightly soft, then pulls back over 40 seconds. It is sharp within the first ten seconds. Wait for GO, then buzz. The earlier you get it, the more it is worth (500 down to 100). |
+| Zoom In | A real photograph of a famous place starts close up and slightly soft, then pulls back over 45 seconds. It starts six times closer than the full picture and is sharp after about 15 seconds. Wait for GO, then buzz. The earlier you get it, the more it is worth (500 down to 100). |
 | Closest Call | Every answer is a number. Closest guess wins. |
 | Phrase Fever | Take turns picking letters. Anyone can try to solve. Close spelling counts. |
 | Name That Decade | Something happened. In which decade? |

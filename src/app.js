@@ -111,7 +111,7 @@
     }
     var FW = fr.clientWidth, FH = fr.clientHeight;
     if (!FW || !FH) { return; }
-    var a = z.w / z.h, F = FW / FH, Z = 3 * Math.max(F / a, a / F);
+    var a = z.w / z.h, F = FW / FH, Z = 6 * Math.max(F / a, a / F);
     var sc = Math.pow(Z, 1 - f), g = (sc - 1) / (Z - 1);
     var tx = (FW / 2 - (el.offsetLeft + el.offsetWidth * z.fx / 100)) * g, ty = (FH / 2 - (el.offsetTop + el.offsetHeight * z.fy / 100)) * g;
     var tr = 'translate3d(' + tx.toFixed(2) + 'px,' + ty.toFixed(2) + 'px,0) scale(' + sc.toFixed(4) + ')';
@@ -119,7 +119,7 @@
     el.style.webkitTransform = el.style.transform = tr;
     var sh = document.getElementById('zsharp');
     if (sh) {
-      var o = Math.max(0, Math.min(1, 0.25 + f / 0.3)); o = o * o * (3 - 2 * o);
+      var o = Math.max(0, Math.min(1, 0.15 + f / 0.4)); o = o * o * (3 - 2 * o);
       if (!(sh.complete && sh.naturalWidth > 0)) { o = 0; }
       sh.style.opacity = o.toFixed(3);
       var zc = document.getElementById('zcredit'); if (zc) { zc.style.visibility = S.phase === 'zoom_reveal' ? 'visible' : 'hidden'; }

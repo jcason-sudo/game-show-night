@@ -483,7 +483,7 @@ RC.createEngine = function (C, opts) {
     if (S.zi >= P.zs.length) { return roundEnd(now); }
     var z = P.zs[S.zi];
     P.cur = mc({ q: '', o: z.o });
-    var zd = C.zoomMs || 40000;
+    var zd = C.zoomMs || 45000;
     S.z = { n: S.zi + 1, of: P.zs.length, img: z.id, fx: z.fx, fy: z.fy, w: z.w, h: z.h, by: z.by || '', lic: z.lic || '' };
     S.zt0 = now + 3000; S.zdur = zd; S.zfrozen = null; S.openAt = S.zt0 + 1500 + Math.floor(rnd() * 2500);
     S.locked = {}; S.early = {}; S.bzr = []; S.wrong = []; S.rv = null; S.turn = null;
