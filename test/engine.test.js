@@ -10,6 +10,7 @@ function lcg(seed) { var s = seed >>> 0; return function () { s = (s * 1664525 +
 
 function play(seed, nPlayers, teamSplit, skill) {
   var rnd = lcg(seed);
+  RC.content.hostJudges = true;   // the simulated nights still exercise the judge screen
   var E = RC.createEngine(RC.content, { rand: rnd });
   var now = 1000000;
   var S = E.init('TEST', now);

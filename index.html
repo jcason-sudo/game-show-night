@@ -3806,11 +3806,13 @@ RC.content = {
     { key: 'decade', title: 'Name That Decade', how: ['Something happened. In which decade?', 'Everyone answers on their own phone.', 'Grandparents, this one is yours.'] },
     { key: 'scramble', title: 'Word Scramble', how: ['The letters are mixed up. Type the word.', 'First to solve wins 150. Everyone else can still score 40.', 'Wrong tries cost nothing. Close spelling counts.'] },
     { key: 'crillion', title: 'Crillion', how: ['Everyone types one answer to the same question. Spelling does not matter.', 'The more obscure your answer, the more it scores. The most obscure answer in the room wins 50 extra.', 'If someone else types the same thing, you split the points. A wrong answer scores zero.'] },
-    { key: 'feud', title: 'Survey Says', how: ['We asked 1,000 imaginary people. Find their top 5 answers.', 'Wait for GO, then buzz. Buzz early and you lose 50 points.', 'Three strikes and the next team can steal. The last survey is worth double.'] }
+    { key: 'feud', title: 'Survey Says', how: ['We asked 1,000 imaginary people. Find their top 5 answers.', 'Wait for GO, then buzz. Buzz early and you lose 50 points.', 'The fastest buzzer picks first. A right answer scores for your team and the next teammate picks.', 'A wrong answer is a strike and the turn passes to the next team. Three strikes ends the board. The last survey is worth double.'] }
   ],
   order: ['vote', 'likely', 'fam', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'crillion', 'feud'],
   /* Set this to a private judge address to let an AI model rule on Crillion answers that are not on the sheet. */
   judgeUrl: '',
+  /* true = answers that are not on the sheet go to the host's phone to judge. James does not want to judge, so: false. */
+  hostJudges: false,
 
   lines: {
     welcome: ['Good evening and welcome to Game Show Night! I am your host, Ace. Lovely to see you all. Some of you even look ready.', 'Hello, hello, hello! Welcome to Game Show Night. I am Ace, I am in charge, and I am already judging you.'],
@@ -4490,6 +4492,8 @@ RC.createEngine = function (C, opts) {
       var pid = S.order[i], a = P.crA[pid];
       if (!a || !pl(pid)) { continue; }
       var r = crMatch(it, a.text);
+      // The host does not judge. Without a live AI judge (C.judgeUrl), an answer that is not on the sheet is refused.
+      if (r.st === 'ask' && !C.hostJudges && !C.judgeUrl) { r = { st: 'no', why: 'Not on my list for this question.' }; }
       if (r.st === 'ask') { ask++; }
       rows.push({ p: pid, n: nm(pid), t: pl(pid).t, text: a.text, st: r.st, name: r.name || '', said: r.said || 0, why: r.why || '', by: '' });
     }
@@ -4703,7 +4707,7 @@ RC.createEngine = function (C, opts) {
   /* ---------- round 5: survey says ---------- */
   function setupFeud() {
     var pick = draw('surveys', C.surveys, cnt(3, 2));
-    P.fq = [];
+    P.fq = []; S.rot = [];   // each team starts with whoever joined it first
     for (var s = 0; s < pick.length; s++) {
       var ord = shuffle(range(pick[s].a.length)), o = [], votes = [], top = [], i;
       for (i = 0; i < ord.length; i++) { o.push(pick[s].a[ord[i]][0]); votes.push(pick[s].a[ord[i]][1]); }
@@ -4735,17 +4739,18 @@ RC.createEngine = function (C, opts) {
     S.f.mode = 'play';
     S.f.play = activeTeam(S.f.play < 0 ? 0 : S.f.play, now);
     S.turn = nextPlayerAny(S.f.play, now);
+    var tl = S.solo ? [] : teamList(S.f.play, now);     // who is up after this player, so the TV can say it
+    S.f.nx = tl.length > 1 ? nm(tl[((S.rot[S.f.play] || 0) + 1) % tl.length]) : '';
     setPhase('feud_pick', now, 18000);
   }
   function feudReveal(team, now) {
     for (var r = 0; r < 5; r++) { if (!S.f.slots[r]) { revealSlot(r, false); } }
     if (S.solo) { team = -1; }
     S.rv = { team: team, pot: S.f.pot, solo: !!S.solo };
-    if (team >= 0) { award(team, S.f.pot, null); }
     S.turn = null;
     setPhase('feud_reveal', now, 10000);
     if (S.solo) { say(S.f.strikes >= 3 ? 'Three strikes. Here is the rest of the board.' : 'The board is cleared!'); }
-    else { say(team >= 0 ? S.teams[team].name + ' take ' + S.f.pot + ' points!' : 'No points this time.'); }
+    else { say(slotsOpen() ? 'Three misses between you. Here is the rest of the board.' + standingLine() : 'The board is cleared! Well played.' + standingLine()); }
     fx(team >= 0 || S.solo ? 'right' : 'wrong');
   }
   function feudPick(o, now) { // o = option index, or -1 on timeout
@@ -4753,7 +4758,7 @@ RC.createEngine = function (C, opts) {
     var rank = o >= 0 ? P.fq[S.fi].top.indexOf(o) : -1;
     if (o >= 0) { f.tried.push(o); }
     var hit = rank >= 0 && !f.slots[rank];
-    if (hit) { revealSlot(rank, true); f.pot += slotPts(rank); if (S.turn && pl(S.turn)) { pl(S.turn).pts += slotPts(rank); } fx('ding'); say(line('survey') + ' ' + f.slots[rank].text + '!'); }
+    if (hit) { revealSlot(rank, true); f.pot += slotPts(rank); if (S.solo) { if (S.turn && pl(S.turn)) { pl(S.turn).pts += slotPts(rank); } } else { award(team, slotPts(rank), S.turn); } fx('ding'); say(line('survey') + ' ' + f.slots[rank].text + '!'); }
     else { f.x++; fx('strike'); say(line('strike') + (S.turn && pl(S.turn) && rnd() < 0.5 ? ' ' + line('teaseWrong', { n: nm(S.turn) }) : '')); }
     if (S.solo) { // no teams: every hit scores for the player who found it, three strikes ends the board
       if (!hit && f.mode !== 'face') { f.strikes++; }
@@ -4765,23 +4770,14 @@ RC.createEngine = function (C, opts) {
       if (!slotsOpen()) { return feudReveal(f.play, now); }
       return feudPlayTurn(now);
     }
-    if (f.mode === 'play') {
-      if (hit) { if (!slotsOpen()) { return feudReveal(f.play, now); } return feudPlayTurn(now); }
-      f.strikes++;
-      if (f.strikes >= 3) {
-        var other = nextTeam(f.play, now);
-        if (other !== f.play) {
-          f.mode = 'steal'; f.st = other; S.turn = nextPlayer(other, now);
-          setPhase('feud_pick', now, 25000);
-          say('Three strikes! ' + S.teams[other].name + ' can steal with one answer.');
-          return;
-        }
-        return feudReveal(f.play, now);
-      }
-      return feudPlayTurn(now);
-    }
-    // steal
-    return feudReveal(hit ? f.st : f.play, now);
+    // team play: every right answer scores at once for the team that found it and that team keeps going,
+    // one teammate after another. A wrong answer is a strike and the turn passes to the next team.
+    if (hit) { if (!slotsOpen()) { return feudReveal(f.play, now); } return feudPlayTurn(now); }
+    f.strikes++;
+    if (f.strikes >= 3) { return feudReveal(-1, now); }
+    f.play = nextTeam(f.play, now);
+    say(line('strike') + ' Over to ' + S.teams[f.play].name + '.');
+    return feudPlayTurn(now);
   }
 
   /* ---------- advance: called on deadline or when the showrunner taps Next ---------- */
@@ -5705,8 +5701,8 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       for (var k = 0; k < 3; k++) { h += '<b class="' + (k < f.strikes ? 'x' : '') + '">X</b>'; }
       h += '</div><div class="tag yel">Pot</div><div class="pot">' + f.pot + '</div>';
       if (S.phase === 'feud_face') { h += S.bzw ? '<div class="status go">BUZZ!</div>' : '<div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="GO! BUZZ NOW!" data-off="WAIT for GO...">WAIT for GO...</div><div class="pickwhy">Early buzz: lose 50</div>'; }
-      else if (S.phase === 'feud_pick') { h += '<div class="status">' + (f.mode === 'steal' ? 'STEAL: ' : '') + who(S.turn) + ' is choosing' + (f.mode === 'face' && S.bzr && S.bzr.length ? '<br><small>fastest finger: ' + secs(S.bzr[0].dt) + '</small>' : '') + '</div>'; }
-      else { h += '<div class="status">' + (S.rv.solo ? 'Board finished' : (S.rv.team >= 0 ? '<span class="t' + S.rv.team + 'c">' + esc(tname(S.rv.team)) + '</span> +' + S.rv.pot : 'No points')) + '</div>'; }
+      else if (S.phase === 'feud_pick') { h += '<div class="status">' + who(S.turn) + ', pick an answer on your phone' + (f.mode !== 'face' && f.nx ? '<br><small>Next up if that is right: ' + esc(f.nx) + '. A miss passes to the next team.</small>' : '') + (f.mode === 'face' && S.bzr && S.bzr.length ? '<br><small>fastest finger: ' + secs(S.bzr[0].dt) + '</small>' : '') + '</div>'; }
+      else { h += '<div class="status">' + (S.rv.solo ? 'Board finished' : 'Board finished. Points were scored as each answer was found.') + '</div>'; }
       return h + '</div></div>' + (S.phase === 'feud_pick' ? timerHtml(f.mode === 'steal' ? 25000 : (f.mode === 'face' ? 14000 : 18000)) : '');
     }
     function barsHtml() {

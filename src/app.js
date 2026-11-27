@@ -463,8 +463,8 @@
       for (var k = 0; k < 3; k++) { h += '<b class="' + (k < f.strikes ? 'x' : '') + '">X</b>'; }
       h += '</div><div class="tag yel">Pot</div><div class="pot">' + f.pot + '</div>';
       if (S.phase === 'feud_face') { h += S.bzw ? '<div class="status go">BUZZ!</div>' : '<div class="status wait" data-open="' + S.openAt + '" data-go="1" data-on="GO! BUZZ NOW!" data-off="WAIT for GO...">WAIT for GO...</div><div class="pickwhy">Early buzz: lose 50</div>'; }
-      else if (S.phase === 'feud_pick') { h += '<div class="status">' + (f.mode === 'steal' ? 'STEAL: ' : '') + who(S.turn) + ' is choosing' + (f.mode === 'face' && S.bzr && S.bzr.length ? '<br><small>fastest finger: ' + secs(S.bzr[0].dt) + '</small>' : '') + '</div>'; }
-      else { h += '<div class="status">' + (S.rv.solo ? 'Board finished' : (S.rv.team >= 0 ? '<span class="t' + S.rv.team + 'c">' + esc(tname(S.rv.team)) + '</span> +' + S.rv.pot : 'No points')) + '</div>'; }
+      else if (S.phase === 'feud_pick') { h += '<div class="status">' + who(S.turn) + ', pick an answer on your phone' + (f.mode !== 'face' && f.nx ? '<br><small>Next up if that is right: ' + esc(f.nx) + '. A miss passes to the next team.</small>' : '') + (f.mode === 'face' && S.bzr && S.bzr.length ? '<br><small>fastest finger: ' + secs(S.bzr[0].dt) + '</small>' : '') + '</div>'; }
+      else { h += '<div class="status">' + (S.rv.solo ? 'Board finished' : 'Board finished. Points were scored as each answer was found.') + '</div>'; }
       return h + '</div></div>' + (S.phase === 'feud_pick' ? timerHtml(f.mode === 'steal' ? 25000 : (f.mode === 'face' ? 14000 : 18000)) : '');
     }
     function barsHtml() {

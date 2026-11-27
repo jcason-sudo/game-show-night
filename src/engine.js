@@ -372,6 +372,8 @@ RC.createEngine = function (C, opts) {
       var pid = S.order[i], a = P.crA[pid];
       if (!a || !pl(pid)) { continue; }
       var r = crMatch(it, a.text);
+      // The host does not judge. Without a live AI judge (C.judgeUrl), an answer that is not on the sheet is refused.
+      if (r.st === 'ask' && !C.hostJudges && !C.judgeUrl) { r = { st: 'no', why: 'Not on my list for this question.' }; }
       if (r.st === 'ask') { ask++; }
       rows.push({ p: pid, n: nm(pid), t: pl(pid).t, text: a.text, st: r.st, name: r.name || '', said: r.said || 0, why: r.why || '', by: '' });
     }
@@ -585,7 +587,7 @@ RC.createEngine = function (C, opts) {
   /* ---------- round 5: survey says ---------- */
   function setupFeud() {
     var pick = draw('surveys', C.surveys, cnt(3, 2));
-    P.fq = [];
+    P.fq = []; S.rot = [];   // each team starts with whoever joined it first
     for (var s = 0; s < pick.length; s++) {
       var ord = shuffle(range(pick[s].a.length)), o = [], votes = [], top = [], i;
       for (i = 0; i < ord.length; i++) { o.push(pick[s].a[ord[i]][0]); votes.push(pick[s].a[ord[i]][1]); }
@@ -617,17 +619,18 @@ RC.createEngine = function (C, opts) {
     S.f.mode = 'play';
     S.f.play = activeTeam(S.f.play < 0 ? 0 : S.f.play, now);
     S.turn = nextPlayerAny(S.f.play, now);
+    var tl = S.solo ? [] : teamList(S.f.play, now);     // who is up after this player, so the TV can say it
+    S.f.nx = tl.length > 1 ? nm(tl[((S.rot[S.f.play] || 0) + 1) % tl.length]) : '';
     setPhase('feud_pick', now, 18000);
   }
   function feudReveal(team, now) {
     for (var r = 0; r < 5; r++) { if (!S.f.slots[r]) { revealSlot(r, false); } }
     if (S.solo) { team = -1; }
     S.rv = { team: team, pot: S.f.pot, solo: !!S.solo };
-    if (team >= 0) { award(team, S.f.pot, null); }
     S.turn = null;
     setPhase('feud_reveal', now, 10000);
     if (S.solo) { say(S.f.strikes >= 3 ? 'Three strikes. Here is the rest of the board.' : 'The board is cleared!'); }
-    else { say(team >= 0 ? S.teams[team].name + ' take ' + S.f.pot + ' points!' : 'No points this time.'); }
+    else { say(slotsOpen() ? 'Three misses between you. Here is the rest of the board.' + standingLine() : 'The board is cleared! Well played.' + standingLine()); }
     fx(team >= 0 || S.solo ? 'right' : 'wrong');
   }
   function feudPick(o, now) { // o = option index, or -1 on timeout
@@ -635,7 +638,7 @@ RC.createEngine = function (C, opts) {
     var rank = o >= 0 ? P.fq[S.fi].top.indexOf(o) : -1;
     if (o >= 0) { f.tried.push(o); }
     var hit = rank >= 0 && !f.slots[rank];
-    if (hit) { revealSlot(rank, true); f.pot += slotPts(rank); if (S.turn && pl(S.turn)) { pl(S.turn).pts += slotPts(rank); } fx('ding'); say(line('survey') + ' ' + f.slots[rank].text + '!'); }
+    if (hit) { revealSlot(rank, true); f.pot += slotPts(rank); if (S.solo) { if (S.turn && pl(S.turn)) { pl(S.turn).pts += slotPts(rank); } } else { award(team, slotPts(rank), S.turn); } fx('ding'); say(line('survey') + ' ' + f.slots[rank].text + '!'); }
     else { f.x++; fx('strike'); say(line('strike') + (S.turn && pl(S.turn) && rnd() < 0.5 ? ' ' + line('teaseWrong', { n: nm(S.turn) }) : '')); }
     if (S.solo) { // no teams: every hit scores for the player who found it, three strikes ends the board
       if (!hit && f.mode !== 'face') { f.strikes++; }
@@ -647,23 +650,14 @@ RC.createEngine = function (C, opts) {
       if (!slotsOpen()) { return feudReveal(f.play, now); }
       return feudPlayTurn(now);
     }
-    if (f.mode === 'play') {
-      if (hit) { if (!slotsOpen()) { return feudReveal(f.play, now); } return feudPlayTurn(now); }
-      f.strikes++;
-      if (f.strikes >= 3) {
-        var other = nextTeam(f.play, now);
-        if (other !== f.play) {
-          f.mode = 'steal'; f.st = other; S.turn = nextPlayer(other, now);
-          setPhase('feud_pick', now, 25000);
-          say('Three strikes! ' + S.teams[other].name + ' can steal with one answer.');
-          return;
-        }
-        return feudReveal(f.play, now);
-      }
-      return feudPlayTurn(now);
-    }
-    // steal
-    return feudReveal(hit ? f.st : f.play, now);
+    // team play: every right answer scores at once for the team that found it and that team keeps going,
+    // one teammate after another. A wrong answer is a strike and the turn passes to the next team.
+    if (hit) { if (!slotsOpen()) { return feudReveal(f.play, now); } return feudPlayTurn(now); }
+    f.strikes++;
+    if (f.strikes >= 3) { return feudReveal(-1, now); }
+    f.play = nextTeam(f.play, now);
+    say(line('strike') + ' Over to ' + S.teams[f.play].name + '.');
+    return feudPlayTurn(now);
   }
 
   /* ---------- advance: called on deadline or when the showrunner taps Next ---------- */

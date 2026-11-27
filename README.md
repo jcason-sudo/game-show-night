@@ -87,6 +87,11 @@ Questions do not repeat until a game's whole pool has been used. The TV remember
 
 - Avatar host (prototype, off by default): add `?avatar=demo` to the link to see where a talking avatar would stand and how the show flows. The real Azure connection needs a token address on a private server; see `docs/avatar-plan.md`.
 
+- Survey Says (teams): a right answer scores at once for the team that found it and the next teammate picks; a wrong answer is a strike and the turn passes to the next team; three strikes ends the board. Each team starts with whoever joined it first, and the TV names who is next.
+- Crillion: the host never judges. Without a live AI judge, an answer that is not on the sheet scores nothing. The prompt for an Opus judge is in `docs/crillion-judge-prompt.md`.
+- Phrase Fever (teams): anyone on the team whose turn it is taps a letter (first tap counts, 14 seconds). Anyone in the room can solve at any time.
+- The host has a British, teasing script. TV Menu > Voice cycles through the voices the browser has, British ones first. Edge on a laptop has the most natural ones.
+
 ## Tests
 
 - `node test/engine.test.js` plays 300 simulated nights (2 to 5 teams and no teams) and checks the host, team, buzzer, Crillion and no-repeat rules.

@@ -920,11 +920,13 @@ RC.content = {
     { key: 'decade', title: 'Name That Decade', how: ['Something happened. In which decade?', 'Everyone answers on their own phone.', 'Grandparents, this one is yours.'] },
     { key: 'scramble', title: 'Word Scramble', how: ['The letters are mixed up. Type the word.', 'First to solve wins 150. Everyone else can still score 40.', 'Wrong tries cost nothing. Close spelling counts.'] },
     { key: 'crillion', title: 'Crillion', how: ['Everyone types one answer to the same question. Spelling does not matter.', 'The more obscure your answer, the more it scores. The most obscure answer in the room wins 50 extra.', 'If someone else types the same thing, you split the points. A wrong answer scores zero.'] },
-    { key: 'feud', title: 'Survey Says', how: ['We asked 1,000 imaginary people. Find their top 5 answers.', 'Wait for GO, then buzz. Buzz early and you lose 50 points.', 'Three strikes and the next team can steal. The last survey is worth double.'] }
+    { key: 'feud', title: 'Survey Says', how: ['We asked 1,000 imaginary people. Find their top 5 answers.', 'Wait for GO, then buzz. Buzz early and you lose 50 points.', 'The fastest buzzer picks first. A right answer scores for your team and the next teammate picks.', 'A wrong answer is a strike and the turn passes to the next team. Three strikes ends the board. The last survey is worth double.'] }
   ],
   order: ['vote', 'likely', 'fam', 'board', 'tf', 'zoom', 'num', 'phrase', 'decade', 'scramble', 'crillion', 'feud'],
   /* Set this to a private judge address to let an AI model rule on Crillion answers that are not on the sheet. */
   judgeUrl: '',
+  /* true = answers that are not on the sheet go to the host's phone to judge. James does not want to judge, so: false. */
+  hostJudges: false,
 
   lines: {
     welcome: ['Good evening and welcome to Game Show Night! I am your host, Ace. Lovely to see you all. Some of you even look ready.', 'Hello, hello, hello! Welcome to Game Show Night. I am Ace, I am in charge, and I am already judging you.'],
