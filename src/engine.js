@@ -16,7 +16,11 @@ RC.createEngine = function (C, opts) {
   function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rnd() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   function range(n) { var a = []; for (var i = 0; i < n; i++) { a.push(i); } return a; }
   function pickOne(a) { return a[Math.floor(rnd() * a.length)]; }
-  function line(key) { return pickOne(C.lines[key]); }
+  function line(key, sub) { // one of the host's lines; {n}, {k}... are filled in from sub
+    var t = pickOne(C.lines[key] || ['']);
+    if (sub) { for (var k in sub) { if (sub.hasOwnProperty(k)) { t = t.split('{' + k + '}').join(sub[k]); } } }
+    return t;
+  }
   function clean(s, n) { s = String(s == null ? '' : s).replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').replace(/^ | $/g, ''); return s.substring(0, n); }
   function mc(item) { // shuffle options, remember where the right one landed
     var order = shuffle(range(item.o.length));
@@ -96,11 +100,11 @@ RC.createEngine = function (C, opts) {
       var miss = [];
       for (var i = 0; i < S.order.length; i++) { if (present(S.order[i], now) && !S.acted[S.order[i]]) { miss.push(nm(S.order[i])); } }
       S.nag = 1;
-      if (miss.length && miss.length <= 3) { say('Still waiting on ' + miss.join(' and ') + '. Lock it in!'); return true; }
-      if (miss.length > 3) { say(miss.length + ' of you have not answered yet. Clock is running!'); return true; }
+      if (miss.length && miss.length <= 3) { say(line('nagOne', { n: miss.join(' and ') })); return true; }
+      if (miss.length > 3) { say(line('nagMany', { k: miss.length })); return true; }
       return false;
     }
-    if (TURNS[ph] && S.turn && pl(S.turn) && part > 0.4) { S.nag = 1; say(nm(S.turn) + ', we are waiting on you. Look at your phone and ' + TURNS[ph] + '.'); return true; }
+    if (TURNS[ph] && S.turn && pl(S.turn) && part > 0.4) { S.nag = 1; say(line('nagTurn', { n: nm(S.turn), 'do': TURNS[ph] })); return true; }
     return false;
   }
   function trailing() { var best = [], min = Infinity; for (var t = 0; t < NT(); t++) { if (S.teams[t].score < min) { min = S.teams[t].score; best = [t]; } else if (S.teams[t].score === min) { best.push(t); } } return pickOne(best); }
@@ -177,7 +181,7 @@ RC.createEngine = function (C, opts) {
     setPhase('round_end', now, 10000);
     var rk = ranking(), ld = leader();
     if (S.solo) { say(rk.length ? rk[0].n + ' is in front with ' + rk[0].pts + ' points.' : 'No points yet.'); }
-    else { say(ld < 0 ? 'It is tied at the top!' : S.teams[ld].name + ' lead with ' + S.teams[ld].score + ' points.'); }
+    else { say(ld < 0 ? line('tied') : line('lead', { t: S.teams[ld].name, p: S.teams[ld].score })); }
     fx('fanfare');
   }
   function finale(now) {
@@ -230,7 +234,7 @@ RC.createEngine = function (C, opts) {
     addGains(gains);
     S.rv = { a: P.cur.a, counts: counts, gains: gains, nok: nok, fast: fast ? pl(fast).n : '', fact: P.cur.f };
     setPhase('vote_reveal', now, 9000);
-    say('The answer is ' + P.cur.o[P.cur.a] + '. ' + (P.cur.f || '') + (nok ? ' ' + nok + ' of you got it.' + (fast ? ' Fastest was ' + nm(fast) + '.' : '') : ' Nobody got it!') + standingLine());
+    say('The answer is ' + P.cur.o[P.cur.a] + '. ' + (P.cur.f || '') + (nok ? (nok > 2 && nok === S.nv ? ' ' + line('praiseAll') : ' ' + nok + ' of you got it.') + (fast ? ' ' + line('praiseFast', { n: nm(fast) }) : '') : ' ' + line('teaseNobody')) + standingLine());
     fx(nok > 0 ? 'right' : 'wrong');
   }
 
@@ -405,7 +409,7 @@ RC.createEngine = function (C, opts) {
     var who = winners.length > 3 ? winners.length + ' players' : winners.join(' and ');
     S.rv = { gains: gains, who: who, text: winners.length === 1 || allSame ? wtext : '', pts: top, allSame: allSame, crown: crown };
     setPhase('cr_reveal', now, 14000);
-    if (!top) { say('Nobody scored on that one.'); }
+    if (!top) { say(line('teaseNobody')); }
     else if (allSame) { say('Everybody said ' + wtext + '. The points are split ' + nOk + ' ways.'); }
     else if (winners.length === 1) { say('The most obscure answer: ' + who + ' with ' + wtext + '. ' + top + ' points.'); }
     else { say('A tie for most obscure: ' + who + ', with ' + top + ' points each.' + standingLine()); }
@@ -467,7 +471,7 @@ RC.createEngine = function (C, opts) {
     S.rv = { text: P.cur.o[P.cur.a], a: P.cur.a, counts: counts, gains: gains, nok: nok, fast: fast ? nm(fast) : '', who: fast ? nm(fast) : '', team: fast ? pl(fast).t : -1, val: val, bonus: bonus };
     S.turn = null;
     setPhase('board_reveal', now, 8000);
-    say('The answer is ' + S.rv.text + '. ' + (nok ? nok + (nok === 1 ? ' player' : ' players') + ' got it. Fastest: ' + nm(fast) + '.' : 'Nobody got that one.') + standingLine());
+    say('The answer is ' + S.rv.text + '. ' + (nok ? nok + (nok === 1 ? ' player' : ' players') + ' got it. ' + line('praiseFast', { n: nm(fast) }) : line('teaseNobody')) + standingLine());
     fx(nok ? 'right' : 'wrong');
   }
 
@@ -500,7 +504,7 @@ RC.createEngine = function (C, opts) {
     if (othersLeft(S.locked, now) && P.zleft > 1500 && optsLeft().length > 1) {
       S.zt0 = now - S.zfrozen * S.zdur; S.zfrozen = null; S.turn = null; S.openAt = now + 1200 + Math.floor(rnd() * 2000);
       setPhase('zoom_q', now, P.zleft);
-      say(line('wrong') + ' ' + stealName(pid) + ', keep looking.');
+      say((pl(pid) ? line('teaseWrong', { n: nm(pid) }) : line('wrong')) + ' ' + stealName(pid) + ', keep looking.');
     } else { zoomReveal(null, now); }
   }
 
@@ -528,7 +532,7 @@ RC.createEngine = function (C, opts) {
     S.rv = { text: P.ph, who: pid ? nm(pid) : '', how: how };
     S.turn = null; S.solver = null;
     setPhase('phrase_reveal', now, 8000);
-    if (how === 'bust') { say('Five misses. The phrase was: ' + P.ph.toLowerCase() + '.'); fx('wrong'); }
+    if (how === 'bust') { say('Five misses. Oh dear, oh dear. The phrase was: ' + P.ph.toLowerCase() + '.'); fx('wrong'); }
     else { say(line('right') + ' ' + P.ph.toLowerCase() + '!'); fx('right'); }
   }
   function lev(a, b) { // edit distance; two letters typed in the wrong order count as one slip
@@ -632,7 +636,7 @@ RC.createEngine = function (C, opts) {
     if (o >= 0) { f.tried.push(o); }
     var hit = rank >= 0 && !f.slots[rank];
     if (hit) { revealSlot(rank, true); f.pot += slotPts(rank); if (S.turn && pl(S.turn)) { pl(S.turn).pts += slotPts(rank); } fx('ding'); say(line('survey') + ' ' + f.slots[rank].text + '!'); }
-    else { f.x++; fx('strike'); say(line('strike')); }
+    else { f.x++; fx('strike'); say(line('strike') + (S.turn && pl(S.turn) && rnd() < 0.5 ? ' ' + line('teaseWrong', { n: nm(S.turn) }) : '')); }
     if (S.solo) { // no teams: every hit scores for the player who found it, three strikes ends the board
       if (!hit && f.mode !== 'face') { f.strikes++; }
       if (!slotsOpen() || f.strikes >= 3) { return feudReveal(-1, now); }
@@ -798,7 +802,7 @@ RC.createEngine = function (C, opts) {
     addGains(gains);
     S.rv = { a: P.cur.a, counts: counts, gains: gains, nok: nok, okp: okp, fooled: fooled, bonus: bonus, voters: voters };
     setPhase('fam_rv', now, 11000);
-    say('The true one is ' + 'ABCD'.charAt(P.cur.a) + '. ' + P.cur.o[P.cur.a] + ' ' + (voters ? (nok === 0 ? S.fq.name + ' fooled every one of you!' : (fooled === 0 ? 'Everybody knew it. ' + S.fq.name + ', you have no secrets.' : nok + (nok === 1 ? ' person' : ' people') + ' knew it. ' + S.fq.name + ' fooled ' + fooled + '.')) : 'Nobody voted.') + standingLine());
+    say('The true one is ' + 'ABCD'.charAt(P.cur.a) + '. ' + P.cur.o[P.cur.a] + ' ' + (voters ? (nok === 0 ? S.fq.name + ' fooled every single one of you! Do you people even talk to each other?' : (fooled === 0 ? 'Everybody knew it. ' + S.fq.name + ', you are an open book, darling.' : nok + (nok === 1 ? ' person' : ' people') + ' knew it. ' + S.fq.name + ' fooled ' + fooled + '.')) : 'Nobody voted.') + standingLine());
     fx(nok > 0 ? 'right' : 'wrong');
   }
 
@@ -943,7 +947,7 @@ RC.createEngine = function (C, opts) {
         if (!(team >= 0 && team < NT())) { team = smallestTeam(); }
         S.players[pid] = p = { n: name, t: team, seen: now, pts: 0, bz: 0, e: 0, rtt: 0, late: 0 };
         S.order.push(pid);
-        fx('join'); if (S.phase === 'lobby') { say('Welcome, ' + name + '!'); }
+        fx('join'); if (S.phase === 'lobby') { say(line('joined', { n: name })); }
       } else { p.n = name; }
       if (m.h && m.h === H.key) { S.boss = pid; }
       p.seen = now;
@@ -1021,7 +1025,7 @@ RC.createEngine = function (C, opts) {
           P.earlyAt = P.earlyAt || {};
           if (P.earlyAt[pid] && now - P.earlyAt[pid] < 1500) { return; }
           P.earlyAt[pid] = now; penalize(pid, EARLY_COST);
-          S.fs = { id: (S.fs ? S.fs.id : 0) + 1, n: p.n }; fx('wrong'); say(p.n + ' jumped the gun! Minus 50.');
+          S.fs = { id: (S.fs ? S.fs.id : 0) + 1, n: p.n }; fx('wrong'); say(line('teaseEarly', { n: p.n }));
           return;
         }
         // Each phone reports how long after its own GO the tap came. Everyone who buzzes within half a second
@@ -1073,7 +1077,7 @@ RC.createEngine = function (C, opts) {
       if (pid !== S.solver) { return; }
       if (phraseMatch(m.text)) { award(team2, 150 + 25 * hiddenCount(), pid); phraseReveal(pid, 'solve', now); }
       else {
-        S.slock[side(pid)] = true; S.last = { bad: clean(m.text, 40), who: p.n }; fx('wrong'); say(line('wrong'));
+        S.slock[side(pid)] = true; S.last = { bad: clean(m.text, 40), who: p.n }; fx('wrong'); say(line('teaseWrong', { n: p.n }));
         if (!phraseMiss(now)) { phraseTurn(now); }
       }
     }

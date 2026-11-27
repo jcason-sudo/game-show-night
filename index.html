@@ -497,6 +497,13 @@ html, body { background: #0F3B4C; color: #EEF3F1; font-weight: 600; }
 .scr.avmode .foot .host { visibility: hidden; width: 21vh; }
 .scr.avmode .zf { width: 84vh; height: 52.5vh; }
 .scr.avmode .zside { width: 24vw; padding-left: 1.8vw; }
+
+/* bigger voting buttons on phones */
+.half .pbtn.who { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 30px; min-height: 76px; padding: 14px 8px; margin-bottom: 12px; }
+.pbtn.fact { font-size: 24px; line-height: 1.22; padding: 18px 16px; min-height: 84px; }
+.pbtn.dark { font-size: 28px; min-height: 76px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; }
+.pbtn.o0, .pbtn.o1, .pbtn.o2, .pbtn.o3 { font-size: 32px; min-height: 78px; }
+.pbody .q { font-size: 34px; }
 </style>
 </head>
 <body>
@@ -3318,6 +3325,7 @@ RC.content = {
   ],
 
   likely: [
+    'trip over absolutely nothing', 'laugh so hard that milk comes out of their nose', 'wave back at someone who was waving at somebody else', 'get caught talking to the dog like it is a person', 'text the family group chat by mistake', 'eat the last cookie and blame someone else', 'fall asleep at the dinner table', 'walk into a glass door', 'lose their phone while holding it', 'sing the wrong words with total confidence', 'wear two different socks and not notice', 'start a food fight', 'get stuck in a baby swing at the park', 'be scared by their own reflection', 'take 40 selfies to get one good one', 'put the cereal in the fridge and the milk in the cupboard', 'ask a question that was answered ten seconds ago', 'show up to the airport on the wrong day', 'argue with the GPS', 'dance in the kitchen when nobody is watching', 'name a pet after a snack', 'eat pizza for breakfast', 'cry laughing at their own joke before the punch line', 'push a door that says pull', 'become a meme', 'fall into a swimming pool with their clothes on', 'bring a suitcase full of snacks on a one-hour trip', 'talk in their sleep about homework or work', 'survive a week with no phone', 'last the shortest time in a haunted house', 'go viral for a terrible dance', 'forget their own age', 'call the teacher or the boss Mom by accident', 'get chased by a goose', 'lock the keys in the car with the engine running', 'say you too when the waiter says enjoy your meal', 'win a hot dog eating contest', 'adopt ten cats', 'be late to their own birthday party', 'clap when the plane lands',
     'fall asleep during a movie', 'win a dance contest', 'get lost even with the GPS on', 'eat dessert before dinner',
     'start talking to a stranger in line', 'forget where the car is parked', 'become famous one day', 'survive on a desert island',
     'sing loudly in the shower', 'laugh at the wrong moment', 'burn the toast', 'be the last one ready to leave',
@@ -3805,14 +3813,26 @@ RC.content = {
   judgeUrl: '',
 
   lines: {
-    welcome: ['Welcome to Game Show Night I am your host, Ace.'],
-    right: ['Correct!', 'Yes! Nailed it.', 'That is right!', 'Boom. Correct.', 'You got it!'],
-    wrong: ['Ooh, no.', 'Not this time.', 'Sorry, that is wrong.', 'Nope!'],
-    steal: ['Chance to steal!', 'The other team can steal it!'],
-    nobuzz: ['Nobody? Really?', 'Time is up.'],
-    strike: ['Strike!', 'Not on the board!'],
-    survey: ['Survey says...', 'Show me the answer!'],
-    final: ['What a night! Thanks for playing.']
+    welcome: ['Good evening and welcome to Game Show Night! I am your host, Ace. Lovely to see you all. Some of you even look ready.', 'Hello, hello, hello! Welcome to Game Show Night. I am Ace, I am in charge, and I am already judging you.'],
+    right: ['Correct! Well done you.', 'Spot on!', 'Oh, very good. I am almost impressed.', 'Bang on. Lovely stuff.', 'Yes! Somebody has been reading books.', 'Correct! Do not let it go to your head.'],
+    wrong: ['Oh dear. No.', 'Not even close, bless you.', 'Wrong! But said with such confidence.', 'Ooh, no. Nice try, though.', 'That is a no from me.', 'Goodness me, no.'],
+    steal: ['Chance to steal! Be ruthless.', 'The others can pinch it!'],
+    nobuzz: ['Nobody? Really? I have met houseplants with quicker reflexes.', 'Time is up. That was painful to watch.'],
+    strike: ['Strike! Not on the board, I am afraid.', 'No! The survey disagrees with you.', 'Strike. Who did you ask, your cat?'],
+    survey: ['Survey says...', 'Show me the answer!', 'Is it up there?'],
+    final: ['What a night! You were all marvellous. Well, most of you. Thanks for playing.', 'And that is the show! Go and put the kettle on. Thanks for playing.'],
+    /* {n} is replaced with the name */
+    teaseWrong: ['Oh, {n}. What were you thinking?', '{n}, bless you. No.', 'Bold answer, {n}. Wrong, but bold.', '{n}, I admire the confidence. Shame about the answer.', 'Not your finest moment, {n}.', '{n}, did you read the question, or just the vibes?'],
+    teaseEarly: ['{n} jumped the gun! Patience, darling. Minus 50.', 'Steady on, {n}! I had not said go. Minus 50.', '{n}, that finger is far too keen. Minus 50.', 'Oh, {n}. Too early. That will be 50 points, thank you.'],
+    teaseNobody: ['Nobody got it! Not one of you. I am speechless, and that is rare.', 'Nobody. Honestly, I expected more from this family.', 'A clean sweep of wrong answers. Impressive, in its way.', 'Nobody got that. Shall we pretend it never happened?'],
+    praiseAll: ['Everybody got it! Too easy, clearly. I shall try harder.', 'All of you! Show-offs, the lot of you.'],
+    praiseFast: ['Fastest was {n}. Quick as a flash.', '{n} got there first. Somebody had their coffee.', 'Fastest finger: {n}. Show-off.'],
+    nagOne: ['Come along, {n}, we have not got all night. Lock it in!', '{n}, any day now would be lovely.', 'Still waiting on {n}. No pressure. Well, some pressure.'],
+    nagMany: ['{k} of you have not answered. Chop chop, the clock is running!', '{k} of you are still thinking. Do hurry up.'],
+    nagTurn: ['{n}, we are all waiting on you, darling. Look at your phone and {do}.', 'Wakey wakey, {n}! It is your turn. {do}, please.'],
+    lead: ['{t} lead with {p} points. Do not get comfortable.', '{t} are out in front with {p}. The rest of you, do keep up.', 'It is {t} on top with {p} points. For now.'],
+    tied: ['It is tied at the top! How terribly exciting.', 'All square at the top. Anybody could win this. Even you.'],
+    joined: ['Welcome, {n}! Lovely to have you.', 'Hello, {n}! Try to keep up.', '{n} is in! Now it is a party.', 'Ah, {n}. We have been expecting you.']
   }
 };
 if (typeof module !== 'undefined') { module.exports = RC; }
@@ -4114,7 +4134,11 @@ RC.createEngine = function (C, opts) {
   function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rnd() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   function range(n) { var a = []; for (var i = 0; i < n; i++) { a.push(i); } return a; }
   function pickOne(a) { return a[Math.floor(rnd() * a.length)]; }
-  function line(key) { return pickOne(C.lines[key]); }
+  function line(key, sub) { // one of the host's lines; {n}, {k}... are filled in from sub
+    var t = pickOne(C.lines[key] || ['']);
+    if (sub) { for (var k in sub) { if (sub.hasOwnProperty(k)) { t = t.split('{' + k + '}').join(sub[k]); } } }
+    return t;
+  }
   function clean(s, n) { s = String(s == null ? '' : s).replace(/[\u0000-\u001f<>]/g, '').replace(/\s+/g, ' ').replace(/^ | $/g, ''); return s.substring(0, n); }
   function mc(item) { // shuffle options, remember where the right one landed
     var order = shuffle(range(item.o.length));
@@ -4194,11 +4218,11 @@ RC.createEngine = function (C, opts) {
       var miss = [];
       for (var i = 0; i < S.order.length; i++) { if (present(S.order[i], now) && !S.acted[S.order[i]]) { miss.push(nm(S.order[i])); } }
       S.nag = 1;
-      if (miss.length && miss.length <= 3) { say('Still waiting on ' + miss.join(' and ') + '. Lock it in!'); return true; }
-      if (miss.length > 3) { say(miss.length + ' of you have not answered yet. Clock is running!'); return true; }
+      if (miss.length && miss.length <= 3) { say(line('nagOne', { n: miss.join(' and ') })); return true; }
+      if (miss.length > 3) { say(line('nagMany', { k: miss.length })); return true; }
       return false;
     }
-    if (TURNS[ph] && S.turn && pl(S.turn) && part > 0.4) { S.nag = 1; say(nm(S.turn) + ', we are waiting on you. Look at your phone and ' + TURNS[ph] + '.'); return true; }
+    if (TURNS[ph] && S.turn && pl(S.turn) && part > 0.4) { S.nag = 1; say(line('nagTurn', { n: nm(S.turn), 'do': TURNS[ph] })); return true; }
     return false;
   }
   function trailing() { var best = [], min = Infinity; for (var t = 0; t < NT(); t++) { if (S.teams[t].score < min) { min = S.teams[t].score; best = [t]; } else if (S.teams[t].score === min) { best.push(t); } } return pickOne(best); }
@@ -4275,7 +4299,7 @@ RC.createEngine = function (C, opts) {
     setPhase('round_end', now, 10000);
     var rk = ranking(), ld = leader();
     if (S.solo) { say(rk.length ? rk[0].n + ' is in front with ' + rk[0].pts + ' points.' : 'No points yet.'); }
-    else { say(ld < 0 ? 'It is tied at the top!' : S.teams[ld].name + ' lead with ' + S.teams[ld].score + ' points.'); }
+    else { say(ld < 0 ? line('tied') : line('lead', { t: S.teams[ld].name, p: S.teams[ld].score })); }
     fx('fanfare');
   }
   function finale(now) {
@@ -4328,7 +4352,7 @@ RC.createEngine = function (C, opts) {
     addGains(gains);
     S.rv = { a: P.cur.a, counts: counts, gains: gains, nok: nok, fast: fast ? pl(fast).n : '', fact: P.cur.f };
     setPhase('vote_reveal', now, 9000);
-    say('The answer is ' + P.cur.o[P.cur.a] + '. ' + (P.cur.f || '') + (nok ? ' ' + nok + ' of you got it.' + (fast ? ' Fastest was ' + nm(fast) + '.' : '') : ' Nobody got it!') + standingLine());
+    say('The answer is ' + P.cur.o[P.cur.a] + '. ' + (P.cur.f || '') + (nok ? (nok > 2 && nok === S.nv ? ' ' + line('praiseAll') : ' ' + nok + ' of you got it.') + (fast ? ' ' + line('praiseFast', { n: nm(fast) }) : '') : ' ' + line('teaseNobody')) + standingLine());
     fx(nok > 0 ? 'right' : 'wrong');
   }
 
@@ -4503,7 +4527,7 @@ RC.createEngine = function (C, opts) {
     var who = winners.length > 3 ? winners.length + ' players' : winners.join(' and ');
     S.rv = { gains: gains, who: who, text: winners.length === 1 || allSame ? wtext : '', pts: top, allSame: allSame, crown: crown };
     setPhase('cr_reveal', now, 14000);
-    if (!top) { say('Nobody scored on that one.'); }
+    if (!top) { say(line('teaseNobody')); }
     else if (allSame) { say('Everybody said ' + wtext + '. The points are split ' + nOk + ' ways.'); }
     else if (winners.length === 1) { say('The most obscure answer: ' + who + ' with ' + wtext + '. ' + top + ' points.'); }
     else { say('A tie for most obscure: ' + who + ', with ' + top + ' points each.' + standingLine()); }
@@ -4565,7 +4589,7 @@ RC.createEngine = function (C, opts) {
     S.rv = { text: P.cur.o[P.cur.a], a: P.cur.a, counts: counts, gains: gains, nok: nok, fast: fast ? nm(fast) : '', who: fast ? nm(fast) : '', team: fast ? pl(fast).t : -1, val: val, bonus: bonus };
     S.turn = null;
     setPhase('board_reveal', now, 8000);
-    say('The answer is ' + S.rv.text + '. ' + (nok ? nok + (nok === 1 ? ' player' : ' players') + ' got it. Fastest: ' + nm(fast) + '.' : 'Nobody got that one.') + standingLine());
+    say('The answer is ' + S.rv.text + '. ' + (nok ? nok + (nok === 1 ? ' player' : ' players') + ' got it. ' + line('praiseFast', { n: nm(fast) }) : line('teaseNobody')) + standingLine());
     fx(nok ? 'right' : 'wrong');
   }
 
@@ -4598,7 +4622,7 @@ RC.createEngine = function (C, opts) {
     if (othersLeft(S.locked, now) && P.zleft > 1500 && optsLeft().length > 1) {
       S.zt0 = now - S.zfrozen * S.zdur; S.zfrozen = null; S.turn = null; S.openAt = now + 1200 + Math.floor(rnd() * 2000);
       setPhase('zoom_q', now, P.zleft);
-      say(line('wrong') + ' ' + stealName(pid) + ', keep looking.');
+      say((pl(pid) ? line('teaseWrong', { n: nm(pid) }) : line('wrong')) + ' ' + stealName(pid) + ', keep looking.');
     } else { zoomReveal(null, now); }
   }
 
@@ -4626,7 +4650,7 @@ RC.createEngine = function (C, opts) {
     S.rv = { text: P.ph, who: pid ? nm(pid) : '', how: how };
     S.turn = null; S.solver = null;
     setPhase('phrase_reveal', now, 8000);
-    if (how === 'bust') { say('Five misses. The phrase was: ' + P.ph.toLowerCase() + '.'); fx('wrong'); }
+    if (how === 'bust') { say('Five misses. Oh dear, oh dear. The phrase was: ' + P.ph.toLowerCase() + '.'); fx('wrong'); }
     else { say(line('right') + ' ' + P.ph.toLowerCase() + '!'); fx('right'); }
   }
   function lev(a, b) { // edit distance; two letters typed in the wrong order count as one slip
@@ -4730,7 +4754,7 @@ RC.createEngine = function (C, opts) {
     if (o >= 0) { f.tried.push(o); }
     var hit = rank >= 0 && !f.slots[rank];
     if (hit) { revealSlot(rank, true); f.pot += slotPts(rank); if (S.turn && pl(S.turn)) { pl(S.turn).pts += slotPts(rank); } fx('ding'); say(line('survey') + ' ' + f.slots[rank].text + '!'); }
-    else { f.x++; fx('strike'); say(line('strike')); }
+    else { f.x++; fx('strike'); say(line('strike') + (S.turn && pl(S.turn) && rnd() < 0.5 ? ' ' + line('teaseWrong', { n: nm(S.turn) }) : '')); }
     if (S.solo) { // no teams: every hit scores for the player who found it, three strikes ends the board
       if (!hit && f.mode !== 'face') { f.strikes++; }
       if (!slotsOpen() || f.strikes >= 3) { return feudReveal(-1, now); }
@@ -4896,7 +4920,7 @@ RC.createEngine = function (C, opts) {
     addGains(gains);
     S.rv = { a: P.cur.a, counts: counts, gains: gains, nok: nok, okp: okp, fooled: fooled, bonus: bonus, voters: voters };
     setPhase('fam_rv', now, 11000);
-    say('The true one is ' + 'ABCD'.charAt(P.cur.a) + '. ' + P.cur.o[P.cur.a] + ' ' + (voters ? (nok === 0 ? S.fq.name + ' fooled every one of you!' : (fooled === 0 ? 'Everybody knew it. ' + S.fq.name + ', you have no secrets.' : nok + (nok === 1 ? ' person' : ' people') + ' knew it. ' + S.fq.name + ' fooled ' + fooled + '.')) : 'Nobody voted.') + standingLine());
+    say('The true one is ' + 'ABCD'.charAt(P.cur.a) + '. ' + P.cur.o[P.cur.a] + ' ' + (voters ? (nok === 0 ? S.fq.name + ' fooled every single one of you! Do you people even talk to each other?' : (fooled === 0 ? 'Everybody knew it. ' + S.fq.name + ', you are an open book, darling.' : nok + (nok === 1 ? ' person' : ' people') + ' knew it. ' + S.fq.name + ' fooled ' + fooled + '.')) : 'Nobody voted.') + standingLine());
     fx(nok > 0 ? 'right' : 'wrong');
   }
 
@@ -5041,7 +5065,7 @@ RC.createEngine = function (C, opts) {
         if (!(team >= 0 && team < NT())) { team = smallestTeam(); }
         S.players[pid] = p = { n: name, t: team, seen: now, pts: 0, bz: 0, e: 0, rtt: 0, late: 0 };
         S.order.push(pid);
-        fx('join'); if (S.phase === 'lobby') { say('Welcome, ' + name + '!'); }
+        fx('join'); if (S.phase === 'lobby') { say(line('joined', { n: name })); }
       } else { p.n = name; }
       if (m.h && m.h === H.key) { S.boss = pid; }
       p.seen = now;
@@ -5119,7 +5143,7 @@ RC.createEngine = function (C, opts) {
           P.earlyAt = P.earlyAt || {};
           if (P.earlyAt[pid] && now - P.earlyAt[pid] < 1500) { return; }
           P.earlyAt[pid] = now; penalize(pid, EARLY_COST);
-          S.fs = { id: (S.fs ? S.fs.id : 0) + 1, n: p.n }; fx('wrong'); say(p.n + ' jumped the gun! Minus 50.');
+          S.fs = { id: (S.fs ? S.fs.id : 0) + 1, n: p.n }; fx('wrong'); say(line('teaseEarly', { n: p.n }));
           return;
         }
         // Each phone reports how long after its own GO the tap came. Everyone who buzzes within half a second
@@ -5171,7 +5195,7 @@ RC.createEngine = function (C, opts) {
       if (pid !== S.solver) { return; }
       if (phraseMatch(m.text)) { award(team2, 150 + 25 * hiddenCount(), pid); phraseReveal(pid, 'solve', now); }
       else {
-        S.slock[side(pid)] = true; S.last = { bad: clean(m.text, 40), who: p.n }; fx('wrong'); say(line('wrong'));
+        S.slock[side(pid)] = true; S.last = { bad: clean(m.text, 40), who: p.n }; fx('wrong'); say(line('teaseWrong', { n: p.n }));
         if (!phraseMiss(now)) { phraseTurn(now); }
       }
     }
@@ -5503,11 +5527,25 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       else if (name === 'fanfare') { tone(523, 0, 0.16); tone(659, 0.16, 0.16); tone(784, 0.32, 0.16); tone(1047, 0.48, 0.4); }
       else if (name === 'win') { [523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { tone(f, i * 0.17, 0.3); }); }
     }
+    var voiceList = [], voiceIdx = -1;
+    function voiceScore(v) { // British first, and the natural-sounding ones before the robotic ones
+      var n = v.name || '', s = 0;
+      if (/en[-_]GB/i.test(v.lang)) { s += 100; } else if (/^en/i.test(v.lang)) { s += 10; } else { return -1; }
+      if (/natural|neural|online|premium|enhanced/i.test(n)) { s += 50; }
+      if (/google uk english male|ryan|thomas|daniel|oliver|arthur/i.test(n)) { s += 20; }
+      if (/google/i.test(n)) { s += 8; }
+      if (/compact|espeak|robot/i.test(n)) { s -= 30; }
+      return s;
+    }
     function pickVoice() {
       try {
-        var vs = window.speechSynthesis.getVoices(), best = null;
-        for (var i = 0; i < vs.length; i++) { if (/^en/i.test(vs[i].lang)) { if (!best) { best = vs[i]; } if (/en[-_]US/i.test(vs[i].lang) && /male|david|daniel|alex|fred|guy|aaron/i.test(vs[i].name)) { best = vs[i]; break; } } }
-        voice = best;
+        var vs = window.speechSynthesis.getVoices(), saved = '';
+        try { saved = localStorage.getItem('gn_voice') || ''; } catch (e1) { }
+        voiceList = []; for (var i = 0; i < vs.length; i++) { if (voiceScore(vs[i]) >= 0) { voiceList.push(vs[i]); } }
+        voiceList.sort(function (x, y) { return voiceScore(y) - voiceScore(x); });
+        voiceIdx = voiceList.length ? 0 : -1;
+        for (i = 0; i < voiceList.length; i++) { if (saved && voiceList[i].name === saved) { voiceIdx = i; } }
+        voice = voiceIdx >= 0 ? voiceList[voiceIdx] : null;
       } catch (e) { }
     }
     function speak(text) {
@@ -5526,7 +5564,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
         speakTimer = setTimeout(function () {
           try {
             var u = new window.SpeechSynthesisUtterance(text);
-            u.rate = 1.05; u.pitch = 1.05; u.lang = 'en-US'; u.volume = 1; if (voice) { u.voice = voice; }
+            u.rate = 1.0; u.pitch = 1.0; u.lang = voice ? voice.lang : 'en-GB'; u.volume = 1; if (voice) { u.voice = voice; }
             u.onstart = function () { voiceState = 'ok'; };
             u.onerror = function (ev) { if (voiceState !== 'ok' && ev && ev.error !== 'interrupted' && ev.error !== 'canceled') { voiceState = 'fail'; } };
             if (syn.resume) { syn.resume(); }
@@ -5761,7 +5799,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       put('pausel', S.paused ? '<div class="paused">PAUSED</div>' : '');
       put('menu', menuOpen ? '<div class="menu">' +
         '<button data-a="s_next">' + (S.phase === 'lobby' ? 'Open the game menu' : 'Next') + '</button><button data-a="s_pause">' + (S.paused ? 'Resume' : 'Pause') + '</button>' +
-        '<button data-a="s_skip">Pick a different game</button><button data-a="s_end">Finish and show the winner</button><button data-a="s_sound">Sound: ' + (soundOn ? 'on' : 'off') + '</button><button data-a="s_test">Test the sound</button><button data-a="s_full">Full screen</button>' +
+        '<button data-a="s_skip">Pick a different game</button><button data-a="s_end">Finish and show the winner</button><button data-a="s_sound">Sound: ' + (soundOn ? 'on' : 'off') + '</button><button data-a="s_test">Test the sound</button><button data-a="s_voice">Voice: ' + (voice ? esc(voice.name.replace(/Microsoft |Google | - English.*| Online \(Natural\)/g, '')) + ' (' + (voiceIdx + 1) + ' of ' + voiceList.length + ') - change' : 'none in this browser') + '</button><button data-a="s_full">Full screen</button>' +
         '<button data-a="s_restart">Restart this game</button><button data-a="s_again">New night, same players</button><button data-a="s_reset">Start over: everyone joins again</button>' +
         '<button data-a="s_unhost">Change the host (new host code)</button><button data-a="s_menu">Close</button></div>' : '');
       if (S.say.id !== lastSay) { lastSay = S.say.id; speak(S.say.text); }
@@ -5790,6 +5828,9 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       else if (a === 's_restart') { E.cmd('restart', null, now); menuOpen = false; }
       else if (a === 's_reset') { E.cmd('reset', null, now); menuOpen = false; }
       else if (a === 's_unhost') { E.cmd('unhost', null, now); if (S.phase !== 'lobby') { E.cmd('menu', null, now); } menuOpen = false; }
+      else if (a === 's_voice') {
+        if (voiceList.length) { voiceIdx = (voiceIdx + 1) % voiceList.length; voice = voiceList[voiceIdx]; try { localStorage.setItem('gn_voice', voice.name); } catch (e5) { } speak('Hello! This is how I sound now. Rather lovely, do you not think?'); }
+      }
       else if (a === 's_test') {
         try { if (actx && actx.resume) { actx.resume(); } } catch (e3) { }
         voiceState = voiceState === 'ok' ? 'ok' : 'wait'; sfx('win');
@@ -5974,7 +6015,7 @@ if (typeof module !== 'undefined') { module.exports = RC; }
       if (ph === 'ml_q') {
         lk = locked('Vote locked in'); if (lk) { return lk; }
         h = '<div class="q">' + esc(S.ml.text) + '</div><div class="half">';
-        for (var w = 0; w < S.ml.who.length; w++) { h += '<button class="pbtn plain c" data-a="mlv" data-v="' + esc(S.ml.who[w].p) + '">' + esc(S.ml.who[w].n) + '</button>'; }
+        for (var w = 0; w < S.ml.who.length; w++) { h += '<button class="pbtn plain c who" data-a="mlv" data-v="' + esc(S.ml.who[w].p) + '">' + esc(S.ml.who[w].n) + '</button>'; }
         return h + '</div>';
       }
       if (ph === 'ml_reveal') { return '<h2>' + (S.rv.win.length ? esc(S.rv.win.join(' and ')) : 'No votes') + '</h2>' + watch(); }

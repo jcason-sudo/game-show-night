@@ -287,11 +287,25 @@
       else if (name === 'fanfare') { tone(523, 0, 0.16); tone(659, 0.16, 0.16); tone(784, 0.32, 0.16); tone(1047, 0.48, 0.4); }
       else if (name === 'win') { [523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { tone(f, i * 0.17, 0.3); }); }
     }
+    var voiceList = [], voiceIdx = -1;
+    function voiceScore(v) { // British first, and the natural-sounding ones before the robotic ones
+      var n = v.name || '', s = 0;
+      if (/en[-_]GB/i.test(v.lang)) { s += 100; } else if (/^en/i.test(v.lang)) { s += 10; } else { return -1; }
+      if (/natural|neural|online|premium|enhanced/i.test(n)) { s += 50; }
+      if (/google uk english male|ryan|thomas|daniel|oliver|arthur/i.test(n)) { s += 20; }
+      if (/google/i.test(n)) { s += 8; }
+      if (/compact|espeak|robot/i.test(n)) { s -= 30; }
+      return s;
+    }
     function pickVoice() {
       try {
-        var vs = window.speechSynthesis.getVoices(), best = null;
-        for (var i = 0; i < vs.length; i++) { if (/^en/i.test(vs[i].lang)) { if (!best) { best = vs[i]; } if (/en[-_]US/i.test(vs[i].lang) && /male|david|daniel|alex|fred|guy|aaron/i.test(vs[i].name)) { best = vs[i]; break; } } }
-        voice = best;
+        var vs = window.speechSynthesis.getVoices(), saved = '';
+        try { saved = localStorage.getItem('gn_voice') || ''; } catch (e1) { }
+        voiceList = []; for (var i = 0; i < vs.length; i++) { if (voiceScore(vs[i]) >= 0) { voiceList.push(vs[i]); } }
+        voiceList.sort(function (x, y) { return voiceScore(y) - voiceScore(x); });
+        voiceIdx = voiceList.length ? 0 : -1;
+        for (i = 0; i < voiceList.length; i++) { if (saved && voiceList[i].name === saved) { voiceIdx = i; } }
+        voice = voiceIdx >= 0 ? voiceList[voiceIdx] : null;
       } catch (e) { }
     }
     function speak(text) {
@@ -310,7 +324,7 @@
         speakTimer = setTimeout(function () {
           try {
             var u = new window.SpeechSynthesisUtterance(text);
-            u.rate = 1.05; u.pitch = 1.05; u.lang = 'en-US'; u.volume = 1; if (voice) { u.voice = voice; }
+            u.rate = 1.0; u.pitch = 1.0; u.lang = voice ? voice.lang : 'en-GB'; u.volume = 1; if (voice) { u.voice = voice; }
             u.onstart = function () { voiceState = 'ok'; };
             u.onerror = function (ev) { if (voiceState !== 'ok' && ev && ev.error !== 'interrupted' && ev.error !== 'canceled') { voiceState = 'fail'; } };
             if (syn.resume) { syn.resume(); }
@@ -545,7 +559,7 @@
       put('pausel', S.paused ? '<div class="paused">PAUSED</div>' : '');
       put('menu', menuOpen ? '<div class="menu">' +
         '<button data-a="s_next">' + (S.phase === 'lobby' ? 'Open the game menu' : 'Next') + '</button><button data-a="s_pause">' + (S.paused ? 'Resume' : 'Pause') + '</button>' +
-        '<button data-a="s_skip">Pick a different game</button><button data-a="s_end">Finish and show the winner</button><button data-a="s_sound">Sound: ' + (soundOn ? 'on' : 'off') + '</button><button data-a="s_test">Test the sound</button><button data-a="s_full">Full screen</button>' +
+        '<button data-a="s_skip">Pick a different game</button><button data-a="s_end">Finish and show the winner</button><button data-a="s_sound">Sound: ' + (soundOn ? 'on' : 'off') + '</button><button data-a="s_test">Test the sound</button><button data-a="s_voice">Voice: ' + (voice ? esc(voice.name.replace(/Microsoft |Google | - English.*| Online \(Natural\)/g, '')) + ' (' + (voiceIdx + 1) + ' of ' + voiceList.length + ') - change' : 'none in this browser') + '</button><button data-a="s_full">Full screen</button>' +
         '<button data-a="s_restart">Restart this game</button><button data-a="s_again">New night, same players</button><button data-a="s_reset">Start over: everyone joins again</button>' +
         '<button data-a="s_unhost">Change the host (new host code)</button><button data-a="s_menu">Close</button></div>' : '');
       if (S.say.id !== lastSay) { lastSay = S.say.id; speak(S.say.text); }
@@ -574,6 +588,9 @@
       else if (a === 's_restart') { E.cmd('restart', null, now); menuOpen = false; }
       else if (a === 's_reset') { E.cmd('reset', null, now); menuOpen = false; }
       else if (a === 's_unhost') { E.cmd('unhost', null, now); if (S.phase !== 'lobby') { E.cmd('menu', null, now); } menuOpen = false; }
+      else if (a === 's_voice') {
+        if (voiceList.length) { voiceIdx = (voiceIdx + 1) % voiceList.length; voice = voiceList[voiceIdx]; try { localStorage.setItem('gn_voice', voice.name); } catch (e5) { } speak('Hello! This is how I sound now. Rather lovely, do you not think?'); }
+      }
       else if (a === 's_test') {
         try { if (actx && actx.resume) { actx.resume(); } } catch (e3) { }
         voiceState = voiceState === 'ok' ? 'ok' : 'wait'; sfx('win');
@@ -758,7 +775,7 @@
       if (ph === 'ml_q') {
         lk = locked('Vote locked in'); if (lk) { return lk; }
         h = '<div class="q">' + esc(S.ml.text) + '</div><div class="half">';
-        for (var w = 0; w < S.ml.who.length; w++) { h += '<button class="pbtn plain c" data-a="mlv" data-v="' + esc(S.ml.who[w].p) + '">' + esc(S.ml.who[w].n) + '</button>'; }
+        for (var w = 0; w < S.ml.who.length; w++) { h += '<button class="pbtn plain c who" data-a="mlv" data-v="' + esc(S.ml.who[w].p) + '">' + esc(S.ml.who[w].n) + '</button>'; }
         return h + '</div>';
       }
       if (ph === 'ml_reveal') { return '<h2>' + (S.rv.win.length ? esc(S.rv.win.join(' and ')) : 'No votes') + '</h2>' + watch(); }

@@ -439,6 +439,7 @@ RC.content = {
   ],
 
   likely: [
+    'trip over absolutely nothing', 'laugh so hard that milk comes out of their nose', 'wave back at someone who was waving at somebody else', 'get caught talking to the dog like it is a person', 'text the family group chat by mistake', 'eat the last cookie and blame someone else', 'fall asleep at the dinner table', 'walk into a glass door', 'lose their phone while holding it', 'sing the wrong words with total confidence', 'wear two different socks and not notice', 'start a food fight', 'get stuck in a baby swing at the park', 'be scared by their own reflection', 'take 40 selfies to get one good one', 'put the cereal in the fridge and the milk in the cupboard', 'ask a question that was answered ten seconds ago', 'show up to the airport on the wrong day', 'argue with the GPS', 'dance in the kitchen when nobody is watching', 'name a pet after a snack', 'eat pizza for breakfast', 'cry laughing at their own joke before the punch line', 'push a door that says pull', 'become a meme', 'fall into a swimming pool with their clothes on', 'bring a suitcase full of snacks on a one-hour trip', 'talk in their sleep about homework or work', 'survive a week with no phone', 'last the shortest time in a haunted house', 'go viral for a terrible dance', 'forget their own age', 'call the teacher or the boss Mom by accident', 'get chased by a goose', 'lock the keys in the car with the engine running', 'say you too when the waiter says enjoy your meal', 'win a hot dog eating contest', 'adopt ten cats', 'be late to their own birthday party', 'clap when the plane lands',
     'fall asleep during a movie', 'win a dance contest', 'get lost even with the GPS on', 'eat dessert before dinner',
     'start talking to a stranger in line', 'forget where the car is parked', 'become famous one day', 'survive on a desert island',
     'sing loudly in the shower', 'laugh at the wrong moment', 'burn the toast', 'be the last one ready to leave',
@@ -926,14 +927,26 @@ RC.content = {
   judgeUrl: '',
 
   lines: {
-    welcome: ['Welcome to Game Show Night I am your host, Ace.'],
-    right: ['Correct!', 'Yes! Nailed it.', 'That is right!', 'Boom. Correct.', 'You got it!'],
-    wrong: ['Ooh, no.', 'Not this time.', 'Sorry, that is wrong.', 'Nope!'],
-    steal: ['Chance to steal!', 'The other team can steal it!'],
-    nobuzz: ['Nobody? Really?', 'Time is up.'],
-    strike: ['Strike!', 'Not on the board!'],
-    survey: ['Survey says...', 'Show me the answer!'],
-    final: ['What a night! Thanks for playing.']
+    welcome: ['Good evening and welcome to Game Show Night! I am your host, Ace. Lovely to see you all. Some of you even look ready.', 'Hello, hello, hello! Welcome to Game Show Night. I am Ace, I am in charge, and I am already judging you.'],
+    right: ['Correct! Well done you.', 'Spot on!', 'Oh, very good. I am almost impressed.', 'Bang on. Lovely stuff.', 'Yes! Somebody has been reading books.', 'Correct! Do not let it go to your head.'],
+    wrong: ['Oh dear. No.', 'Not even close, bless you.', 'Wrong! But said with such confidence.', 'Ooh, no. Nice try, though.', 'That is a no from me.', 'Goodness me, no.'],
+    steal: ['Chance to steal! Be ruthless.', 'The others can pinch it!'],
+    nobuzz: ['Nobody? Really? I have met houseplants with quicker reflexes.', 'Time is up. That was painful to watch.'],
+    strike: ['Strike! Not on the board, I am afraid.', 'No! The survey disagrees with you.', 'Strike. Who did you ask, your cat?'],
+    survey: ['Survey says...', 'Show me the answer!', 'Is it up there?'],
+    final: ['What a night! You were all marvellous. Well, most of you. Thanks for playing.', 'And that is the show! Go and put the kettle on. Thanks for playing.'],
+    /* {n} is replaced with the name */
+    teaseWrong: ['Oh, {n}. What were you thinking?', '{n}, bless you. No.', 'Bold answer, {n}. Wrong, but bold.', '{n}, I admire the confidence. Shame about the answer.', 'Not your finest moment, {n}.', '{n}, did you read the question, or just the vibes?'],
+    teaseEarly: ['{n} jumped the gun! Patience, darling. Minus 50.', 'Steady on, {n}! I had not said go. Minus 50.', '{n}, that finger is far too keen. Minus 50.', 'Oh, {n}. Too early. That will be 50 points, thank you.'],
+    teaseNobody: ['Nobody got it! Not one of you. I am speechless, and that is rare.', 'Nobody. Honestly, I expected more from this family.', 'A clean sweep of wrong answers. Impressive, in its way.', 'Nobody got that. Shall we pretend it never happened?'],
+    praiseAll: ['Everybody got it! Too easy, clearly. I shall try harder.', 'All of you! Show-offs, the lot of you.'],
+    praiseFast: ['Fastest was {n}. Quick as a flash.', '{n} got there first. Somebody had their coffee.', 'Fastest finger: {n}. Show-off.'],
+    nagOne: ['Come along, {n}, we have not got all night. Lock it in!', '{n}, any day now would be lovely.', 'Still waiting on {n}. No pressure. Well, some pressure.'],
+    nagMany: ['{k} of you have not answered. Chop chop, the clock is running!', '{k} of you are still thinking. Do hurry up.'],
+    nagTurn: ['{n}, we are all waiting on you, darling. Look at your phone and {do}.', 'Wakey wakey, {n}! It is your turn. {do}, please.'],
+    lead: ['{t} lead with {p} points. Do not get comfortable.', '{t} are out in front with {p}. The rest of you, do keep up.', 'It is {t} on top with {p} points. For now.'],
+    tied: ['It is tied at the top! How terribly exciting.', 'All square at the top. Anybody could win this. Even you.'],
+    joined: ['Welcome, {n}! Lovely to have you.', 'Hello, {n}! Try to keep up.', '{n} is in! Now it is a party.', 'Ah, {n}. We have been expecting you.']
   }
 };
 if (typeof module !== 'undefined') { module.exports = RC; }

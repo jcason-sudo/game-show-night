@@ -487,3 +487,10 @@ html, body { background: #0F3B4C; color: #EEF3F1; font-weight: 600; }
 .scr.avmode .foot .host { visibility: hidden; width: 21vh; }
 .scr.avmode .zf { width: 84vh; height: 52.5vh; }
 .scr.avmode .zside { width: 24vw; padding-left: 1.8vw; }
+
+/* bigger voting buttons on phones */
+.half .pbtn.who { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 30px; min-height: 76px; padding: 14px 8px; margin-bottom: 12px; }
+.pbtn.fact { font-size: 24px; line-height: 1.22; padding: 18px 16px; min-height: 84px; }
+.pbtn.dark { font-size: 28px; min-height: 76px; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; }
+.pbtn.o0, .pbtn.o1, .pbtn.o2, .pbtn.o3 { font-size: 32px; min-height: 78px; }
+.pbody .q { font-size: 34px; }
